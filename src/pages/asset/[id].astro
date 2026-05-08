@@ -1,0 +1,499 @@
+---
+import fs from "node:fs";
+import path from "node:path";
+
+import "../../styles/global.css";
+import type { AssetItem } from "../../lib/types";
+
+export function getStaticPaths() {
+  const dataDir = path.join(process.cwd(), "public", "data");
+  const readIndex = (filename: string): AssetItem[] => {
+    const filePath = path.join(dataDir, filename);
+    if (!fs.existsSync(filePath)) {
+      return [];
+    }
+    return JSON.parse(fs.readFileSync(filePath, "utf8")) as AssetItem[];
+  };
+  const assets = [...readIndex("arcaea-index.json"), ...readIndex("phigros-index.json")];
+  const getRelated = (current: AssetItem) => {
+    const samePack = current.pack
+      ? assets.filter((asset) => asset.id !== current.id && asset.game === current.game && asset.pack === current.pack)
+      : [];
+    const sameCategory = assets.filter(
+      (asset) =>
+        asset.id !== current.id &&
+        asset.game === current.game &&
+        asset.category === current.category &&
+        asset.pack !== current.pack,
+    );
+
+    return [...samePack, ...sameCategory]
+      .sort((a, b) => (b.mtimeMs ?? 0) - (a.mtimeMs ?? 0) || a.title.localeCompare(b.title, "zh-CN"))
+      .slice(0, 8);
+  };
+
+  return assets.map((asset) => ({
+    params: { id: asset.id },
+    props: {
+      asset,
+      relatedAssets: getRelated(asset),
+    },
+  }));
+}
+
+type Props = {
+  asset: AssetItem;
+  relatedAssets: AssetItem[];
+};
+
+const { asset, relatedAssets } = Astro.props as Props;
+const previewUrl = asset.thumbnailLarge ?? asset.thumbnailMedium ?? asset.thumbnailSmall ?? asset.url;
+const gameHref = asset.game === "Phigros" ? "/phigros" : "/arcaea";
+const gameLabel = asset.game === "Phigros" ? "返回 Phigros" : "返回 Arcaea";
+const originalUrl = asset.url;
+const fileSize = formatBytes(asset.sizeBytes);
+const dimensions = asset.width && asset.height ? `${asset.width} x ${asset.height}` : "未知尺寸";
+const metadataRows = [
+  ["游戏", asset.game],
+  ["分类", asset.category],
+  ["作者", asset.artist],
+  ["曲包", asset.pack],
+  ["版本", asset.version],
+  ["BPM", asset.bpm],
+  ["SIDE", asset.side],
+  ["文件名", asset.filename],
+  ["文件大小", fileSize],
+  ["图片尺寸", dimensions],
+].filter(([, value]) => value !== undefined && value !== "");
+
+function formatBytes(bytes?: number) {
+  if (!bytes) {
+    return "未知大小";
+  }
+  if (bytes < 1024 * 1024) {
+    return `${Math.round(bytes / 1024)} KB`;
+  }
+  return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
+}
+---
+
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" href="/favicon.ico" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="generator" content={Astro.generator} />
+    <meta name="description" content={`${asset.title} - ${asset.game} ${asset.category} 资源详情`} />
+    <title>{asset.title} - 资源详情</title>
+  </head>
+  <body>
+    <main class="detail-shell">
+      <nav class="top-nav" aria-label="页面导航">
+        <a href="/">首页</a>
+        <a href={gameHref}>{gameLabel}</a>
+        <a href="/search">全站搜索</a>
+      </nav>
+
+      <section class="detail-hero">
+        <div class="preview-panel">
+          <img
+            src={previewUrl}
+            alt={asset.title}
+            width={asset.width ?? 1280}
+            height={asset.height ?? 720}
+            loading="lazy"
+            decoding="async"
+          />
+        </div>
+
+        <div class="info-panel">
+          <p class="eyebrow">{asset.game} / {asset.category}</p>
+          <h1>{asset.title}</h1>
+
+          <div class="action-row">
+            <a class="primary-action" href={originalUrl} download={asset.filename}>下载原图</a>
+            <button class="secondary-action" type="button" data-copy-url={originalUrl}>复制直链</button>
+            <a class="secondary-action" href={gameHref}>{gameLabel}</a>
+          </div>
+
+          <dl class="metadata-list">
+            {
+              metadataRows.map(([label, value]) => (
+                <>
+                  <dt>{label}</dt>
+                  <dd>{value}</dd>
+                </>
+              ))
+            }
+          </dl>
+
+          <div class="tag-list" aria-label="标签">
+            {asset.tags.map((tag) => <a href={`/search?tag=${encodeURIComponent(tag)}`}>{tag}</a>)}
+          </div>
+        </div>
+      </section>
+
+      <section class="related-section">
+        <div class="section-heading">
+          <p class="eyebrow">Related</p>
+          <h2>{asset.pack ? "同曲包推荐" : "同分类推荐"}</h2>
+        </div>
+
+        {
+          relatedAssets.length > 0 ? (
+            <div class="related-grid">
+              {relatedAssets.map((related) => (
+                <a class="related-card" href={`/asset/${related.id}`}>
+                  <img
+                    src={related.thumbnailSmall ?? related.thumbnailMedium ?? related.thumbnailLarge}
+                    alt={related.title}
+                    width={related.width ?? 320}
+                    height={related.height ?? 240}
+                    loading="lazy"
+                    decoding="async"
+                  />
+                  <span>{related.category}</span>
+                  <strong>{related.title}</strong>
+                </a>
+              ))}
+            </div>
+          ) : (
+            <p class="empty-related">暂无可推荐的同类资源。</p>
+          )
+        }
+      </section>
+    </main>
+
+    <script>
+      const button = document.querySelector("[data-copy-url]");
+      button?.addEventListener("click", async () => {
+        const url = new URL(button.getAttribute("data-copy-url") || "", window.location.origin).toString();
+        try {
+          await navigator.clipboard.writeText(url);
+          button.textContent = "已复制";
+          window.setTimeout(() => {
+            button.textContent = "复制直链";
+          }, 1600);
+        } catch {
+          button.textContent = "复制失败";
+          window.setTimeout(() => {
+            button.textContent = "复制直链";
+          }, 1600);
+        }
+      });
+    </script>
+  </body>
+</html>
+
+<style>
+  :global(:root) {
+    color-scheme: light dark;
+    --bg: #f6f7fb;
+    --surface: #ffffff;
+    --surface-soft: #eef2f7;
+    --text: #111827;
+    --muted: #667085;
+    --line: #d9e0ea;
+    --accent: #0f766e;
+    --accent-strong: #0f4f66;
+    --shadow: 0 18px 42px rgba(16, 24, 40, 0.1);
+  }
+
+  :global(body) {
+    background:
+      radial-gradient(circle at top left, rgba(20, 184, 166, 0.14), transparent 32rem),
+      linear-gradient(180deg, var(--bg), #ffffff 38rem);
+    color: var(--text);
+  }
+
+  .detail-shell {
+    width: min(1320px, calc(100% - 32px));
+    margin: 0 auto;
+    padding: 28px 0 56px;
+  }
+
+  .top-nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 18px;
+  }
+
+  .top-nav a,
+  .secondary-action,
+  .primary-action,
+  .tag-list a {
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    color: inherit;
+    font-weight: 800;
+    text-decoration: none;
+  }
+
+  .top-nav a {
+    padding: 8px 12px;
+    background: var(--surface-soft);
+  }
+
+  .detail-hero {
+    display: grid;
+    grid-template-columns: minmax(0, 1.35fr) minmax(340px, 0.65fr);
+    gap: 20px;
+    align-items: start;
+  }
+
+  .preview-panel,
+  .info-panel,
+  .related-section {
+    border: 1px solid var(--line);
+    border-radius: 22px;
+    background: color-mix(in srgb, var(--surface) 94%, transparent);
+    box-shadow: var(--shadow);
+  }
+
+  .preview-panel {
+    display: grid;
+    min-height: 420px;
+    place-items: center;
+    overflow: hidden;
+    padding: 18px;
+  }
+
+  .preview-panel img {
+    display: block;
+    max-width: 100%;
+    max-height: min(76vh, 820px);
+    width: auto;
+    height: auto;
+    border-radius: 14px;
+    object-fit: contain;
+    background: var(--surface-soft);
+  }
+
+  .info-panel {
+    padding: clamp(22px, 4vw, 34px);
+  }
+
+  .eyebrow {
+    margin: 0 0 10px;
+    color: var(--accent);
+    font-size: 0.78rem;
+    font-weight: 900;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  h1,
+  h2,
+  p {
+    margin-top: 0;
+  }
+
+  h1 {
+    margin-bottom: 20px;
+    overflow-wrap: anywhere;
+    font-size: clamp(2rem, 4vw, 4rem);
+    line-height: 1.05;
+    letter-spacing: 0;
+  }
+
+  h2 {
+    margin-bottom: 0;
+    font-size: clamp(1.5rem, 3vw, 2.25rem);
+    letter-spacing: 0;
+  }
+
+  .action-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 24px;
+  }
+
+  .primary-action,
+  .secondary-action {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 44px;
+    padding: 0 16px;
+    font: inherit;
+    cursor: pointer;
+  }
+
+  .primary-action {
+    border-color: var(--text);
+    background: var(--text);
+    color: var(--surface);
+  }
+
+  .secondary-action {
+    background: var(--surface-soft);
+  }
+
+  .metadata-list {
+    display: grid;
+    grid-template-columns: 112px minmax(0, 1fr);
+    gap: 1px;
+    overflow: hidden;
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    background: var(--line);
+  }
+
+  .metadata-list dt,
+  .metadata-list dd {
+    margin: 0;
+    padding: 12px;
+    background: var(--surface);
+  }
+
+  .metadata-list dt {
+    color: var(--muted);
+    font-weight: 800;
+  }
+
+  .metadata-list dd {
+    overflow-wrap: anywhere;
+  }
+
+  .tag-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 20px;
+  }
+
+  .tag-list a {
+    padding: 8px 10px;
+    background: var(--surface-soft);
+    color: var(--muted);
+    font-size: 0.88rem;
+  }
+
+  .related-section {
+    margin-top: 20px;
+    padding: clamp(22px, 4vw, 34px);
+  }
+
+  .section-heading {
+    margin-bottom: 20px;
+  }
+
+  .related-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 14px;
+  }
+
+  .related-card {
+    overflow: hidden;
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    background: var(--surface);
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .related-card img {
+    display: block;
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    object-fit: cover;
+    background: var(--surface-soft);
+  }
+
+  .related-card span,
+  .related-card strong {
+    display: block;
+    overflow: hidden;
+    padding-inline: 12px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .related-card span {
+    padding-top: 12px;
+    color: var(--muted);
+    font-size: 0.82rem;
+  }
+
+  .related-card strong {
+    padding-top: 4px;
+    padding-bottom: 12px;
+  }
+
+  .empty-related {
+    margin-bottom: 0;
+    color: var(--muted);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :global(:root) {
+      --bg: #0d1117;
+      --surface: #151b23;
+      --surface-soft: #1f2937;
+      --text: #f8fafc;
+      --muted: #a4adbb;
+      --line: #2e3746;
+      --accent: #5eead4;
+      --accent-strong: #7dd3fc;
+      --shadow: 0 18px 42px rgba(0, 0, 0, 0.34);
+    }
+
+    :global(body) {
+      background:
+        radial-gradient(circle at top left, rgba(45, 212, 191, 0.12), transparent 32rem),
+        linear-gradient(180deg, var(--bg), #111827 38rem);
+    }
+  }
+
+  @media (max-width: 980px) {
+    .detail-hero {
+      grid-template-columns: 1fr;
+    }
+
+    .preview-panel {
+      min-height: 260px;
+    }
+
+    .related-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media (max-width: 620px) {
+    .detail-shell {
+      width: min(100% - 20px, 1320px);
+      padding-top: 10px;
+    }
+
+    .preview-panel,
+    .info-panel,
+    .related-section {
+      border-radius: 16px;
+    }
+
+    .action-row {
+      display: grid;
+    }
+
+    .metadata-list {
+      grid-template-columns: 1fr;
+    }
+
+    .metadata-list dt {
+      padding-bottom: 4px;
+    }
+
+    .metadata-list dd {
+      padding-top: 4px;
+    }
+
+    .related-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

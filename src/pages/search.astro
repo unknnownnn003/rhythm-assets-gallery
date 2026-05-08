@@ -1,0 +1,155 @@
+---
+import fs from "node:fs";
+import path from "node:path";
+
+import GalleryGrid from "../components/GalleryGrid";
+import "../styles/global.css";
+import type { AssetItem } from "../lib/types";
+
+const assets = [...readAssets("arcaea-index.json"), ...readAssets("phigros-index.json")];
+
+function readAssets(filename: string): AssetItem[] {
+  const filePath = path.join(process.cwd(), "public", "data", filename);
+  if (!fs.existsSync(filePath)) {
+    return [];
+  }
+  return JSON.parse(fs.readFileSync(filePath, "utf8")) as AssetItem[];
+}
+---
+
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" href="/favicon.ico" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="generator" content={Astro.generator} />
+    <meta name="description" content="跨 Arcaea 和 Phigros 的资源搜索页。" />
+    <title>全站资源搜索</title>
+  </head>
+  <body>
+    <main class="gallery-page-shell">
+      <header class="gallery-page-hero">
+        <nav>
+          <a href="/">首页</a>
+          <a href="/arcaea">Arcaea</a>
+          <a href="/phigros">Phigros</a>
+        </nav>
+        <p class="eyebrow">Global Search</p>
+        <h1>全站资源搜索</h1>
+        <p>当前搜索范围包含 Arcaea 与 Phigros，共 {assets.length.toLocaleString("zh-CN")} 个资源。</p>
+      </header>
+
+      <GalleryGrid assets={assets} game="All" client:load />
+    </main>
+  </body>
+</html>
+
+<style>
+  :global(:root) {
+    color-scheme: light dark;
+    --bg: #f6f7fb;
+    --surface: #ffffff;
+    --surface-soft: #eef2f7;
+    --text: #111827;
+    --muted: #667085;
+    --line: #d9e0ea;
+    --accent: #0f766e;
+    --accent-strong: #0f4f66;
+    --shadow: 0 18px 42px rgba(16, 24, 40, 0.1);
+  }
+
+  :global(body) {
+    background:
+      radial-gradient(circle at top left, rgba(20, 184, 166, 0.16), transparent 30rem),
+      linear-gradient(180deg, var(--bg), #ffffff 36rem);
+    color: var(--text);
+  }
+
+  .gallery-page-shell {
+    width: min(1360px, calc(100% - 32px));
+    margin: 0 auto;
+    padding: 28px 0 56px;
+  }
+
+  .gallery-page-hero {
+    margin-bottom: 22px;
+    border: 1px solid var(--line);
+    border-radius: 24px;
+    padding: clamp(24px, 5vw, 48px);
+    background: color-mix(in srgb, var(--surface) 92%, transparent);
+    box-shadow: var(--shadow);
+  }
+
+  nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 28px;
+  }
+
+  nav a {
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    padding: 8px 12px;
+    background: var(--surface-soft);
+    color: inherit;
+    font-weight: 800;
+    text-decoration: none;
+  }
+
+  .eyebrow {
+    margin: 0 0 10px;
+    color: var(--accent);
+    font-size: 0.78rem;
+    font-weight: 900;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  h1 {
+    margin: 0 0 12px;
+    font-size: clamp(2.25rem, 6vw, 5rem);
+    line-height: 1;
+    letter-spacing: 0;
+  }
+
+  p {
+    max-width: 760px;
+    margin: 0;
+    color: var(--muted);
+    line-height: 1.8;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :global(:root) {
+      --bg: #0d1117;
+      --surface: #151b23;
+      --surface-soft: #1f2937;
+      --text: #f8fafc;
+      --muted: #a4adbb;
+      --line: #2e3746;
+      --accent: #5eead4;
+      --accent-strong: #7dd3fc;
+      --shadow: 0 18px 42px rgba(0, 0, 0, 0.34);
+    }
+
+    :global(body) {
+      background:
+        radial-gradient(circle at top left, rgba(45, 212, 191, 0.12), transparent 30rem),
+        linear-gradient(180deg, var(--bg), #111827 36rem);
+    }
+  }
+
+  @media (max-width: 640px) {
+    .gallery-page-shell {
+      width: min(100% - 20px, 1360px);
+      padding-top: 10px;
+    }
+
+    .gallery-page-hero {
+      border-radius: 16px;
+    }
+  }
+</style>

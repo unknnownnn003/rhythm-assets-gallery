@@ -1,0 +1,34 @@
+import type { AssetItem } from "../lib/types";
+
+type AssetCardProps = {
+  asset: AssetItem;
+};
+
+export function AssetCard({ asset }: AssetCardProps) {
+  const imageSrc = asset.thumbnailSmall ?? asset.thumbnailMedium ?? asset.thumbnailLarge;
+  const dimensions = asset.width && asset.height ? `${asset.width} x ${asset.height}` : "未知尺寸";
+
+  return (
+    <a className="asset-tile" href={`/asset/${asset.id}`} title={asset.filename}>
+      {imageSrc ? (
+        <img
+          src={imageSrc}
+          alt={asset.title}
+          loading="lazy"
+          decoding="async"
+          width={asset.width ?? 320}
+          height={asset.height ?? 240}
+        />
+      ) : (
+        <div className="asset-tile-placeholder" aria-hidden="true" />
+      )}
+      <div className="asset-tile-body">
+        <span>{asset.category}</span>
+        <strong>{asset.title}</strong>
+        <small>
+          {asset.extension.toUpperCase()} / {dimensions}
+        </small>
+      </div>
+    </a>
+  );
+}
