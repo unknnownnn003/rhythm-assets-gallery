@@ -15,21 +15,59 @@ export function getStaticPaths() {
     return JSON.parse(fs.readFileSync(filePath, "utf8")) as AssetItem[];
   };
   const assets = [...readIndex("arcaea-index.json"), ...readIndex("phigros-index.json")];
+  const seededScore = (value: string) => {
+    let hash = 2166136261;
+    for (let index = 0; index < value.length; index += 1) {
+      hash ^= value.charCodeAt(index);
+      hash = Math.imul(hash, 16777619);
+    }
+    return hash >>> 0;
+  };
+  const seededShuffle = <T,>(items: T[], seed: string) =>
+    [...items]
+      .map((item, index) => ({ item, score: seededScore(`${seed}:${index}`) }))
+      .sort((a, b) => a.score - b.score)
+      .map(({ item }) => item);
+  const normalizeAssetKey = (value: string) =>
+    value
+      .replace(/\.[^.]+$/, "")
+      .replace(/\.(?:jpg|jpeg|png|webp|avif|gif)_opt$/i, "")
+      .replace(/_opt$/i, "")
+      .normalize("NFC")
+      .toLowerCase();
   const getRelated = (current: AssetItem) => {
     const samePack = current.pack
       ? assets.filter((asset) => asset.id !== current.id && asset.game === current.game && asset.pack === current.pack)
       : [];
-    const sameCategory = assets.filter(
+
+    if (current.pack) {
+      return seededShuffle(samePack, current.id).slice(0, 8);
+    }
+
+    return seededShuffle(
+      assets.filter(
+        (asset) =>
+          asset.id !== current.id &&
+          asset.game === current.game &&
+          asset.category === current.category,
+      ),
+      current.id,
+    )
+      .slice(0, 8);
+  };
+  const getBackgroundAsset = (current: AssetItem) => {
+    if (!current.bg) {
+      return undefined;
+    }
+
+    const expected = normalizeAssetKey(current.bg);
+    return assets.find(
       (asset) =>
         asset.id !== current.id &&
         asset.game === current.game &&
-        asset.category === current.category &&
-        asset.pack !== current.pack,
+        asset.category === "游玩背景" &&
+        normalizeAssetKey(asset.filename) === expected,
     );
-
-    return [...samePack, ...sameCategory]
-      .sort((a, b) => (b.mtimeMs ?? 0) - (a.mtimeMs ?? 0) || a.title.localeCompare(b.title, "zh-CN"))
-      .slice(0, 8);
   };
 
   return assets.map((asset) => ({
@@ -37,6 +75,7 @@ export function getStaticPaths() {
     props: {
       asset,
       relatedAssets: getRelated(asset),
+      backgroundAsset: getBackgroundAsset(asset),
     },
   }));
 }
@@ -44,9 +83,10 @@ export function getStaticPaths() {
 type Props = {
   asset: AssetItem;
   relatedAssets: AssetItem[];
+  backgroundAsset?: AssetItem;
 };
 
-const { asset, relatedAssets } = Astro.props as Props;
+const { asset, relatedAssets, backgroundAsset } = Astro.props as Props;
 const previewUrl = asset.thumbnailLarge ?? asset.thumbnailMedium ?? asset.thumbnailSmall ?? asset.url;
 const gameHref = asset.game === "Phigros" ? "/phigros" : "/arcaea";
 const gameLabel = asset.game === "Phigros" ? "返回 Phigros" : "返回 Arcaea";
@@ -54,17 +94,22 @@ const originalUrl = asset.url;
 const fileSize = formatBytes(asset.sizeBytes);
 const dimensions = asset.width && asset.height ? `${asset.width} x ${asset.height}` : "未知尺寸";
 const metadataRows = [
-  ["游戏", asset.game],
-  ["分类", asset.category],
-  ["作者", asset.artist],
-  ["曲包", asset.pack],
-  ["版本", asset.version],
-  ["BPM", asset.bpm],
-  ["SIDE", asset.side],
-  ["文件名", asset.filename],
-  ["文件大小", fileSize],
-  ["图片尺寸", dimensions],
-].filter(([, value]) => value !== undefined && value !== "");
+  { label: "游戏", value: asset.game },
+  { label: "分类", value: asset.category },
+  { label: "作者", value: asset.artist },
+  { label: "曲包", value: asset.pack },
+  { label: "版本", value: asset.version },
+  { label: "独立难度曲绘", value: asset.difficultyLabel ?? asset.difficulty },
+  { label: "BYD 版本", value: asset.bydVersion },
+  { label: "ETR 版本", value: asset.etrVersion },
+  { label: "歌曲序号", value: asset.idx?.toString() },
+  { label: "BPM", value: asset.bpm },
+  { label: "侧别", value: asset.sideLabel ?? asset.side },
+  { label: "游玩背景", value: asset.bg, href: backgroundAsset ? `/asset/${backgroundAsset.id}` : undefined },
+  { label: "文件名", value: asset.filename },
+  { label: "文件大小", value: fileSize },
+  { label: "图片尺寸", value: dimensions },
+].filter((row) => row.value !== undefined && row.value !== "");
 
 function formatBytes(bytes?: number) {
   if (!bytes) {
@@ -75,6 +120,7 @@ function formatBytes(bytes?: number) {
   }
   return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
 }
+
 ---
 
 <!doctype html>
@@ -120,10 +166,10 @@ function formatBytes(bytes?: number) {
 
           <dl class="metadata-list">
             {
-              metadataRows.map(([label, value]) => (
+              metadataRows.map((row) => (
                 <>
-                  <dt>{label}</dt>
-                  <dd>{value}</dd>
+                  <dt>{row.label}</dt>
+                  <dd>{row.href ? <a class="metadata-link" href={row.href}>{row.value}</a> : row.value}</dd>
                 </>
               ))
             }
@@ -138,7 +184,7 @@ function formatBytes(bytes?: number) {
       <section class="related-section">
         <div class="section-heading">
           <p class="eyebrow">Related</p>
-          <h2>{asset.pack ? "同曲包推荐" : "同分类推荐"}</h2>
+          <h2>{asset.pack ? "同曲包随机推荐" : "同分类推荐"}</h2>
         </div>
 
         {
@@ -357,6 +403,11 @@ function formatBytes(bytes?: number) {
 
   .metadata-list dd {
     overflow-wrap: anywhere;
+  }
+
+  .metadata-link {
+    color: var(--accent-strong);
+    font-weight: 800;
   }
 
   .tag-list {

@@ -196,11 +196,17 @@
 }
 
 .asset-tile-body span,
+.asset-tile-body em,
 .asset-tile-body small {
   overflow: hidden;
   color: var(--muted);
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.asset-tile-body em {
+  font-size: 0.82rem;
+  font-style: normal;
 }
 
 .asset-tile-body strong {

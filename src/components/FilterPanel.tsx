@@ -7,24 +7,34 @@ type CountItem = {
 
 type FilterPanelProps = {
   categories: CountItem[];
+  metaFilters: Array<{
+    label: string;
+    value: string;
+    items: CountItem[];
+  }>;
   tags: CountItem[];
   selectedCategory: string;
   selectedTag: string;
+  selectedMeta: Record<string, string>;
   sort: string;
   onCategoryChange: (value: string) => void;
   onTagChange: (value: string) => void;
+  onMetaChange: (key: string, value: string) => void;
   onSortChange: (value: string) => void;
   onClear: () => void;
 };
 
 export function FilterPanel({
   categories,
+  metaFilters,
   tags,
   selectedCategory,
   selectedTag,
+  selectedMeta,
   sort,
   onCategoryChange,
   onTagChange,
+  onMetaChange,
   onSortChange,
   onClear,
 }: FilterPanelProps) {
@@ -65,6 +75,23 @@ export function FilterPanel({
           ))}
         </div>
       </div>
+
+      {metaFilters.map((filter) => (
+        <label className="filter-field" key={filter.value}>
+          <span>{filter.label}</span>
+          <select
+            value={selectedMeta[filter.value] ?? ""}
+            onChange={(event) => onMetaChange(filter.value, event.currentTarget.value)}
+          >
+            <option value="">全部</option>
+            {filter.items.map((item) => (
+              <option key={item.name} value={item.name}>
+                {item.name} ({item.count})
+              </option>
+            ))}
+          </select>
+        </label>
+      ))}
 
       <div className="filter-group">
         <span>标签</span>

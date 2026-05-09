@@ -157,13 +157,17 @@ async function buildAsset(filePath: string, config: ScanConfig): Promise<AssetIt
   const id = stableId(relativePath);
   const game = detectGame(relativePath);
   const category = detectCategory(pathSegments);
-  const parsed = game === "Arcaea" ? parseArcaeaFilename(filename) : {};
+  const parsed =
+    game === "Arcaea"
+      ? parseArcaeaFilename(filename)
+      : game === "Phigros"
+        ? parsePhigrosFilename(filename)
+        : {};
   const title = parsed.title || filenameToTitle(filename);
-  const tags = buildTags({ game, category, pathSegments, extension });
 
   const metadata = await readImageMetadata(filePath);
 
-  return {
+  const asset: AssetItem = {
     id,
     game,
     category,
@@ -171,10 +175,16 @@ async function buildAsset(filePath: string, config: ScanConfig): Promise<AssetIt
     ...withoutEmpty({
       artist: parsed.artist,
       version: parsed.version,
+      bydVersion: parsed.bydVersion,
+      etrVersion: parsed.etrVersion,
       pack: parsed.pack,
       idx: parsed.idx,
       bpm: parsed.bpm,
       side: parsed.side,
+      sideLabel: parsed.sideLabel,
+      bg: parsed.bg,
+      difficulty: parsed.difficulty,
+      difficultyLabel: parsed.difficultyLabel,
     }),
     filename,
     extension,
@@ -187,8 +197,10 @@ async function buildAsset(filePath: string, config: ScanConfig): Promise<AssetIt
     width: metadata.width,
     height: metadata.height,
     mtimeMs: Math.trunc(fileStat.mtimeMs),
-    tags,
+    tags: [],
   };
+  asset.tags = buildTags(asset, pathSegments);
+  return asset;
 }
 
 async function readImageMetadata(filePath: string) {
@@ -244,45 +256,184 @@ function findGameSegmentIndex(segments: string[]) {
   return segments.findIndex((segment) => /arcaea|phigros/i.test(segment));
 }
 
-function parseArcaeaFilename(filename: string): Partial<Pick<AssetItem, "title" | "artist" | "version" | "pack" | "idx" | "bpm" | "side">> {
-  const stem = filename.replace(/\.[^.]+$/, "");
-  const metadataMatch = stem.match(/^(?<prefix>.+?)_IDX\s*(?<idx>\d+)_BPM\s*(?<bpm>[^_]+)_SIDE\s*(?<side>[^_]+)(?:_|$)/i);
+function parseArcaeaFilename(filename: string): Partial<Pick<AssetItem, "title" | "artist" | "version" | "bydVersion" | "etrVersion" | "pack" | "idx" | "bpm" | "side" | "sideLabel" | "bg" | "difficulty" | "difficultyLabel">> {
+  const stem = stripOptimizationSuffix(filename.replace(/\.[^.]+$/, ""));
+  const parts = stem.split("_").map((part) => part.trim()).filter(Boolean);
+  const idxIndex = parts.findIndex((part) => /^IDX\s+/i.test(part));
+  const bpmIndex = parts.findIndex((part) => /^BPM\s+/i.test(part));
+  const sideIndex = parts.findIndex((part) => /^SIDE\s+/i.test(part));
 
-  if (!metadataMatch?.groups) {
+  if (idxIndex <= 0 || bpmIndex < 0 || sideIndex < 0) {
     return {};
   }
 
-  const prefixParts = metadataMatch.groups.prefix.split("_").map((part) => part.trim()).filter(Boolean);
-  const idx = Number.parseInt(metadataMatch.groups.idx, 10);
-  const titleEnd = Math.max(prefixParts.length - 3, 1);
+  const prefixParts = parts.slice(0, idxIndex);
+  const idx = Number.parseInt(parts[idxIndex].replace(/^IDX\s+/i, "").trim(), 10);
+  const bpm = parts[bpmIndex].replace(/^BPM\s+/i, "").trim();
+  const side = parts[sideIndex].replace(/^SIDE\s+/i, "").trim();
+  const suffixParts = parts.slice(sideIndex + 1);
+  const difficultyCode = suffixParts.at(-1);
+  const difficulty = formatArcaeaDifficulty(difficultyCode);
+  const bgEndIndex = difficulty ? suffixParts.length - 2 : suffixParts.length - 1;
+  const bg = bgEndIndex > 0 ? suffixParts.slice(0, bgEndIndex).join("_") : undefined;
+
+  const versionIndex = prefixParts.findIndex((part) => /^\d+(?:\.\d+)+$/.test(part));
+  if (versionIndex <= 0) {
+    return {};
+  }
+
+  const { title, artist } = splitArcaeaTitleArtist(prefixParts.slice(0, versionIndex));
+  const version = prefixParts[versionIndex];
+  const tailParts = prefixParts.slice(versionIndex + 1);
+  const bydIndex = tailParts.findIndex((part) => /^BYD\s+/i.test(part));
+  const etrIndex = tailParts.findIndex((part) => /^ETR\s+/i.test(part));
+  const bydVersion = bydIndex >= 0 ? tailParts[bydIndex].replace(/^BYD\s+/i, "").trim() : undefined;
+  const etrVersion = etrIndex >= 0 ? tailParts[etrIndex].replace(/^ETR\s+/i, "").trim() : undefined;
+  const pack = tailParts.filter((_, index) => index !== bydIndex && index !== etrIndex).join("_") || undefined;
 
   return withoutEmpty({
-    title: prefixParts.slice(0, titleEnd).join("_") || undefined,
-    artist: prefixParts.length >= 4 ? prefixParts.at(-3) : undefined,
-    version: prefixParts.length >= 3 ? prefixParts.at(-2) : undefined,
-    pack: prefixParts.length >= 2 ? prefixParts.at(-1) : undefined,
+    title,
+    artist,
+    version,
+    bydVersion,
+    etrVersion,
+    pack,
     idx: Number.isFinite(idx) ? idx : undefined,
-    bpm: metadataMatch.groups.bpm.trim(),
-    side: metadataMatch.groups.side.trim(),
+    bpm,
+    side,
+    sideLabel: formatArcaeaSide(side),
+    bg,
+    difficulty,
+    difficultyLabel: difficulty ? formatArcaeaDifficultyLabel(difficulty) : undefined,
   });
 }
 
-function filenameToTitle(filename: string) {
-  return filename.replace(/\.[^.]+$/, "").replace(/[_-]+/g, " ").trim() || filename;
+function parsePhigrosFilename(filename: string): Partial<Pick<AssetItem, "title" | "artist">> {
+  const stem = filename.replace(/\.[^.]+$/, "").trim();
+  if (stem === "Chronos Collapse - La Campanella") {
+    return { title: stem };
+  }
+
+  const separator = " - ";
+  const separatorIndex = stem.lastIndexOf(separator);
+  if (separatorIndex <= 0) {
+    return {};
+  }
+
+  return withoutEmpty({
+    title: stem.slice(0, separatorIndex).trim(),
+    artist: stem.slice(separatorIndex + separator.length).trim(),
+  });
 }
 
-function buildTags(input: {
-  game: GameName;
-  category: AssetCategory;
-  pathSegments: string[];
-  extension: string;
-}) {
+function formatArcaeaSide(side?: string) {
+  if (!side) {
+    return undefined;
+  }
+
+  const normalized = side.trim().toLowerCase();
+  if (normalized === "0") {
+    return "光侧";
+  }
+  if (normalized === "1") {
+    return "对立侧（暗侧）";
+  }
+  if (normalized === "2") {
+    return "消色侧";
+  }
+  if (normalized === "3") {
+    return "Lephon 侧";
+  }
+  return side;
+}
+
+function splitArcaeaTitleArtist(parts: string[]) {
+  if (parts.length === 0) {
+    return {};
+  }
+  if (parts.length === 1) {
+    return { title: parts[0] };
+  }
+
+  const leadingSymbolCount = parts.findIndex((part) => hasLetterDigitOrCjk(part));
+  if (leadingSymbolCount > 0) {
+    return {
+      title: parts.slice(0, leadingSymbolCount).join("_"),
+      artist: parts.slice(leadingSymbolCount).join("_"),
+    };
+  }
+
+  return {
+    title: parts[0],
+    artist: parts.slice(1).join("_"),
+  };
+}
+
+function hasLetterDigitOrCjk(value: string) {
+  return /[A-Za-z0-9\u3040-\u30ff\u3400-\u9fff]/.test(value);
+}
+
+function formatArcaeaDifficulty(code?: string) {
+  const normalized = code?.trim();
+  if (normalized === "0") {
+    return "PST";
+  }
+  if (normalized === "1") {
+    return "PRS";
+  }
+  if (normalized === "2") {
+    return "FTR";
+  }
+  if (normalized === "3") {
+    return "BYD";
+  }
+  if (normalized === "4") {
+    return "ETR";
+  }
+  return undefined;
+}
+
+function formatArcaeaDifficultyLabel(difficulty: NonNullable<AssetItem["difficulty"]>) {
+  const labels = {
+    PST: "Past [PST]",
+    PRS: "Present [PRS]",
+    FTR: "Future [FTR]",
+    BYD: "Beyond [BYD]",
+    ETR: "Eternal [ETR]",
+  } satisfies Record<NonNullable<AssetItem["difficulty"]>, string>;
+
+  return labels[difficulty];
+}
+
+function filenameToTitle(filename: string) {
+  return stripOptimizationSuffix(filename.replace(/\.[^.]+$/, "")).replace(/-+/g, " ").trim() || filename;
+}
+
+function stripOptimizationSuffix(value: string) {
+  return value
+    .replace(/\.(?:jpg|jpeg|png|webp|avif|gif)_opt$/i, "")
+    .replace(/_opt$/i, "")
+    .replace(/_optimization$/i, "");
+}
+
+function buildTags(input: AssetItem, pathSegments: string[]) {
   const tags = new Set<string>();
   tags.add(input.game);
   tags.add(input.category);
   tags.add(input.extension);
+  addTag(tags, input.artist);
+  addTag(tags, input.version);
+  addTag(tags, input.pack);
+  addTag(tags, input.bydVersion ? `BYD ${input.bydVersion}` : undefined);
+  addTag(tags, input.etrVersion ? `ETR ${input.etrVersion}` : undefined);
+  addTag(tags, input.difficultyLabel);
+  addTag(tags, input.sideLabel);
+  addTag(tags, input.bg ? `背景 ${input.bg}` : undefined);
+  if (input.idx !== undefined) {
+    addTag(tags, `IDX ${input.idx}`);
+  }
 
-  const directorySegments = input.pathSegments.slice(0, -1);
+  const directorySegments = pathSegments.slice(0, -1);
   const gameIndex = findGameSegmentIndex(directorySegments);
   const tagSegments = gameIndex >= 0 ? directorySegments.slice(gameIndex + 1) : directorySegments;
 
@@ -293,6 +444,13 @@ function buildTags(input: {
   }
 
   return [...tags].filter(Boolean).sort((a, b) => a.localeCompare(b));
+}
+
+function addTag(tags: Set<string>, value?: string) {
+  const normalized = value?.trim();
+  if (normalized) {
+    tags.add(normalized);
+  }
 }
 
 function buildPublicUrl(baseUrl: string, relativePath: string) {

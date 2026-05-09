@@ -31,6 +31,7 @@ const THUMB_SIZES: ThumbSize[] = [
 
 async function main() {
   loadEnvFile();
+  configureSharp();
 
   const config = getThumbConfig();
   const indexes = await readIndexes();
@@ -52,6 +53,20 @@ async function main() {
 
   console.log(`generate-thumbnails: processed ${allAssets.length} asset(s).`);
   console.log(`generate-thumbnails: generated ${generated}, skipped ${skipped}, warnings ${warned}.`);
+}
+
+function configureSharp() {
+  const concurrency = Number.parseInt(process.env.SHARP_CONCURRENCY || "1", 10);
+  const memoryMb = Number.parseInt(process.env.SHARP_CACHE_MEMORY_MB || "64", 10);
+  const cacheItems = Number.parseInt(process.env.SHARP_CACHE_ITEMS || "64", 10);
+  const cacheFiles = Number.parseInt(process.env.SHARP_CACHE_FILES || "0", 10);
+
+  sharp.concurrency(Number.isFinite(concurrency) && concurrency > 0 ? concurrency : 1);
+  sharp.cache({
+    memory: Number.isFinite(memoryMb) && memoryMb >= 0 ? memoryMb : 64,
+    items: Number.isFinite(cacheItems) && cacheItems >= 0 ? cacheItems : 64,
+    files: Number.isFinite(cacheFiles) && cacheFiles >= 0 ? cacheFiles : 0,
+  });
 }
 
 function loadEnvFile() {
@@ -133,7 +148,7 @@ async function processAsset(asset: AssetItem, config: ThumbConfig) {
 
   try {
     const sourceStat = await stat(sourcePath);
-    const metadata = await sharp(sourcePath, { animated: true }).metadata();
+    const metadata = await sharp(sourcePath).metadata();
     asset.width = metadata.width;
     asset.height = metadata.height;
     asset.mtimeMs = Math.trunc(sourceStat.mtimeMs);
@@ -148,7 +163,7 @@ async function processAsset(asset: AssetItem, config: ThumbConfig) {
       }
 
       await mkdir(path.dirname(thumbPath), { recursive: true });
-      await sharp(sourcePath, { animated: true })
+      await sharp(sourcePath)
         .resize({ width: size.width, withoutEnlargement: true })
         .webp({ quality: 82 })
         .toFile(thumbPath);

@@ -23,10 +23,16 @@ export type AssetItem = {
   title: string;
   artist?: string;
   version?: string;
+  bydVersion?: string;
+  etrVersion?: string;
   pack?: string;
   idx?: number;
   bpm?: string;
   side?: string;
+  sideLabel?: string;
+  bg?: string;
+  difficulty?: "PST" | "PRS" | "FTR" | "BYD" | "ETR";
+  difficultyLabel?: string;
   filename: string;
   extension: string;
   relativePath: string;

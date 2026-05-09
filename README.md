@@ -1,4 +1,4 @@
-# Rhythm Assets Gallery
+﻿# Rhythm Assets Gallery
 
 一个静态音游曲绘下载站，目前主要面向 Arcaea 和 Phigros 的曲绘、角色、曲包封面等图片资源。
 
@@ -123,6 +123,129 @@ dist
 ## 部署 dist 目录
 
 这是静态站，不需要 Node.js 后端常驻运行。推荐部署方式：
+
+### PowerShell 自动部署
+
+项目提供 Windows PowerShell 部署脚本：
+
+```powershell
+.\scripts\deploy.ps1
+```
+
+脚本会按顺序执行：
+
+1. `npm run update`
+2. `npm run build`
+3. 创建本地上传快照 `.deploy-work/dist-snapshot`
+4. 在服务器创建临时发布目录
+5. 使用 `scp` 上传快照内容
+6. 上传成功后在服务器执行发布切换：当前正式目录移动为 `.old`，新目录切换为正式目录
+
+任一步骤失败时，脚本会停止执行。脚本不会把服务器 IP、用户名、密码硬编码进脚本。
+
+部署配置从项目根目录的本地文件读取：
+
+```powershell
+.\.deploy.env
+```
+
+`.deploy.env` 已加入 `.gitignore`，不要提交这个文件。仓库里只保留 `.deploy.env.example` 作为模板。
+
+当前站点按宝塔 Linux 面板常见目录配置：
+
+```env
+DEPLOY_HOST=your-server.example.com
+DEPLOY_USER=deploy
+DEPLOY_PORT=22
+DEPLOY_PATH=/www/wwwroot/example.com
+DEPLOY_SITE_URL=https://example.com
+DEPLOY_REMOTE_WORK_PATH=/www/wwwroot/example.com.build-work
+DEPLOY_MIN_FREE_MB=2048
+DEPLOY_USE_SSH_CONFIG=false
+DEPLOY_PROGRESS_POLL_SECONDS=3
+DEPLOY_REMOTE_SHARP_CONCURRENCY=1
+DEPLOY_REMOTE_SHARP_CACHE_MEMORY_MB=64
+```
+
+如果你的 SSH 登录用户不是 `deploy`，只改 `.deploy.env` 里的 `DEPLOY_USER`。`DEPLOY_PATH` 应该和宝塔面板里这个网站的根目录一致；宝塔默认通常是 `/www/wwwroot/域名`。
+
+默认 `DEPLOY_USE_SSH_CONFIG=false`，脚本会忽略本机 `~/.ssh/config`，避免被已有 Host 别名、跳板机或图形 SSH 工具写入的配置影响。如果你确实依赖 `~/.ssh/config` 里的密钥、跳板机或端口配置，可以改成：
+
+```env
+DEPLOY_USE_SSH_CONFIG=true
+```
+
+如果只需要指定密钥文件，优先在 `.deploy.env` 里显式配置：
+
+```env
+DEPLOY_IDENTITY_FILE=C:\Users\你的用户名\.ssh\id_rsa
+```
+
+然后运行：
+
+```powershell
+.\scripts\deploy.ps1
+```
+
+也可以临时指定其他配置文件：
+
+```powershell
+.\scripts\deploy.ps1 -ConfigPath .\.deploy.env
+```
+
+要求本机已经可以通过 `ssh` 和 `scp` 登录服务器。推荐使用 SSH key；如果使用密码登录，会由系统的 `ssh/scp` 命令交互式提示输入，密码不要写进脚本或仓库文件。
+
+脚本会在上传前检查服务器上 `DEPLOY_PATH` 所在分区的剩余空间。因为当前全量发布会同时保留临时新版本和 `.old` 备份，服务器剩余空间只有约 18G 时要避免上传过大的 `dist`。`DEPLOY_MIN_FREE_MB` 用来保留安全余量，默认示例为 2048 MB。
+
+上传阶段会显示总进度、当前估算速度和剩余时间。这个进度通过定时查询服务器临时目录大小估算，`DEPLOY_PROGRESS_POLL_SECONDS` 控制刷新间隔，默认 3 秒。
+
+脚本默认先复制一份本地 `dist` 快照再上传，避免上传过程中 `dist` 被重新构建或其他工具改动导致 `scp` 找不到文件。这个快照目录是 `.deploy-work/dist-snapshot`，已加入 `.gitignore`。如果确定不会并发改动 `dist`，可以跳过快照：
+
+```powershell
+.\scripts\deploy.ps1 -SkipLocalSnapshot
+```
+
+### 远程构建部署
+
+如果服务器上已经有完整曲绘原图目录，可以让服务器构建网页，只从本地上传源码包，不上传本地 `dist`、`public/assets`、`public/thumbs`、`public/data` 和 `node_modules`。
+
+先在 `.deploy.env` 里配置服务器原图目录：
+
+```env
+DEPLOY_REMOTE_ASSET_ROOT=/服务器上的/曲绘/目录
+```
+
+然后运行：
+
+```powershell
+.\scripts\deploy.ps1 -Mode remote-build
+```
+
+远程构建模式会：
+
+1. 本地打包源码，排除大目录和生成目录。
+2. 清理服务器旧的 `source-*`、`source-*.tar.gz` 和未切换的 release 临时目录。
+3. 上传源码包到 `DEPLOY_REMOTE_WORK_PATH`。
+4. 检查服务器 Node.js 版本必须满足 `>=22.12.0`。
+5. 在服务器写入构建用 `.env`，其中 `ASSET_ROOT` 指向 `DEPLOY_REMOTE_ASSET_ROOT`。
+6. 复用正式站点里已有的 `thumbs` 缩略图目录，避免未变化图片重复生成缩略图。
+7. 在服务器执行 `npm ci` 或 `npm install`、`npm run update`、`npm run build`。
+8. 构建成功后把服务器生成的 `dist` 原子切换为宝塔网站目录。
+
+注意：远程构建模式不会把原图复制进 `dist`。宝塔/Nginx 需要把网页路径 `/assets/` 指向 `DEPLOY_REMOTE_ASSET_ROOT`，否则详情页原图下载链接会 404。索引会在每次构建时重新生成到 `dist/data`；缩略图会优先复用正式站点已有的 `thumbs`，只为新增或变更的图片补齐。
+
+`DEPLOY_REMOTE_ASSET_ROOT` 不要放在 `DEPLOY_PATH` 里面。远程构建会对 `DEPLOY_PATH` 做原子切换，如果原图目录在这个正式网站目录下，会有被移动到 `.old` 的风险。建议把原图放在独立目录，例如 `/www/rhythm-assets`，再用宝塔/Nginx 给 `/assets/` 配 alias。
+
+如果服务器内存较小，缩略图生成可能被系统 kill，表现为退出码 `137`。默认配置会限制 `sharp` 的并发和缓存：
+
+```env
+DEPLOY_REMOTE_SHARP_CONCURRENCY=1
+DEPLOY_REMOTE_SHARP_CACHE_MEMORY_MB=64
+```
+
+当前部署脚本使用全量上传 `dist` 构建产物的方式。脚本已经预留 `-Mode incremental` 参数位置，但增量上传尚未实现；后续可以在这个入口接入基于文件清单、mtime/hash 或 rsync 风格的增量同步，让只修改过的构建内容上传到服务器并立即通过网页访问。
+
+### 手动部署
 
 1. 在本地或服务器上运行：
 
