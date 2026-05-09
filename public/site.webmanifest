@@ -1,0 +1,21 @@
+{
+  "name": "Unknnownnn 曲绘下载站",
+  "short_name": "曲绘下载站",
+  "description": "浏览、搜索和下载 Arcaea 与 Phigros 曲绘、曲包封面、角色立绘、头像和背景图资源。",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f7fbff",
+  "theme_color": "#0f8f8a",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

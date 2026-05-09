@@ -3,6 +3,7 @@ import { TagPill } from "./TagPill";
 type CountItem = {
   name: string;
   count: number;
+  value?: string;
 };
 
 type FilterPanelProps = {
@@ -85,7 +86,7 @@ export function FilterPanel({
           >
             <option value="">全部</option>
             {filter.items.map((item) => (
-              <option key={item.name} value={item.name}>
+              <option key={item.value ?? item.name} value={item.value ?? item.name}>
                 {item.name} ({item.count})
               </option>
             ))}

@@ -108,7 +108,7 @@ export default function GalleryGrid({ assets, game }: GalleryGridProps) {
   const fuse = useMemo(
     () =>
       new Fuse(assets, {
-        keys: ["title", "artist", "filename", "category", "tags", "pack", "version", "bydVersion", "etrVersion", "bg", "sideLabel", "idx"],
+        keys: ["title", "artist", "filename", "category", "tags", "pack", "packDisplayName", "packDescription", "version", "bydVersion", "etrVersion", "bg", "sideLabel", "idx"],
         threshold: 0.32,
         ignoreLocation: true,
       }),
@@ -226,7 +226,7 @@ const META_FILTER_KEYS = ["version", "pack", "difficulty", "side", "bg"] as cons
 function buildMetaFilters(assets: AssetItem[]) {
   const filters = [
     { label: "更新版本", value: "version", items: countBy(assets.map((asset) => asset.version ?? ""), compareVersionDesc) },
-    { label: "曲包 / 章节", value: "pack", items: countBy(assets.map((asset) => asset.pack ?? "")) },
+    { label: "曲包 / 章节", value: "pack", items: countPacks(assets) },
     { label: "独立难度曲绘", value: "difficulty", items: countBy(assets.map((asset) => asset.difficulty ?? ""), compareDifficulty) },
     { label: "背景侧", value: "side", items: countBy(assets.map((asset) => asset.sideLabel ?? "")) },
     { label: "游玩背景", value: "bg", items: countBy(assets.map((asset) => asset.bg ?? "")) },
@@ -281,7 +281,29 @@ function countBy(values: string[], sortItems?: (a: CountItem, b: CountItem) => n
 type CountItem = {
   name: string;
   count: number;
+  value?: string;
 };
+
+function countPacks(assets: AssetItem[]) {
+  const counts = new Map<string, CountItem>();
+  for (const asset of assets) {
+    if (!asset.pack) {
+      continue;
+    }
+    const current = counts.get(asset.pack);
+    if (current) {
+      current.count += 1;
+    } else {
+      counts.set(asset.pack, {
+        name: asset.packDisplayName ?? asset.pack,
+        value: asset.pack,
+        count: 1,
+      });
+    }
+  }
+
+  return [...counts.values()].sort((a, b) => b.count - a.count || a.name.localeCompare(b.name, "zh-CN"));
+}
 
 function compareVersionDesc(a: CountItem, b: CountItem) {
   return compareVersionNameDesc(a.name, b.name) || b.count - a.count || a.name.localeCompare(b.name, "zh-CN");
@@ -322,6 +344,14 @@ function compareDifficulty(a: CountItem, b: CountItem) {
 }
 
 function sortAssets(a: AssetItem, b: AssetItem, sort: string) {
+  const sameSongArt = getSongArtKey(a) && getSongArtKey(a) === getSongArtKey(b);
+  if (sameSongArt) {
+    const originalPriority = getSongArtPriority(a) - getSongArtPriority(b);
+    if (originalPriority !== 0) {
+      return originalPriority;
+    }
+  }
+
   if (sort === "name") {
     return a.title.localeCompare(b.title, "zh-CN");
   }
@@ -334,4 +364,27 @@ function sortAssets(a: AssetItem, b: AssetItem, sort: string) {
   }
 
   return (b.mtimeMs ?? 0) - (a.mtimeMs ?? 0) || a.title.localeCompare(b.title, "zh-CN");
+}
+
+function getSongArtKey(asset: AssetItem) {
+  if (asset.game !== "Arcaea" || (asset.category !== "曲绘" && asset.category !== "曲绘（AI超分后）")) {
+    return "";
+  }
+
+  return asset.filename
+    .replace(/\.[^.]+$/, "")
+    .replace(/\.(?:jpg|jpeg|png|webp|avif|gif)_opt$/i, "")
+    .replace(/_opt$/i, "")
+    .normalize("NFC")
+    .toLowerCase();
+}
+
+function getSongArtPriority(asset: AssetItem) {
+  if (asset.category === "曲绘") {
+    return 0;
+  }
+  if (asset.category === "曲绘（AI超分后）") {
+    return 1;
+  }
+  return 2;
 }

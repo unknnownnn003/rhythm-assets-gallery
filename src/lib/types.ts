@@ -26,6 +26,9 @@ export type AssetItem = {
   bydVersion?: string;
   etrVersion?: string;
   pack?: string;
+  packDisplayName?: string;
+  packDescription?: string;
+  packSection?: string;
   idx?: number;
   bpm?: string;
   side?: string;
@@ -44,6 +47,7 @@ export type AssetItem = {
   width?: number;
   height?: number;
   mtimeMs?: number;
+  wikiUrl?: string;
   tags: string[];
 };
 

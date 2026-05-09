@@ -1,8 +1,9 @@
----
+﻿---
 import fs from "node:fs";
 import path from "node:path";
 
 import "../../styles/global.css";
+import { SITE_NAME, absoluteUrl, assetAlt, assetMetaDescription, assetMetaTitle, assetOgImage } from "../../lib/seo";
 import type { AssetItem } from "../../lib/types";
 
 export function getStaticPaths() {
@@ -35,21 +36,55 @@ export function getStaticPaths() {
       .replace(/_opt$/i, "")
       .normalize("NFC")
       .toLowerCase();
+  const isArcaeaSongArt = (asset: AssetItem) =>
+    asset.game === "Arcaea" && (asset.category === "曲绘" || asset.category === "曲绘（AI超分后）");
+  const preferOriginalSongArt = (items: AssetItem[]) => {
+    const groups = new Map<string, AssetItem>();
+    for (const item of items) {
+      if (!isArcaeaSongArt(item)) {
+        groups.set(item.id, item);
+        continue;
+      }
+
+      const key = normalizeAssetKey(item.filename);
+      const current = groups.get(key);
+      if (!current || (item.category === "曲绘" && current.category === "曲绘（AI超分后）")) {
+        groups.set(key, item);
+      }
+    }
+    return [...groups.values()];
+  };
   const getRelated = (current: AssetItem) => {
+    if (current.game === "Arcaea" && current.category === "游玩背景") {
+      const backgroundKey = normalizeAssetKey(current.filename);
+      const songsUsingBackground = assets.filter(
+        (asset) =>
+          asset.id !== current.id &&
+          asset.game === current.game &&
+          (asset.category === "曲绘" || asset.category === "曲绘（AI超分后）") &&
+          asset.bg &&
+          normalizeAssetKey(asset.bg) === backgroundKey,
+      );
+
+      return seededShuffle(preferOriginalSongArt(songsUsingBackground), current.id).slice(0, 8);
+    }
+
     const samePack = current.pack
       ? assets.filter((asset) => asset.id !== current.id && asset.game === current.game && asset.pack === current.pack)
       : [];
 
     if (current.pack) {
-      return seededShuffle(samePack, current.id).slice(0, 8);
+      return seededShuffle(preferOriginalSongArt(samePack), current.id).slice(0, 8);
     }
 
     return seededShuffle(
-      assets.filter(
-        (asset) =>
-          asset.id !== current.id &&
-          asset.game === current.game &&
-          asset.category === current.category,
+      preferOriginalSongArt(
+        assets.filter(
+          (asset) =>
+            asset.id !== current.id &&
+            asset.game === current.game &&
+            asset.category === current.category,
+        ),
       ),
       current.id,
     )
@@ -69,6 +104,21 @@ export function getStaticPaths() {
         normalizeAssetKey(asset.filename) === expected,
     );
   };
+  const getAlternateSongArt = (current: AssetItem) => {
+    if (!isArcaeaSongArt(current)) {
+      return undefined;
+    }
+
+    const expected = normalizeAssetKey(current.filename);
+    const expectedCategory = current.category === "曲绘" ? "曲绘（AI超分后）" : "曲绘";
+    return assets.find(
+      (asset) =>
+        asset.id !== current.id &&
+        asset.game === current.game &&
+        asset.category === expectedCategory &&
+        normalizeAssetKey(asset.filename) === expected,
+    );
+  };
 
   return assets.map((asset) => ({
     params: { id: asset.id },
@@ -76,6 +126,7 @@ export function getStaticPaths() {
       asset,
       relatedAssets: getRelated(asset),
       backgroundAsset: getBackgroundAsset(asset),
+      alternateSongArt: getAlternateSongArt(asset),
     },
   }));
 }
@@ -84,31 +135,44 @@ type Props = {
   asset: AssetItem;
   relatedAssets: AssetItem[];
   backgroundAsset?: AssetItem;
+  alternateSongArt?: AssetItem;
 };
 
-const { asset, relatedAssets, backgroundAsset } = Astro.props as Props;
+const { asset, relatedAssets, backgroundAsset, alternateSongArt } = Astro.props as Props;
 const previewUrl = asset.thumbnailLarge ?? asset.thumbnailMedium ?? asset.thumbnailSmall ?? asset.url;
 const gameHref = asset.game === "Phigros" ? "/phigros" : "/arcaea";
 const gameLabel = asset.game === "Phigros" ? "返回 Phigros" : "返回 Arcaea";
 const originalUrl = asset.url;
 const fileSize = formatBytes(asset.sizeBytes);
 const dimensions = asset.width && asset.height ? `${asset.width} x ${asset.height}` : "未知尺寸";
+const packLabel = asset.packDisplayName ?? asset.pack;
+const wikiLabel = "Arcaea Wiki";
+const pageTitle = assetMetaTitle(asset);
+const pageDescription = assetMetaDescription(asset);
+const pageUrl = absoluteUrl(`/asset/${asset.id}/`);
+const pageImage = assetOgImage(asset);
+const previewAlt = assetAlt(asset);
+const relatedHeading = asset.category === "游玩背景"
+  ? "使用该背景的曲目"
+  : asset.pack
+    ? "同曲包随机推荐"
+    : "同分类推荐";
 const metadataRows = [
   { label: "游戏", value: asset.game },
   { label: "分类", value: asset.category },
   { label: "作者", value: asset.artist },
-  { label: "曲包", value: asset.pack },
+  { label: "曲包", value: packLabel },
   { label: "版本", value: asset.version },
   { label: "独立难度曲绘", value: asset.difficultyLabel ?? asset.difficulty },
   { label: "BYD 版本", value: asset.bydVersion },
   { label: "ETR 版本", value: asset.etrVersion },
-  { label: "歌曲序号", value: asset.idx?.toString() },
   { label: "BPM", value: asset.bpm },
   { label: "侧别", value: asset.sideLabel ?? asset.side },
   { label: "游玩背景", value: asset.bg, href: backgroundAsset ? `/asset/${backgroundAsset.id}` : undefined },
   { label: "文件名", value: asset.filename },
   { label: "文件大小", value: fileSize },
   { label: "图片尺寸", value: dimensions },
+  { label: wikiLabel, value: asset.wikiUrl ? "打开对应页面" : undefined, href: asset.wikiUrl },
 ].filter((row) => row.value !== undefined && row.value !== "");
 
 function formatBytes(bytes?: number) {
@@ -127,14 +191,22 @@ function formatBytes(bytes?: number) {
 <html lang="zh-CN">
   <head>
     <meta charset="utf-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <link rel="icon" href="/favicon.ico" />
+    <link rel="icon" type="image/png" href="/site-icon.png" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/site.webmanifest" />
+    <link rel="canonical" href={pageUrl} />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="generator" content={Astro.generator} />
-    <meta name="description" content={`${asset.title} - ${asset.game} ${asset.category} 资源详情`} />
-    <title>{asset.title} - 资源详情</title>
+    <meta name="description" content={pageDescription} />
+    <meta property="og:type" content="article" />
+    <meta property="og:site_name" content={SITE_NAME} />
+    <meta property="og:title" content={pageTitle} />
+    <meta property="og:description" content={pageDescription} />
+    <meta property="og:url" content={pageUrl} />
+    <meta property="og:image" content={pageImage} />
+    <title>{pageTitle}</title>
   </head>
-  <body>
+  <body class={asset.game === "Phigros" ? "theme-phigros" : "theme-arcaea"}>
     <main class="detail-shell">
       <nav class="top-nav" aria-label="页面导航">
         <a href="/">首页</a>
@@ -146,7 +218,7 @@ function formatBytes(bytes?: number) {
         <div class="preview-panel">
           <img
             src={previewUrl}
-            alt={asset.title}
+            alt={previewAlt}
             width={asset.width ?? 1280}
             height={asset.height ?? 720}
             loading="lazy"
@@ -161,8 +233,29 @@ function formatBytes(bytes?: number) {
           <div class="action-row">
             <a class="primary-action" href={originalUrl} download={asset.filename}>下载原图</a>
             <button class="secondary-action" type="button" data-copy-url={originalUrl}>复制直链</button>
+            {asset.wikiUrl ? <a class="secondary-action" href={asset.wikiUrl} target="_blank" rel="noreferrer">{wikiLabel}</a> : null}
             <a class="secondary-action" href={gameHref}>{gameLabel}</a>
           </div>
+
+          {
+            alternateSongArt ? (
+              <div class="variant-switch" aria-label="曲绘版本切换">
+                <span>曲绘版本</span>
+                <div>
+                  {asset.category === "曲绘" ? (
+                    <strong>原图</strong>
+                  ) : (
+                    <a href={`/asset/${alternateSongArt.id}`}>原图</a>
+                  )}
+                  {asset.category === "曲绘（AI超分后）" ? (
+                    <strong>AI 超分</strong>
+                  ) : (
+                    <a href={`/asset/${alternateSongArt.id}`}>AI 超分</a>
+                  )}
+                </div>
+              </div>
+            ) : null
+          }
 
           <dl class="metadata-list">
             {
@@ -184,7 +277,7 @@ function formatBytes(bytes?: number) {
       <section class="related-section">
         <div class="section-heading">
           <p class="eyebrow">Related</p>
-          <h2>{asset.pack ? "同曲包随机推荐" : "同分类推荐"}</h2>
+          <h2>{relatedHeading}</h2>
         </div>
 
         {
@@ -194,7 +287,7 @@ function formatBytes(bytes?: number) {
                 <a class="related-card" href={`/asset/${related.id}`}>
                   <img
                     src={related.thumbnailSmall ?? related.thumbnailMedium ?? related.thumbnailLarge}
-                    alt={related.title}
+                    alt={assetAlt(related)}
                     width={related.width ?? 320}
                     height={related.height ?? 240}
                     loading="lazy"
@@ -234,26 +327,6 @@ function formatBytes(bytes?: number) {
 </html>
 
 <style>
-  :global(:root) {
-    color-scheme: light dark;
-    --bg: #f6f7fb;
-    --surface: #ffffff;
-    --surface-soft: #eef2f7;
-    --text: #111827;
-    --muted: #667085;
-    --line: #d9e0ea;
-    --accent: #0f766e;
-    --accent-strong: #0f4f66;
-    --shadow: 0 18px 42px rgba(16, 24, 40, 0.1);
-  }
-
-  :global(body) {
-    background:
-      radial-gradient(circle at top left, rgba(20, 184, 166, 0.14), transparent 32rem),
-      linear-gradient(180deg, var(--bg), #ffffff 38rem);
-    color: var(--text);
-  }
-
   .detail-shell {
     width: min(1320px, calc(100% - 32px));
     margin: 0 auto;
@@ -272,7 +345,7 @@ function formatBytes(bytes?: number) {
   .primary-action,
   .tag-list a {
     border: 1px solid var(--line);
-    border-radius: 999px;
+    border-radius: 16px;
     color: inherit;
     font-weight: 800;
     text-decoration: none;
@@ -280,7 +353,15 @@ function formatBytes(bytes?: number) {
 
   .top-nav a {
     padding: 8px 12px;
-    background: var(--surface-soft);
+    background: rgba(255, 255, 255, 0.58);
+    box-shadow: var(--soft-shadow);
+    backdrop-filter: blur(16px) saturate(1.35);
+    -webkit-backdrop-filter: blur(16px) saturate(1.35);
+  }
+
+  .top-nav a:hover {
+    border-color: color-mix(in srgb, var(--accent-strong) 42%, var(--line));
+    transform: translateY(-2px) scale(1.03);
   }
 
   .detail-hero {
@@ -294,12 +375,16 @@ function formatBytes(bytes?: number) {
   .info-panel,
   .related-section {
     border: 1px solid var(--line);
-    border-radius: 22px;
-    background: color-mix(in srgb, var(--surface) 94%, transparent);
+    border-radius: 28px;
+    background: var(--surface);
     box-shadow: var(--shadow);
+    backdrop-filter: var(--glass);
+    -webkit-backdrop-filter: var(--glass);
+    animation: liquid-card-rise 560ms ease both;
   }
 
   .preview-panel {
+    position: relative;
     display: grid;
     min-height: 420px;
     place-items: center;
@@ -307,19 +392,32 @@ function formatBytes(bytes?: number) {
     padding: 18px;
   }
 
+  .preview-panel::before {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background:
+      linear-gradient(135deg, rgba(255, 255, 255, 0.52), transparent 30%),
+      linear-gradient(315deg, color-mix(in srgb, var(--accent-strong) 16%, transparent), transparent 44%);
+    content: "";
+  }
+
   .preview-panel img {
+    position: relative;
     display: block;
     max-width: 100%;
     max-height: min(76vh, 820px);
     width: auto;
     height: auto;
-    border-radius: 14px;
+    border-radius: 20px;
     object-fit: contain;
     background: var(--surface-soft);
+    box-shadow: var(--soft-shadow);
   }
 
   .info-panel {
     padding: clamp(22px, 4vw, 34px);
+    animation-delay: 80ms;
   }
 
   .eyebrow {
@@ -355,7 +453,7 @@ function formatBytes(bytes?: number) {
     display: flex;
     flex-wrap: wrap;
     gap: 10px;
-    margin-bottom: 24px;
+    margin-bottom: 14px;
   }
 
   .primary-action,
@@ -371,12 +469,53 @@ function formatBytes(bytes?: number) {
 
   .primary-action {
     border-color: var(--text);
-    background: var(--text);
-    color: var(--surface);
+    background: linear-gradient(135deg, var(--accent-strong), var(--accent));
+    color: #fff;
+    box-shadow: var(--soft-shadow);
   }
 
   .secondary-action {
-    background: var(--surface-soft);
+    background: rgba(255, 255, 255, 0.58);
+    box-shadow: var(--soft-shadow);
+  }
+
+  .primary-action:hover,
+  .secondary-action:hover,
+  .tag-list a:hover,
+  .variant-switch a:hover {
+    border-color: color-mix(in srgb, var(--accent-strong) 42%, var(--line));
+    transform: translateY(-2px) scale(1.025);
+  }
+
+  .variant-switch {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px 14px;
+    margin-bottom: 24px;
+    color: var(--muted);
+    font-weight: 800;
+  }
+
+  .variant-switch div {
+    display: inline-flex;
+    overflow: hidden;
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.58);
+    box-shadow: var(--soft-shadow);
+  }
+
+  .variant-switch a,
+  .variant-switch strong {
+    padding: 8px 12px;
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .variant-switch strong {
+    background: linear-gradient(135deg, var(--accent-strong), var(--accent));
+    color: #fff;
   }
 
   .metadata-list {
@@ -385,7 +524,7 @@ function formatBytes(bytes?: number) {
     gap: 1px;
     overflow: hidden;
     border: 1px solid var(--line);
-    border-radius: 14px;
+    border-radius: 18px;
     background: var(--line);
   }
 
@@ -393,7 +532,7 @@ function formatBytes(bytes?: number) {
   .metadata-list dd {
     margin: 0;
     padding: 12px;
-    background: var(--surface);
+    background: rgba(255, 255, 255, 0.58);
   }
 
   .metadata-list dt {
@@ -419,14 +558,16 @@ function formatBytes(bytes?: number) {
 
   .tag-list a {
     padding: 8px 10px;
-    background: var(--surface-soft);
+    background: rgba(255, 255, 255, 0.58);
     color: var(--muted);
     font-size: 0.88rem;
+    box-shadow: var(--soft-shadow);
   }
 
   .related-section {
     margin-top: 20px;
     padding: clamp(22px, 4vw, 34px);
+    animation-delay: 140ms;
   }
 
   .section-heading {
@@ -442,10 +583,25 @@ function formatBytes(bytes?: number) {
   .related-card {
     overflow: hidden;
     border: 1px solid var(--line);
-    border-radius: 14px;
+    border-radius: 22px;
     background: var(--surface);
     color: inherit;
     text-decoration: none;
+    box-shadow: var(--soft-shadow);
+    transition:
+      transform 180ms cubic-bezier(0.2, 0.8, 0.2, 1),
+      box-shadow 180ms ease,
+      border-color 180ms ease;
+  }
+
+  .related-card:hover {
+    border-color: color-mix(in srgb, var(--accent-strong) 42%, var(--line));
+    box-shadow: 0 22px 46px rgba(45, 79, 118, 0.18);
+    transform: translateY(-5px) scale(1.018);
+  }
+
+  .related-card:hover img {
+    transform: scale(1.045);
   }
 
   .related-card img {
@@ -454,6 +610,7 @@ function formatBytes(bytes?: number) {
     aspect-ratio: 4 / 3;
     object-fit: cover;
     background: var(--surface-soft);
+    transition: transform 220ms cubic-bezier(0.2, 0.8, 0.2, 1);
   }
 
   .related-card span,
@@ -482,22 +639,13 @@ function formatBytes(bytes?: number) {
   }
 
   @media (prefers-color-scheme: dark) {
-    :global(:root) {
-      --bg: #0d1117;
-      --surface: #151b23;
-      --surface-soft: #1f2937;
-      --text: #f8fafc;
-      --muted: #a4adbb;
-      --line: #2e3746;
-      --accent: #5eead4;
-      --accent-strong: #7dd3fc;
-      --shadow: 0 18px 42px rgba(0, 0, 0, 0.34);
-    }
-
-    :global(body) {
-      background:
-        radial-gradient(circle at top left, rgba(45, 212, 191, 0.12), transparent 32rem),
-        linear-gradient(180deg, var(--bg), #111827 38rem);
+    .top-nav a,
+    .secondary-action,
+    .variant-switch div,
+    .metadata-list dt,
+    .metadata-list dd,
+    .tag-list a {
+      background: rgba(21, 27, 35, 0.64);
     }
   }
 

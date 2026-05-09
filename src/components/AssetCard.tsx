@@ -1,4 +1,5 @@
 import type { AssetItem } from "../lib/types";
+import { assetAlt } from "../lib/seo";
 
 type AssetCardProps = {
   asset: AssetItem;
@@ -10,7 +11,7 @@ export function AssetCard({ asset }: AssetCardProps) {
   const metadata = [
     asset.difficultyLabel ?? asset.difficulty,
     asset.version,
-    asset.pack,
+    asset.packDisplayName ?? asset.pack,
     asset.artist,
     asset.sideLabel,
   ].filter(Boolean);
@@ -20,7 +21,7 @@ export function AssetCard({ asset }: AssetCardProps) {
       {imageSrc ? (
         <img
           src={imageSrc}
-          alt={asset.title}
+          alt={assetAlt(asset)}
           loading="lazy"
           decoding="async"
           width={asset.width ?? 320}

@@ -11,9 +11,10 @@
     "preview": "astro preview",
     "scan": "tsx scripts/scan-assets.ts",
     "thumbs": "tsx scripts/generate-thumbnails.ts",
+    "sitemap": "tsx scripts/generate-sitemap.ts",
     "validate:assets": "tsx scripts/validate-assets.ts",
     "import:incoming": "tsx scripts/import-incoming-assets.ts",
-    "update": "npm run scan && npm run thumbs",
+    "update": "npm run scan && npm run thumbs && npm run sitemap",
     "astro": "astro"
   },
   "dependencies": {
