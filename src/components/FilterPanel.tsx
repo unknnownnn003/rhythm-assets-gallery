@@ -78,20 +78,27 @@ export function FilterPanel({
       </div>
 
       {metaFilters.map((filter) => (
-        <label className="filter-field" key={filter.value}>
+        <div class="filter-field" key={filter.value}>
           <span>{filter.label}</span>
-          <select
-            value={selectedMeta[filter.value] ?? ""}
-            onChange={(event) => onMetaChange(filter.value, event.currentTarget.value)}
-          >
-            <option value="">全部</option>
-            {filter.items.map((item) => (
-              <option key={item.value ?? item.name} value={item.value ?? item.name}>
-                {item.name} ({item.count})
-              </option>
-            ))}
-          </select>
-        </label>
+          <div class="filter-field-row">
+            <select
+              value={selectedMeta[filter.value] ?? ""}
+              onChange={(event) => onMetaChange(filter.value, event.currentTarget.value)}
+            >
+              <option value="">全部</option>
+              {filter.items.map((item) => (
+                <option key={item.value ?? item.name} value={item.value ?? item.name}>
+                  {item.name} ({item.count})
+                </option>
+              ))}
+            </select>
+            {selectedMeta[filter.value] ? (
+              <button type="button" class="filter-clear-btn" onClick={() => onMetaChange(filter.value, "")} title={`清除${filter.label}`}>
+                ×
+              </button>
+            ) : null}
+          </div>
+        </div>
       ))}
 
       <div className="filter-group">

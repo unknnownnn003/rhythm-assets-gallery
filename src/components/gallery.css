@@ -157,6 +157,33 @@
   margin-bottom: 18px;
 }
 
+.filter-field-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.filter-clear-btn {
+  flex: 0 0 auto;
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 0;
+  background: var(--surface-soft);
+  color: var(--muted);
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: border-color 160ms ease, color 160ms ease, transform 160ms ease;
+}
+
+.filter-clear-btn:hover {
+  border-color: color-mix(in srgb, var(--accent-strong) 42%, var(--line));
+  color: var(--text);
+  transform: scale(1.1);
+}
+
 .filter-group {
   display: grid;
   gap: 8px;
@@ -369,4 +396,30 @@
     text-overflow: ellipsis;
     white-space: nowrap;
   }
+}
+
+.gallery-footer {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 32px;
+  padding-top: 20px;
+  border-top: 1px solid var(--line);
+}
+
+.gallery-footer a {
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 8px 16px;
+  background: var(--surface-soft);
+  color: var(--muted);
+  font-weight: 800;
+  text-decoration: none;
+  transition: border-color 160ms ease, color 160ms ease, transform 160ms ease;
+}
+
+.gallery-footer a:hover {
+  border-color: color-mix(in srgb, var(--accent-strong) 42%, var(--line));
+  color: var(--text);
+  transform: translateY(-2px);
 }

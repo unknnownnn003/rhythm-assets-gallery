@@ -55,6 +55,29 @@ export function getStaticPaths() {
     return [...groups.values()];
   };
   const getRelated = (current: AssetItem) => {
+    if (current.game === "Arcaea" && current.characterId !== undefined) {
+      return seededShuffle(
+        assets.filter((asset) => asset.id !== current.id && asset.game === current.game && asset.characterId === current.characterId),
+        current.id,
+      ).slice(0, 8);
+    }
+
+    if (current.game === "Arcaea" && current.storyPathTitle) {
+      return seededShuffle(
+        assets.filter(
+          (asset) =>
+            asset.id !== current.id &&
+            asset.game === current.game &&
+            (
+              asset.storyPathTitle === current.storyPathTitle ||
+              Boolean(current.relatedSongId && asset.songId === current.relatedSongId) ||
+              Boolean(current.relatedCharacterIds?.some((id) => asset.characterId === id))
+            ),
+        ),
+        current.id,
+      ).slice(0, 8);
+    }
+
     if (current.game === "Arcaea" && current.category === "游玩背景") {
       const backgroundKey = normalizeAssetKey(current.filename);
       const songsUsingBackground = assets.filter(
@@ -154,21 +177,38 @@ const pageImage = assetOgImage(asset);
 const previewAlt = assetAlt(asset);
 const relatedHeading = asset.category === "游玩背景"
   ? "使用该背景的曲目"
-  : asset.pack
-    ? "同曲包随机推荐"
-    : "同分类推荐";
+  : asset.characterId !== undefined
+    ? "同搭档相关资源"
+    : asset.storyPathTitle
+      ? "同剧情章节资源"
+      : asset.pack
+        ? "同曲包随机推荐"
+        : "同分类推荐";
 const metadataRows = [
   { label: "游戏", value: asset.game },
   { label: "分类", value: asset.category },
+  { label: "歌曲 ID", value: asset.songId },
   { label: "作者", value: asset.artist },
   { label: "曲包", value: packLabel },
   { label: "版本", value: asset.version },
   { label: "独立难度曲绘", value: asset.difficultyLabel ?? asset.difficulty },
+  { label: "显示难度", value: asset.difficultyRating },
+  { label: "全部谱面难度", value: asset.difficultyRatings?.join(" / ") },
+  { label: "谱师", value: asset.chartDesigner },
+  { label: "曲绘画师", value: asset.jacketDesigner },
   { label: "BYD 版本", value: asset.bydVersion },
   { label: "ETR 版本", value: asset.etrVersion },
   { label: "BPM", value: asset.bpm },
   { label: "侧别", value: asset.sideLabel ?? asset.side },
   { label: "游玩背景", value: asset.bg, href: backgroundAsset ? `/asset/${backgroundAsset.id}` : undefined },
+  { label: "反转背景", value: asset.bgInverse },
+  { label: "搭档", value: asset.characterName },
+  { label: "搭档资源", value: asset.characterVariant },
+  { label: "关联角色", value: asset.relatedCharacterNames?.join(" / ") },
+  { label: "剧情章节", value: asset.storyPathTitle },
+  { label: "剧情节点", value: asset.storyNode },
+  { label: "剧情类型", value: asset.storyType },
+  { label: "关联曲目", value: asset.relatedSongTitle ?? asset.relatedSongId },
   { label: "文件名", value: asset.filename },
   { label: "文件大小", value: fileSize },
   { label: "图片尺寸", value: dimensions },

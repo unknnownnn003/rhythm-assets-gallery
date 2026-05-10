@@ -25,12 +25,86 @@ npm run thumbs
 npm run update
 npm run validate:assets
 npm run import:incoming
+npm run arcaea:extract
+npm run arcaea:metadata
 ```
 
 `npm run update` 等于：
 
 ```text
-npm run scan + npm run thumbs
+npm run scan + npm run thumbs + npm run sitemap
+```
+
+## Arcaea APK 更新提取流程
+
+Phigros 自动更新脚本暂未实现。当前只有 Arcaea 专用流程。
+
+### 只提取新版 APK 的新增资源
+
+如果目标只是从新版 APK 和上一版 APK 中找出新增或变化的图片资源，并放到一个待处理目录里，用：
+
+```powershell
+npm run arcaea:extract -- --new "D:\Files\曲绘\Arcaea\APK\arcaea_新版本.apk" --old "D:\Files\曲绘\Arcaea\APK\arcaea_上一版本.apk" --out "D:\Files\曲绘\Arcaea\曲绘（85）6.xx.x"
+```
+
+`--new` 和 `--old` 可以传 APK 文件，也可以传已解压目录。如果传目录，目录本身可以是 APK 解压根目录，也可以直接是其中的 `assets` 目录。
+
+这个脚本会：
+
+- 只读取输入 APK 或目录，不修改原始 APK、已解压目录、`public/assets` 或远程资源目录。
+- 从 APK 中选择性抽取站点会使用的图片资源，不解包音频、模型、谱面以外的无关大文件。
+- 对比新版和旧版相同路径文件的 SHA-1，复制新增或内容变化的图片。
+- 跳过歌曲目录里的 `_256` 压缩曲绘。
+- 按资源类型输出到 `曲绘`、`曲包封面`、`剧情/cg`、`剧情贴图`、`角色/立绘`、`角色/头像`、`角色/LinkPlay预览`、`游玩背景`、`LinkPlay贴纸`、`世界模式`、`启动页面` 等子目录。
+- 同步复制新版的 `songlist`、`packlist`、`story2/ordering` 到输出目录的 `_metadata/`，方便人工核对。
+- 写入 `arcaea-update-report.json`，列出复制了哪些文件。
+- 曲绘输出文件名会根据新版 `songlist` 自动加可读前缀。
+- 如果是 `1080_base_3` 或 `1080_base_4` 等独立难度曲绘，前缀会优先使用该难度自己的曲名、曲师、BPM、背景、谱师、曲绘画师和显示难度，避免和普通难度信息混淆。
+
+所以，**提取更新资源这一步只需要跑 `npm run arcaea:extract`**。它负责把新增内容找出来并放进你指定的文件夹，供你后续手动超分、压缩和整理。
+
+### 更新网站使用的 Arcaea 元信息
+
+如果新版 APK 已经解压，且你希望网站的曲名、曲包、剧情、角色、难度等关联信息也跟着新版更新，再运行：
+
+```powershell
+npm run arcaea:metadata -- --assets-dir "D:\Files\曲绘\Arcaea\APK\arcaea_新版本\assets"
+```
+
+这个脚本会从新版 `assets` 中读取：
+
+- `songs/songlist`
+- `songs/packlist`
+- `app-data/story2/ordering`
+- `app-data/story/main/entries_*`
+- `app-data/story/side/entries_*`
+
+并生成：
+
+```text
+scripts/data/arcaea-metadata.json
+```
+
+扫描器会用这个文件增强网站索引。当前增强内容包括：
+
+- 曲绘关联歌曲 ID、曲名、曲师、曲包、版本、BPM、SIDE、游玩背景、反转背景。
+- 独立难度曲绘关联对应难度自己的曲名、曲师、显示难度、谱师、曲绘画师、BPM 和背景。
+- 曲包显示名会优先使用 `name_localized`，并在存在 `pack_parent` 时附带父曲包上下文，减少多个 `Collaboration Chapter 2/3` 难以区分的问题。
+- 角色立绘、头像、LinkPlay 预览关联 `搭档列表.CSV` 中的搭档名。
+- 剧情 CG 关联剧情章节、剧情节点、剧情类型、解锁曲包、关联曲目和关联角色。
+- 剧情贴图尽量按目录名关联到对应剧情章节。
+
+更新元信息后，如果要重新生成网站：
+
+```powershell
+npm run update
+npm run build
+```
+
+如果要同步到服务器，再按部署流程运行：
+
+```powershell
+.\scripts\deploy.ps1 -Mode remote-build
 ```
 
 ## 本地开发流程

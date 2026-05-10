@@ -108,7 +108,7 @@ export default function GalleryGrid({ assets, game }: GalleryGridProps) {
   const fuse = useMemo(
     () =>
       new Fuse(assets, {
-        keys: ["title", "artist", "filename", "category", "tags", "pack", "packDisplayName", "packDescription", "version", "bydVersion", "etrVersion", "bg", "sideLabel", "idx"],
+        keys: ["title", "artist", "filename", "category", "tags", "pack", "packDisplayName", "packDescription", "version", "bydVersion", "etrVersion", "bg", "bgInverse", "sideLabel", "idx", "songId", "difficultyRating", "difficultyRatings", "chartDesigner", "jacketDesigner", "characterName", "characterVariant", "relatedCharacterNames", "storyNode", "storyPathTitle", "relatedSongId", "relatedSongTitle"],
         threshold: 0.32,
         ignoreLocation: true,
       }),
@@ -221,15 +221,20 @@ export default function GalleryGrid({ assets, game }: GalleryGridProps) {
   );
 }
 
-const META_FILTER_KEYS = ["version", "pack", "difficulty", "side", "bg"] as const;
+const META_FILTER_KEYS = ["version", "pack", "difficulty", "rating", "side", "bg", "character", "story", "chartDesigner", "jacketDesigner"] as const;
 
 function buildMetaFilters(assets: AssetItem[]) {
   const filters = [
-    { label: "更新版本", value: "version", items: countBy(assets.map((asset) => asset.version ?? ""), compareVersionDesc) },
-    { label: "曲包 / 章节", value: "pack", items: countPacks(assets) },
+    { label: "更新版本", value: "version", items: countBySong(assets, (asset) => asset.version ?? "", compareVersionDesc) },
+    { label: "曲包 / 章节", value: "pack", items: countPacksBySong(assets) },
     { label: "独立难度曲绘", value: "difficulty", items: countBy(assets.map((asset) => asset.difficulty ?? ""), compareDifficulty) },
-    { label: "背景侧", value: "side", items: countBy(assets.map((asset) => asset.sideLabel ?? "")) },
-    { label: "游玩背景", value: "bg", items: countBy(assets.map((asset) => asset.bg ?? "")) },
+    { label: "谱面难度", value: "rating", items: countBy(assets.flatMap((asset) => asset.difficultyRatings ?? (asset.difficultyRating ? [asset.difficultyRating] : [])), compareRating) },
+    { label: "背景侧", value: "side", items: countBySong(assets, (asset) => asset.sideLabel ?? "") },
+    { label: "游玩背景", value: "bg", items: countBySong(assets, (asset) => asset.bg ?? "") },
+    { label: "搭档", value: "character", items: countBySong(assets, (asset) => asset.characterName ?? "") },
+    { label: "剧情章节", value: "story", items: countBySong(assets, (asset) => asset.storyPathTitle ?? "") },
+    { label: "谱师", value: "chartDesigner", items: countBySong(assets, (asset) => asset.chartDesigner ?? "") },
+    { label: "曲绘画师", value: "jacketDesigner", items: countBySong(assets, (asset) => asset.jacketDesigner ?? "") },
   ];
 
   return filters.filter((filter) => filter.items.length > 0);
@@ -250,18 +255,81 @@ function matchesMetaFilters(asset: AssetItem, selectedMeta: Record<string, strin
     if (key === "difficulty") {
       return asset.difficulty === value;
     }
+    if (key === "rating") {
+      return asset.difficultyRating === value || asset.difficultyRatings?.includes(value);
+    }
     if (key === "side") {
       return asset.sideLabel === value;
     }
     if (key === "bg") {
       return asset.bg === value;
     }
+    if (key === "character") {
+      return asset.characterName === value;
+    }
+    if (key === "story") {
+      return asset.storyPathTitle === value;
+    }
+    if (key === "chartDesigner") {
+      return asset.chartDesigner === value;
+    }
+    if (key === "jacketDesigner") {
+      return asset.jacketDesigner === value;
+    }
     return true;
   });
 }
 
 function isStructuredTag(tag: string) {
-  return /^(BYD|ETR|IDX)\b/i.test(tag) || tag.startsWith("背景 ");
+  return /^(?:BYD|ETR|IDX|谱师|曲绘)\b/i.test(tag);
+}
+
+function countBySong(assets: AssetItem[], getField: (asset: AssetItem) => string, sortItems?: (a: CountItem, b: CountItem) => number) {
+  const seen = new Map<string, string>();
+  for (const asset of assets) {
+    const key = asset.songId ?? asset.id;
+    if (!seen.has(key)) {
+      const field = getField(asset);
+      if (field) {
+        seen.set(key, field);
+      }
+    }
+  }
+
+  const counts = new Map<string, number>();
+  for (const value of seen.values()) {
+    counts.set(value, (counts.get(value) ?? 0) + 1);
+  }
+
+  return [...counts.entries()]
+    .map(([name, count]) => ({ name, count }))
+    .sort(sortItems ?? ((a, b) => b.count - a.count || a.name.localeCompare(b.name, "zh-CN")));
+}
+
+function countPacksBySong(assets: AssetItem[]) {
+  const seen = new Map<string, CountItem>();
+  for (const asset of assets) {
+    const key = asset.songId ?? asset.id;
+    if (!seen.has(key) && asset.pack) {
+      seen.set(key, {
+        name: asset.packDisplayName ?? asset.pack,
+        value: asset.pack,
+        count: 0,
+      });
+    }
+  }
+
+  const counts = new Map<string, CountItem>();
+  for (const item of seen.values()) {
+    const current = counts.get(item.value ?? item.name);
+    if (current) {
+      current.count += 1;
+    } else {
+      counts.set(item.value ?? item.name, { ...item, count: 1 });
+    }
+  }
+
+  return [...counts.values()].sort((a, b) => b.count - a.count || a.name.localeCompare(b.name, "zh-CN"));
 }
 
 function countBy(values: string[], sortItems?: (a: CountItem, b: CountItem) => number) {
@@ -341,6 +409,18 @@ function parseVersionParts(value: string) {
 function compareDifficulty(a: CountItem, b: CountItem) {
   const order = ["PST", "PRS", "FTR", "BYD", "ETR"];
   return order.indexOf(a.name) - order.indexOf(b.name);
+}
+
+function compareRating(a: CountItem, b: CountItem) {
+  return parseRatingName(a.name) - parseRatingName(b.name) || b.count - a.count || a.name.localeCompare(b.name, "zh-CN");
+}
+
+function parseRatingName(value: string) {
+  const match = value.match(/^(\d+)(\+)?$/);
+  if (!match) {
+    return Number.POSITIVE_INFINITY;
+  }
+  return Number.parseInt(match[1], 10) + (match[2] ? 0.5 : 0);
 }
 
 function sortAssets(a: AssetItem, b: AssetItem, sort: string) {

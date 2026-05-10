@@ -12,6 +12,9 @@ export function AssetCard({ asset }: AssetCardProps) {
     asset.difficultyLabel ?? asset.difficulty,
     asset.version,
     asset.packDisplayName ?? asset.pack,
+    asset.characterName,
+    asset.storyPathTitle,
+    asset.difficultyRating ? `定数 ${asset.difficultyRating}` : undefined,
     asset.artist,
     asset.sideLabel,
   ].filter(Boolean);

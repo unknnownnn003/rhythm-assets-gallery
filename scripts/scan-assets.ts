@@ -24,9 +24,71 @@ type ArcaeaPackList = {
   packs?: ArcaeaPackMetadata[];
 };
 
+type LocalizedText = Record<string, string | undefined>;
+
+type ArcaeaSongDifficulty = {
+  ratingClass?: number;
+  chartDesigner?: string;
+  jacketDesigner?: string;
+  rating?: number;
+  ratingPlus?: boolean;
+  bpm?: string;
+  bg?: string;
+  bg_inverse?: string;
+  version?: string;
+  title_localized?: LocalizedText;
+  artist?: string;
+};
+
+type ArcaeaSongMetadata = {
+  idx?: number;
+  id: string;
+  title_localized?: LocalizedText;
+  artist?: string;
+  bpm?: string;
+  set?: string;
+  side?: number | string;
+  bg?: string;
+  bg_inverse?: string;
+  version?: string;
+  bydversion?: string;
+  etrversion?: string;
+  difficulties?: ArcaeaSongDifficulty[];
+};
+
+type ArcaeaStoryNodeMetadata = {
+  node: string;
+  pathTitle?: string;
+  type?: string;
+  act?: number;
+  pathSlug?: string;
+  characters?: number[];
+  purchases?: string[];
+  cgPath?: string;
+  clearSongId?: string;
+};
+
+type ArcaeaCharacterMetadata = {
+  id: number;
+  name: string;
+  type?: string;
+  skill?: string;
+};
+
+type ArcaeaContentMetadata = {
+  songsById: Map<string, ArcaeaSongMetadata>;
+  songsByIdx: Map<number, ArcaeaSongMetadata>;
+  packs: Map<string, ArcaeaPackMetadata>;
+  storyNodes: Map<string, ArcaeaStoryNodeMetadata>;
+  storyPathsBySlug: Map<string, ArcaeaStoryNodeMetadata>;
+  characters: Map<number, ArcaeaCharacterMetadata>;
+};
+
 const PROJECT_ROOT = process.cwd();
 const DATA_DIR = path.join(PROJECT_ROOT, "public", "data");
 const ARCAEA_PACKLIST_PATH = path.join(PROJECT_ROOT, "scripts", "data", "arcaea-packlist-6.14.0c.json");
+const ARCAEA_METADATA_PATH = path.join(PROJECT_ROOT, "scripts", "data", "arcaea-metadata.json");
+const ARCAEA_CHARACTER_CSV_PATH = path.join(PROJECT_ROOT, "搭档列表.CSV");
 const ARCAEA_WIKI_BASE_URL = "https://wiki.arcaea.cn";
 const DEFAULT_CONFIG: ScanConfig = {
   assetRoot: path.join(PROJECT_ROOT, "public", "assets"),
@@ -44,6 +106,8 @@ const KNOWN_CATEGORIES = [
   "启动页面",
   "游玩背景",
   "曲绘",
+  "LinkPlay贴纸",
+  "剧情贴图",
   "头像",
   "角色",
   "立绘",
@@ -55,8 +119,9 @@ async function main() {
 
   const config = getScanConfig();
   const arcaeaPackMetadata = loadArcaeaPackMetadata();
+  const arcaeaContentMetadata = loadArcaeaContentMetadata(arcaeaPackMetadata);
   const files = existsSync(config.assetRoot) ? await collectImageFiles(config.assetRoot) : [];
-  const assets = await buildAssets(files, config, arcaeaPackMetadata);
+  const assets = await buildAssets(files, config, arcaeaContentMetadata);
 
   const arcaeaAssets = assets.filter((asset) => asset.game === "Arcaea");
   const phigrosAssets = assets.filter((asset) => asset.game === "Phigros");
@@ -129,6 +194,137 @@ function loadArcaeaPackMetadata() {
   return packs;
 }
 
+function loadArcaeaContentMetadata(packMetadata: Map<string, ArcaeaPackMetadata>): ArcaeaContentMetadata {
+  const metadata: ArcaeaContentMetadata = {
+    songsById: new Map(),
+    songsByIdx: new Map(),
+    packs: new Map(packMetadata),
+    storyNodes: new Map(),
+    storyPathsBySlug: new Map(),
+    characters: loadArcaeaCharacterMetadata(),
+  };
+
+  if (!existsSync(ARCAEA_METADATA_PATH)) {
+    return metadata;
+  }
+
+  try {
+    const data = JSON.parse(readFileSyncUtf8(ARCAEA_METADATA_PATH)) as {
+      songs?: ArcaeaSongMetadata[];
+      packs?: ArcaeaPackMetadata[];
+      storyNodes?: ArcaeaStoryNodeMetadata[];
+    };
+
+    for (const pack of data.packs ?? []) {
+      if (pack.id) {
+        metadata.packs.set(pack.id, pack);
+      }
+    }
+
+    for (const song of data.songs ?? []) {
+      if (!song.id) {
+        continue;
+      }
+      metadata.songsById.set(song.id, song);
+      if (song.idx !== undefined) {
+        metadata.songsByIdx.set(song.idx, song);
+      }
+    }
+
+    for (const storyNode of data.storyNodes ?? []) {
+      if (storyNode.node) {
+        metadata.storyNodes.set(storyNode.node, storyNode);
+      }
+      const slug = storyNode.pathSlug ?? slugifyStoryPathTitle(storyNode.pathTitle);
+      if (slug && !metadata.storyPathsBySlug.has(slug)) {
+        metadata.storyPathsBySlug.set(slug, storyNode);
+      }
+    }
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    console.warn(`scan-assets: could not read Arcaea content metadata: ${message}`);
+  }
+
+  return metadata;
+}
+
+function slugifyStoryPathTitle(value?: string) {
+  return value?.toLowerCase().replace(/[^a-z0-9]+/g, "") || undefined;
+}
+
+function loadArcaeaCharacterMetadata() {
+  const characters = new Map<number, ArcaeaCharacterMetadata>();
+  if (!existsSync(ARCAEA_CHARACTER_CSV_PATH)) {
+    return characters;
+  }
+
+  try {
+    const content = readTextWithFallback(ARCAEA_CHARACTER_CSV_PATH);
+    const rows = content.split(/\r?\n/).map((line) => parseCsvLine(line));
+    const headerIndex = rows.findIndex((row) => row[0] === "#" && row[1] === "搭档名称");
+    if (headerIndex < 0) {
+      return characters;
+    }
+
+    for (const row of rows.slice(headerIndex + 2)) {
+      const id = Number.parseInt(row[0] ?? "", 10);
+      const name = row[1]?.trim();
+      if (!Number.isFinite(id) || !name) {
+        continue;
+      }
+      characters.set(id, {
+        id,
+        name,
+        type: row[2]?.trim() || undefined,
+        skill: row[11]?.trim() || undefined,
+      });
+    }
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    console.warn(`scan-assets: could not read Arcaea character CSV: ${message}`);
+  }
+
+  return characters;
+}
+
+function readTextWithFallback(filePath: string) {
+  const buffer = readFileSync(filePath);
+  const utf8 = buffer.toString("utf8");
+  if (!utf8.includes("\uFFFD")) {
+    return utf8;
+  }
+
+  try {
+    return new TextDecoder("gb18030").decode(buffer);
+  } catch {
+    return utf8;
+  }
+}
+
+function parseCsvLine(line: string) {
+  const cells: string[] = [];
+  let current = "";
+  let inQuotes = false;
+  for (let index = 0; index < line.length; index += 1) {
+    const char = line[index];
+    if (char === "\"") {
+      if (inQuotes && line[index + 1] === "\"") {
+        current += "\"";
+        index += 1;
+      } else {
+        inQuotes = !inQuotes;
+      }
+    } else if (char === "," && !inQuotes) {
+      cells.push(current);
+      current = "";
+    } else {
+      current += char;
+    }
+  }
+  cells.push(current);
+  return cells;
+}
+
 function unquoteEnvValue(value: string) {
   if (
     (value.startsWith("\"") && value.endsWith("\"")) ||
@@ -173,13 +369,13 @@ async function collectImageFiles(root: string): Promise<string[]> {
 async function buildAssets(
   filePaths: string[],
   config: ScanConfig,
-  arcaeaPackMetadata: Map<string, ArcaeaPackMetadata>,
+  arcaeaContentMetadata: ArcaeaContentMetadata,
 ): Promise<AssetItem[]> {
   const assets: AssetItem[] = [];
 
   for (const filePath of filePaths) {
     try {
-      assets.push(await buildAsset(filePath, config, arcaeaPackMetadata));
+      assets.push(await buildAsset(filePath, config, arcaeaContentMetadata));
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       console.warn(`scan-assets: skipped "${filePath}" because ${message}`);
@@ -192,7 +388,7 @@ async function buildAssets(
 async function buildAsset(
   filePath: string,
   config: ScanConfig,
-  arcaeaPackMetadata: Map<string, ArcaeaPackMetadata>,
+  arcaeaContentMetadata: ArcaeaContentMetadata,
 ): Promise<AssetItem> {
   const fileStat = await stat(filePath);
   const relativePath = toPosixPath(path.relative(config.assetRoot, filePath));
@@ -208,11 +404,14 @@ async function buildAsset(
       : game === "Phigros"
         ? parsePhigrosFilename(filename)
         : {};
-  const arcaeaPack = game === "Arcaea" ? resolveArcaeaPack(filename, category, parsed.pack, arcaeaPackMetadata) : undefined;
-  const title = arcaeaPack?.coverTitle || parsed.title || filenameToTitle(filename);
+  const arcaeaEnrichment = game === "Arcaea" ? enrichArcaeaAsset(relativePath, filename, category, parsed, arcaeaContentMetadata) : {};
+  const arcaeaPack = game === "Arcaea"
+    ? resolveArcaeaPack(filename, category, arcaeaEnrichment.pack ?? parsed.pack, arcaeaContentMetadata.packs)
+    : undefined;
+  const title = arcaeaPack?.coverTitle || arcaeaEnrichment.title || parsed.title || filenameToTitle(filename);
 
   const metadata = await readImageMetadata(filePath);
-  const wikiUrl = buildWikiUrl({ game, category, title, pack: arcaeaPack?.metadata, bg: parsed.bg });
+  const wikiUrl = buildWikiUrl({ game, category, title, pack: arcaeaPack?.metadata, bg: arcaeaEnrichment.bg ?? parsed.bg });
 
   const asset: AssetItem = {
     id,
@@ -220,21 +419,38 @@ async function buildAsset(
     category,
     title,
     ...withoutEmpty({
-      artist: parsed.artist,
-      version: parsed.version,
-      bydVersion: parsed.bydVersion,
-      etrVersion: parsed.etrVersion,
-      pack: arcaeaPack?.metadata.id ?? parsed.pack,
-      packDisplayName: arcaeaPack ? getLocalizedValue(arcaeaPack.metadata.name_localized) : undefined,
+      artist: arcaeaEnrichment.artist ?? parsed.artist,
+      version: arcaeaEnrichment.version ?? parsed.version,
+      bydVersion: arcaeaEnrichment.bydVersion ?? parsed.bydVersion,
+      etrVersion: arcaeaEnrichment.etrVersion ?? parsed.etrVersion,
+      pack: arcaeaPack?.metadata.id ?? arcaeaEnrichment.pack ?? parsed.pack,
+      packDisplayName: arcaeaPack ? formatPackDisplayName(arcaeaPack.metadata, arcaeaContentMetadata.packs) : undefined,
       packDescription: arcaeaPack ? getLocalizedValue(arcaeaPack.metadata.description_localized) : undefined,
       packSection: arcaeaPack?.metadata.section,
-      idx: parsed.idx,
-      bpm: parsed.bpm,
-      side: parsed.side,
-      sideLabel: parsed.sideLabel,
-      bg: parsed.bg,
-      difficulty: parsed.difficulty,
-      difficultyLabel: parsed.difficultyLabel,
+      idx: arcaeaEnrichment.idx ?? parsed.idx,
+      songId: arcaeaEnrichment.songId,
+      bpm: arcaeaEnrichment.bpm ?? parsed.bpm,
+      side: arcaeaEnrichment.side ?? parsed.side,
+      sideLabel: arcaeaEnrichment.sideLabel ?? parsed.sideLabel,
+      bg: arcaeaEnrichment.bg ?? parsed.bg,
+      bgInverse: arcaeaEnrichment.bgInverse,
+      difficulty: arcaeaEnrichment.difficulty ?? parsed.difficulty,
+      difficultyLabel: arcaeaEnrichment.difficultyLabel ?? parsed.difficultyLabel,
+      difficultyRating: arcaeaEnrichment.difficultyRating,
+      difficultyRatings: arcaeaEnrichment.difficultyRatings,
+      chartDesigner: arcaeaEnrichment.chartDesigner,
+      jacketDesigner: arcaeaEnrichment.jacketDesigner,
+      characterId: arcaeaEnrichment.characterId,
+      characterName: arcaeaEnrichment.characterName,
+      characterVariant: arcaeaEnrichment.characterVariant,
+      relatedCharacterIds: arcaeaEnrichment.relatedCharacterIds,
+      relatedCharacterNames: arcaeaEnrichment.relatedCharacterNames,
+      storyNode: arcaeaEnrichment.storyNode,
+      storyPathTitle: arcaeaEnrichment.storyPathTitle,
+      storyType: arcaeaEnrichment.storyType,
+      storyAct: arcaeaEnrichment.storyAct,
+      relatedSongId: arcaeaEnrichment.relatedSongId,
+      relatedSongTitle: arcaeaEnrichment.relatedSongTitle,
     }),
     filename,
     extension,
@@ -284,6 +500,13 @@ function detectGame(relativePath: string): GameName {
 
 function detectCategory(pathSegments: string[]): AssetCategory {
   const directorySegments = pathSegments.slice(0, -1);
+  const normalizedPath = pathSegments.join("/");
+  if (/\/img\/multiplayer\/stickers\//i.test(normalizedPath) || pathSegments.includes("LinkPlay贴纸")) {
+    return "LinkPlay贴纸";
+  }
+  if (/\/img\/story\//i.test(normalizedPath) || pathSegments.includes("剧情贴图")) {
+    return "剧情贴图";
+  }
   const gameIndex = findGameSegmentIndex(directorySegments);
   const categorySegments = gameIndex >= 0 ? directorySegments.slice(gameIndex + 1) : directorySegments;
   const searchSegments = categorySegments.length > 0 ? categorySegments : directorySegments;
@@ -377,6 +600,206 @@ function parsePhigrosFilename(filename: string): Partial<Pick<AssetItem, "title"
   });
 }
 
+function enrichArcaeaAsset(
+  relativePath: string,
+  filename: string,
+  category: AssetCategory,
+  parsed: Partial<AssetItem>,
+  metadata: ArcaeaContentMetadata,
+): Partial<AssetItem> {
+  if (category === "曲绘" || category === "曲绘（AI超分后）") {
+    const song = parsed.idx !== undefined ? metadata.songsByIdx.get(parsed.idx) : undefined;
+    if (!song) {
+      return {};
+    }
+
+    const difficulty = parsed.difficulty;
+    const difficultyMeta = difficulty ? song.difficulties?.find((item) => formatArcaeaDifficulty(String(item.ratingClass)) === difficulty) : undefined;
+    const title = getLocalizedValue(difficultyMeta?.title_localized) ?? getLocalizedValue(song.title_localized);
+    const artist = difficultyMeta?.artist || song.artist;
+    return withoutEmpty({
+      title,
+      artist,
+      idx: song.idx,
+      songId: song.id,
+      version: difficultyMeta?.version ?? song.version,
+      bydVersion: song.bydversion,
+      etrVersion: song.etrversion,
+      pack: song.set,
+      bpm: difficultyMetaBpm(difficultyMeta) ?? song.bpm,
+      side: String(song.side ?? ""),
+      sideLabel: formatArcaeaSide(String(song.side ?? "")),
+      bg: difficultyMetaBg(difficultyMeta) ?? song.bg,
+      bgInverse: difficultyMetaBgInverse(difficultyMeta) ?? song.bg_inverse,
+      difficulty,
+      difficultyLabel: difficulty ? formatArcaeaDifficultyLabel(difficulty) : undefined,
+      difficultyRating: formatDifficultyRating(difficultyMeta),
+      difficultyRatings: collectDifficultyRatings(song),
+      chartDesigner: difficultyMeta?.chartDesigner,
+      jacketDesigner: difficultyMeta?.jacketDesigner,
+    });
+  }
+
+  if (category === "游玩背景") {
+    const bgKey = stripImageExtension(filename);
+    const songs = [...metadata.songsById.values()].filter((song) => song.bg === bgKey || song.bg_inverse === bgKey);
+    const firstSong = songs[0];
+    return withoutEmpty({
+      title: firstSong ? `${getLocalizedValue(firstSong.title_localized) ?? firstSong.id} 游玩背景` : `游玩背景 ${bgKey}`,
+      bg: bgKey,
+      relatedSongId: firstSong?.id,
+    });
+  }
+
+  if (category === "立绘" || category === "头像" || category === "LinkPlay预览") {
+    const characterKey = parseCharacterAssetKey(filename);
+    if (!characterKey) {
+      return {};
+    }
+
+    const character = metadata.characters.get(characterKey.id);
+    const variant = formatCharacterVariant(characterKey.suffix, category);
+    return withoutEmpty({
+      title: character ? `${character.name}（${variant}）` : `搭档 ${characterKey.raw}（${variant}）`,
+      characterId: characterKey.id,
+      characterName: character?.name,
+      characterVariant: variant,
+    });
+  }
+
+  if (category === "剧情") {
+    const nodeKey = normalizeStoryNodeKey(filename);
+    const storyNode = metadata.storyNodes.get(nodeKey);
+    if (!storyNode) {
+      return {};
+    }
+
+    const relatedSong = storyNode.clearSongId ? metadata.songsById.get(storyNode.clearSongId) : undefined;
+    const relatedCharacters = resolveStoryCharacters(storyNode, metadata);
+    return withoutEmpty({
+      title: storyNode.pathTitle ? `${storyNode.pathTitle} / ${storyNode.node} 剧情 CG` : `${storyNode.node} 剧情 CG`,
+      storyNode: storyNode.node,
+      storyPathTitle: storyNode.pathTitle,
+      storyType: storyNode.type,
+      storyAct: storyNode.act,
+      relatedSongId: storyNode.clearSongId,
+      relatedSongTitle: relatedSong ? getLocalizedValue(relatedSong.title_localized) ?? relatedSong.id : undefined,
+      relatedCharacterIds: storyNode.characters,
+      relatedCharacterNames: relatedCharacters.map((character) => character.name),
+      pack: storyNode.purchases?.[0],
+    });
+  }
+
+  if (category === "剧情贴图") {
+    const folder = relativePath.split("/").at(-2);
+    const storyPath = folder ? metadata.storyPathsBySlug.get(slugifyStoryPathTitle(folder) ?? "") : undefined;
+    const relatedCharacters = storyPath ? resolveStoryCharacters(storyPath, metadata) : [];
+    return withoutEmpty({
+      title: storyPath?.pathTitle
+        ? `${storyPath.pathTitle} 剧情贴图 ${cleanStoryDisplayName(filename)}`
+        : folder && folder !== "剧情贴图"
+          ? `${folder} 剧情贴图 ${cleanStoryDisplayName(filename)}`
+          : `剧情贴图 ${cleanStoryDisplayName(filename)}`,
+      storyPathTitle: storyPath?.pathTitle ?? folder,
+      storyType: storyPath?.type,
+      storyAct: storyPath?.act,
+      relatedCharacterIds: storyPath?.characters,
+      relatedCharacterNames: relatedCharacters.map((character) => character.name),
+      pack: storyPath?.purchases?.[0],
+    });
+  }
+
+  return {};
+}
+
+function difficultyMetaBpm(difficulty?: ArcaeaSongDifficulty & { bpm?: string }) {
+  return difficulty?.bpm;
+}
+
+function difficultyMetaBg(difficulty?: ArcaeaSongDifficulty & { bg?: string }) {
+  return difficulty?.bg;
+}
+
+function difficultyMetaBgInverse(difficulty?: ArcaeaSongDifficulty & { bg_inverse?: string }) {
+  return difficulty?.bg_inverse;
+}
+
+function resolveStoryCharacters(storyNode: ArcaeaStoryNodeMetadata, metadata: ArcaeaContentMetadata) {
+  return (storyNode.characters ?? [])
+    .map((id) => metadata.characters.get(id))
+    .filter((character): character is ArcaeaCharacterMetadata => Boolean(character));
+}
+
+function normalizeStoryNodeKey(filename: string) {
+  return stripImageExtension(stripOptimizationSuffix(stripImageExtension(filename)));
+}
+
+function cleanStoryDisplayName(filename: string) {
+  return normalizeStoryNodeKey(filename).replace(/[_-]+/g, " ").trim() || filename;
+}
+
+function formatDifficultyRating(difficulty?: ArcaeaSongDifficulty) {
+  if (difficulty?.rating === undefined || difficulty.rating === 0) {
+    return undefined;
+  }
+  return `${difficulty.rating}${difficulty.ratingPlus ? "+" : ""}`;
+}
+
+function collectDifficultyRatings(song: ArcaeaSongMetadata) {
+  const ratings = new Set<string>();
+  for (const difficulty of song.difficulties ?? []) {
+    if (difficulty.rating === 0) {
+      continue;
+    }
+    const rating = formatDifficultyRating(difficulty);
+    if (rating) {
+      ratings.add(rating);
+    }
+  }
+  return [...ratings].sort(compareDifficultyRatingName);
+}
+
+function compareDifficultyRatingName(a: string, b: string) {
+  const parsedA = parseDifficultyRating(a);
+  const parsedB = parseDifficultyRating(b);
+  return parsedA - parsedB || a.localeCompare(b, "zh-CN");
+}
+
+function parseDifficultyRating(value: string) {
+  const match = value.match(/^(\d+)(\+)?$/);
+  if (!match) {
+    return Number.POSITIVE_INFINITY;
+  }
+  return Number.parseInt(match[1], 10) + (match[2] ? 0.5 : 0);
+}
+
+function parseCharacterAssetKey(filename: string) {
+  const stem = stripImageExtension(filename).replace(/_(?:icon|mp)$/i, "");
+  const match = stem.match(/^(-?\d+)(.*)$/);
+  if (!match) {
+    return undefined;
+  }
+  return {
+    raw: stem,
+    id: Number.parseInt(match[1], 10),
+    suffix: match[2] ?? "",
+  };
+}
+
+function formatCharacterVariant(suffix: string, category: AssetCategory) {
+  const base = category === "头像" ? "头像" : category === "LinkPlay预览" ? "LinkPlay 预览" : "立绘";
+  if (suffix === "u") {
+    return `觉醒${base}`;
+  }
+  if (suffix === "o") {
+    return `旧${base}`;
+  }
+  if (suffix) {
+    return `${base} ${suffix}`;
+  }
+  return base;
+}
+
 function resolveArcaeaPack(
   filename: string,
   category: AssetCategory,
@@ -436,6 +859,20 @@ function parseArcaeaPackCoverFilename(filename: string, packs: Map<string, Arcae
 function formatArcaeaPackCoverTitle(pack: ArcaeaPackMetadata, variantLabels: string[]) {
   const displayName = getLocalizedValue(pack.name_localized) ?? pack.id;
   return variantLabels.length > 0 ? `${displayName}（${variantLabels.join(" / ")}）` : displayName;
+}
+
+function formatPackDisplayName(pack: ArcaeaPackMetadata, packs: Map<string, ArcaeaPackMetadata>) {
+  const displayName = getLocalizedValue(pack.name_localized) ?? pack.id;
+  if (!pack.pack_parent) {
+    return displayName;
+  }
+
+  const parent = packs.get(pack.pack_parent);
+  const parentName = parent ? getLocalizedValue(parent.name_localized) ?? parent.id : pack.pack_parent;
+  if (displayName.includes(parentName)) {
+    return displayName;
+  }
+  return `${parentName} / ${displayName}`;
 }
 
 function getLocalizedValue(value?: Record<string, string>) {
@@ -569,6 +1006,10 @@ function filenameToTitle(filename: string) {
   return stripOptimizationSuffix(filename.replace(/\.[^.]+$/, "")).replace(/-+/g, " ").trim() || filename;
 }
 
+function stripImageExtension(filename: string) {
+  return filename.replace(/\.[^.]+$/, "");
+}
+
 function stripOptimizationSuffix(value: string) {
   return value
     .replace(/\.(?:jpg|jpeg|png|webp|avif|gif)_opt$/i, "")
@@ -580,7 +1021,6 @@ function buildTags(input: AssetItem, pathSegments: string[]) {
   const tags = new Set<string>();
   tags.add(input.game);
   tags.add(input.category);
-  tags.add(input.extension);
   addTag(tags, input.artist);
   addTag(tags, input.version);
   addTag(tags, input.packDisplayName ?? input.pack);
@@ -588,21 +1028,10 @@ function buildTags(input: AssetItem, pathSegments: string[]) {
   addTag(tags, input.etrVersion ? `ETR ${input.etrVersion}` : undefined);
   addTag(tags, input.difficultyLabel);
   addTag(tags, input.sideLabel);
-  addTag(tags, input.bg ? `背景 ${input.bg}` : undefined);
-  if (input.idx !== undefined) {
-    addTag(tags, `IDX ${input.idx}`);
-  }
-
-  const directorySegments = pathSegments.slice(0, -1);
-  const gameIndex = findGameSegmentIndex(directorySegments);
-  const tagSegments = gameIndex >= 0 ? directorySegments.slice(gameIndex + 1) : directorySegments;
-
-  for (const segment of tagSegments) {
-    if (segment && !/sample/i.test(segment) && !/arcaea|phigros/i.test(segment)) {
-      tags.add(segment);
-    }
-  }
-
+  addTag(tags, input.chartDesigner ? `谱师 ${input.chartDesigner}` : undefined);
+  addTag(tags, input.jacketDesigner ? `曲绘 ${input.jacketDesigner}` : undefined);
+  addTag(tags, input.characterName);
+  addTag(tags, input.storyPathTitle);
   return [...tags].filter(Boolean).sort((a, b) => a.localeCompare(b));
 }
 

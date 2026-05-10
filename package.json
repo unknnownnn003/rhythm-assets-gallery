@@ -14,6 +14,8 @@
     "sitemap": "tsx scripts/generate-sitemap.ts",
     "validate:assets": "tsx scripts/validate-assets.ts",
     "import:incoming": "tsx scripts/import-incoming-assets.ts",
+    "arcaea:metadata": "tsx scripts/update-arcaea-metadata.ts",
+    "arcaea:extract": "tsx scripts/extract-arcaea-update.ts",
     "update": "npm run scan && npm run thumbs && npm run sitemap",
     "astro": "astro"
   },

@@ -8,7 +8,9 @@ export type KnownAssetCategory =
   | "角色"
   | "立绘"
   | "LinkPlay预览"
+  | "LinkPlay贴纸"
   | "剧情"
+  | "剧情贴图"
   | "启动页面"
   | "游玩背景"
   | "April Fools"
@@ -30,12 +32,29 @@ export type AssetItem = {
   packDescription?: string;
   packSection?: string;
   idx?: number;
+  songId?: string;
   bpm?: string;
   side?: string;
   sideLabel?: string;
   bg?: string;
+  bgInverse?: string;
   difficulty?: "PST" | "PRS" | "FTR" | "BYD" | "ETR";
   difficultyLabel?: string;
+  difficultyRating?: string;
+  difficultyRatings?: string[];
+  chartDesigner?: string;
+  jacketDesigner?: string;
+  characterId?: number;
+  characterName?: string;
+  characterVariant?: string;
+  relatedCharacterIds?: number[];
+  relatedCharacterNames?: string[];
+  storyNode?: string;
+  storyPathTitle?: string;
+  storyType?: string;
+  storyAct?: number;
+  relatedSongId?: string;
+  relatedSongTitle?: string;
   filename: string;
   extension: string;
   relativePath: string;
