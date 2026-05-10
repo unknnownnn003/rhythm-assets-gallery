@@ -14,10 +14,14 @@ export const homepageConfig = {
 
   bilibili: {
     enabled: true,
+    mid: "385607044",
     url: "https://space.bilibili.com/385607044",
+    avatar: "/site-icon.png",
     badge: "Bilibili",
-    title: "我的B站主页",
-    description: "主页会放一些相关内容和更新入口。",
+    name: "Unknnownnn",
+    fansFallback: "见主页",
+    syncLabel: "实时粉丝数以 B 站主页为准",
+    description: "这里展示站点所有者的 B 站入口和账号信息，也会放一些相关内容和更新入口。",
     button: "打开 B 站主页",
   },
 
@@ -27,8 +31,9 @@ export const homepageConfig = {
   },
 
   games: {
-    arcaeaDescription: "个分类，去 Arcaea 区看看",
-    phigrosDescription: "个分类，去 Phigros 区看看",
+    arcaeaDescription: "个分类，可直接浏览曲绘文件",
+    phigrosDescription: "个分类，可直接浏览曲绘文件",
+    entryCta: "进入资源浏览",
   },
 
   sections: {
@@ -41,6 +46,12 @@ export const homepageConfig = {
     overviewTitle: "站内现在有这些",
     categoryUnit: "个分类",
     unknownSize: "未知大小",
+  },
+
+  footer: {
+    copyright: "© Unknnownnn Rhythm Assets Gallery",
+    assetNote: "图片资源版权归原游戏与作者所有，本站仅作整理索引与学习交流。",
+    contact: "如需移除或修正资源信息，请通过站点所有者的 B 站主页联系。",
   },
 
   theme: {

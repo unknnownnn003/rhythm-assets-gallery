@@ -23,7 +23,7 @@ const summary = readJson<SiteSummary>("summary.json", {
   generatedAt: new Date(0).toISOString(),
 });
 const recentUpdates = readJson<AssetItem[]>("recent-updates.json", []).slice(0, 8);
-const heroPreviewAssets = recentUpdates.slice(0, 3);
+const heroPreviewAssets = recentUpdates.slice(0, 6);
 const pageTitle = "Arcaea | Phigros 曲绘下载站 - Unknnownnn";
 const pageDescription = "提供 Arcaea、Phigros 曲绘、曲包封面、角色立绘、头像、背景图等音游资源浏览、搜索与下载。";
 const pageImage = recentUpdates[0] ? assetOgImage(recentUpdates[0]) : absoluteUrl("/site-icon.png");
@@ -31,7 +31,9 @@ const pageImage = recentUpdates[0] ? assetOgImage(recentUpdates[0]) : absoluteUr
 const gameStats = new Map(summary.games.map((game) => [game.game, game]));
 const arcaea = gameStats.get("Arcaea");
 const phigros = gameStats.get("Phigros");
-const categoryShortcuts = getCategoryShortcuts(summary);
+const arcaeaCategoryShortcuts = getGameCategoryShortcuts(summary, "Arcaea");
+const phigrosCategoryShortcuts = getGameCategoryShortcuts(summary, "Phigros");
+const totalCategoryCount = countUniqueCategories(summary);
 const generatedAt = new Intl.DateTimeFormat("zh-CN", {
   year: "numeric",
   month: "2-digit",
@@ -48,22 +50,30 @@ function readJson<T>(filename: string, fallback: T): T {
   return JSON.parse(fs.readFileSync(filePath, "utf8")) as T;
 }
 
-function getCategoryShortcuts(siteSummary: SiteSummary) {
-  const counts = new Map<string, number>();
+function getGameCategoryShortcuts(siteSummary: SiteSummary, gameName: "Arcaea" | "Phigros") {
+  const game = siteSummary.games.find((item) => item.game === gameName);
+  if (!game) {
+    return [];
+  }
 
+  const hrefBase = gameName === "Arcaea" ? "/arcaea" : "/phigros";
+  return Object.entries(game.categories)
+    .map(([name, count]) => ({ name, count, href: `${hrefBase}?category=${encodeURIComponent(name)}` }))
+    .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name, "zh-CN"))
+    .slice(0, 8);
+}
+
+function countUniqueCategories(siteSummary: SiteSummary) {
+  const categories = new Set<string>();
   for (const game of siteSummary.games) {
     if (game.game === "Unknown") {
       continue;
     }
-    for (const [category, count] of Object.entries(game.categories)) {
-      counts.set(category, (counts.get(category) ?? 0) + count);
+    for (const category of Object.keys(game.categories)) {
+      categories.add(category);
     }
   }
-
-  return [...counts.entries()]
-    .map(([name, count]) => ({ name, count, href: `/search?category=${encodeURIComponent(name)}` }))
-    .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name))
-    .slice(0, 10);
+  return categories.size;
 }
 
 function formatBytes(bytes?: number) {
@@ -134,26 +144,50 @@ function formatBytes(bytes?: number) {
         <aside class="hero-side" aria-label="站点信息">
           {
             homepageConfig.bilibili.enabled && (
-              <div class="owner-card">
-                <span class="bili-mark">{homepageConfig.bilibili.badge}</span>
-                <strong>{homepageConfig.bilibili.title}</strong>
-                <span>{homepageConfig.bilibili.description}</span>
+              <div class="owner-card" data-bili-card data-mid={homepageConfig.bilibili.mid}>
+                <div class="owner-head">
+                  <img
+                    data-bili-avatar
+                    src={homepageConfig.bilibili.avatar}
+                    alt={`${homepageConfig.bilibili.name} 的 B 站头像`}
+                    width="72"
+                    height="72"
+                    loading="lazy"
+                    decoding="async"
+                  />
+                  <div>
+                    <span class="bili-mark">{homepageConfig.bilibili.badge}</span>
+                    <strong data-bili-name>{homepageConfig.bilibili.name}</strong>
+                  </div>
+                </div>
+                <p>{homepageConfig.bilibili.description}</p>
+                <div class="bili-metrics" aria-label="B站数据">
+                  <span>
+                    <strong data-bili-fans>{homepageConfig.bilibili.fansFallback}</strong>
+                    粉丝
+                  </span>
+                  <span>
+                    <strong>{homepageConfig.bilibili.mid}</strong>
+                    UID
+                  </span>
+                </div>
                 <a href={homepageConfig.bilibili.url} target="_blank" rel="noopener noreferrer">
                   {homepageConfig.bilibili.button}
                 </a>
+                <small>{homepageConfig.bilibili.syncLabel}</small>
               </div>
             )
           }
 
           <div class="quick-stats" aria-label="资源统计">
-            <div>
+            <a href="/search">
               <span class="stat-value">{summary.totalAssets.toLocaleString("zh-CN")}</span>
               <span class="stat-label">{homepageConfig.stats.totalAssetsLabel}</span>
-            </div>
-            <div>
-              <span class="stat-value">{categoryShortcuts.length}</span>
+            </a>
+            <a href="#categories">
+              <span class="stat-value">{totalCategoryCount}</span>
               <span class="stat-label">{homepageConfig.stats.categoryShortcutLabel}</span>
-            </div>
+            </a>
           </div>
         </aside>
       </section>
@@ -163,35 +197,55 @@ function formatBytes(bytes?: number) {
           <span class="card-kicker">Arcaea</span>
           <strong>{arcaea?.totalAssets.toLocaleString("zh-CN") ?? 0} 张</strong>
           <span>{Object.keys(arcaea?.categories ?? {}).length} {homepageConfig.games.arcaeaDescription}</span>
+          <em>{homepageConfig.games.entryCta}</em>
         </a>
 
         <a class="game-card phigros-card" href="/phigros">
           <span class="card-kicker">Phigros</span>
           <strong>{phigros?.totalAssets.toLocaleString("zh-CN") ?? 0} 张</strong>
           <span>{Object.keys(phigros?.categories ?? {}).length} {homepageConfig.games.phigrosDescription}</span>
+          <em>{homepageConfig.games.entryCta}</em>
         </a>
       </section>
 
-      <section class="section-block seo-intro">
-        <p>
-          Arcaea 与 Phigros 曲绘下载站收集并整理相关图片资源，包括曲绘、曲包封面、角色立绘、头像、剧情 CG、启动页面和游玩背景等。本站支持按游戏、分类、曲包、BPM、版本等信息搜索和筛选，方便玩家快速找到需要的音游资源。
-        </p>
-      </section>
-
-      <section class="section-block">
+      <section id="categories" class="section-block category-section">
         <div class="section-heading">
           <p class="eyebrow">{homepageConfig.sections.categoriesEyebrow}</p>
           <h2>{homepageConfig.sections.categoriesTitle}</h2>
         </div>
-        <div class="category-list">
-          {
-            categoryShortcuts.map((category) => (
-              <a href={category.href} class="category-chip">
-                <span>{category.name}</span>
-                <strong>{category.count}</strong>
-              </a>
-            ))
-          }
+        <div class="category-columns">
+          <div class="category-group">
+            <div class="category-group-head">
+              <strong>Arcaea</strong>
+              <a href="/arcaea">进入 Arcaea 浏览</a>
+            </div>
+            <div class="category-list">
+              {
+                arcaeaCategoryShortcuts.map((category) => (
+                  <a href={category.href} class="category-chip">
+                    <span>{category.name}</span>
+                    <strong>{category.count}</strong>
+                  </a>
+                ))
+              }
+            </div>
+          </div>
+          <div class="category-group">
+            <div class="category-group-head">
+              <strong>Phigros</strong>
+              <a href="/phigros">进入 Phigros 浏览</a>
+            </div>
+            <div class="category-list">
+              {
+                phigrosCategoryShortcuts.map((category) => (
+                  <a href={category.href} class="category-chip">
+                    <span>{category.name}</span>
+                    <strong>{category.count}</strong>
+                  </a>
+                ))
+              }
+            </div>
+          </div>
         </div>
       </section>
 
@@ -235,15 +289,27 @@ function formatBytes(bytes?: number) {
             summary.games
               .filter((game) => game.game !== "Unknown" || game.totalAssets > 0)
               .map((game) => (
-                <div class="mini-stat">
+                <a class="mini-stat" href={game.game === "Arcaea" ? "/arcaea" : game.game === "Phigros" ? "/phigros" : "/search"}>
                   <span>{game.game}</span>
                   <strong>{game.totalAssets.toLocaleString("zh-CN")}</strong>
                   <small>{Object.keys(game.categories).length} {homepageConfig.sections.categoryUnit}</small>
-                </div>
+                </a>
               ))
           }
         </div>
       </section>
+
+      <section class="section-block seo-intro">
+        <p>
+          Arcaea 与 Phigros 曲绘下载站收集并整理相关图片资源，包括曲绘、曲包封面、角色立绘、头像、剧情 CG、启动页面和游玩背景等。本站支持按游戏、分类、曲包、BPM、版本等信息搜索和筛选，方便玩家快速找到需要的音游资源。
+        </p>
+      </section>
+
+      <footer class="site-footer">
+        <span>{homepageConfig.footer.copyright}</span>
+        <span>{homepageConfig.footer.assetNote}</span>
+        <span>{homepageConfig.footer.contact}</span>
+      </footer>
     </main>
   </body>
 </html>
@@ -411,16 +477,17 @@ function formatBytes(bytes?: number) {
   }
 
   .hero-preview-strip {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
+    display: grid;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    width: min(640px, 100%);
+    gap: 12px;
     margin-top: 22px;
   }
 
   .hero-preview-strip a {
     position: relative;
     display: block;
-    width: clamp(76px, 10vw, 118px);
+    width: 100%;
     overflow: hidden;
     border: 1px solid rgba(255, 255, 255, 0.72);
     border-radius: 22px;
@@ -438,6 +505,18 @@ function formatBytes(bytes?: number) {
 
   .hero-preview-strip a:nth-child(3) {
     --tilt: -1deg;
+  }
+
+  .hero-preview-strip a:nth-child(4) {
+    --tilt: 1.5deg;
+  }
+
+  .hero-preview-strip a:nth-child(5) {
+    --tilt: -2.5deg;
+  }
+
+  .hero-preview-strip a:nth-child(6) {
+    --tilt: 2.5deg;
   }
 
   .hero-preview-strip a:hover {
@@ -473,19 +552,44 @@ function formatBytes(bytes?: number) {
 
   .owner-card {
     display: flex;
-    min-height: 210px;
+    min-height: 286px;
     flex-direction: column;
-    justify-content: flex-end;
+    justify-content: space-between;
     border-radius: 28px;
     padding: 26px;
     background:
+      radial-gradient(circle at 12% 16%, rgba(251, 114, 153, 0.28), transparent 28%),
       linear-gradient(135deg, rgba(251, 114, 153, 0.18), rgba(255, 255, 255, 0.66) 52%),
       var(--surface);
+    transition: transform 180ms ease, box-shadow 180ms ease;
+  }
+
+  .owner-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 24px 50px rgba(251, 114, 153, 0.18);
+  }
+
+  .owner-head {
+    display: flex;
+    gap: 14px;
+    align-items: center;
+  }
+
+  .owner-head img {
+    display: block;
+    width: 72px;
+    height: 72px;
+    flex: 0 0 auto;
+    border: 3px solid rgba(255, 255, 255, 0.78);
+    border-radius: 22px;
+    object-fit: cover;
+    box-shadow: 0 12px 28px rgba(251, 114, 153, 0.18);
   }
 
   .bili-mark {
+    display: inline-flex;
     width: max-content;
-    margin-bottom: auto;
+    margin-bottom: 8px;
     border-radius: 999px;
     padding: 7px 11px;
     background: color-mix(in srgb, var(--bili) 16%, var(--surface));
@@ -494,20 +598,50 @@ function formatBytes(bytes?: number) {
     font-weight: 900;
   }
 
+  .owner-card strong,
+  .owner-card p,
+  .owner-card small {
+    display: block;
+  }
+
   .owner-card strong {
     margin-bottom: 8px;
     font-size: 1.45rem;
     line-height: 1.18;
   }
 
-  .owner-card span:not(.bili-mark) {
+  .owner-card p {
+    margin: 18px 0 0;
     color: var(--muted);
     line-height: 1.7;
   }
 
+  .bili-metrics {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    margin-top: 18px;
+  }
+
+  .bili-metrics span {
+    border: 1px solid rgba(251, 114, 153, 0.18);
+    border-radius: 18px;
+    padding: 12px;
+    background: rgba(255, 255, 255, 0.54);
+    color: var(--muted);
+    font-size: 0.78rem;
+    line-height: 1.3;
+  }
+
+  .bili-metrics strong {
+    margin: 0 0 4px;
+    color: var(--text);
+    font-size: 1.08rem;
+  }
+
   .owner-card a {
     width: max-content;
-    margin-top: 18px;
+    margin-top: 16px;
     border-radius: 16px;
     padding: 11px 16px;
     background: linear-gradient(135deg, var(--bili), #ff9fb7);
@@ -515,6 +649,18 @@ function formatBytes(bytes?: number) {
     font-weight: 900;
     text-decoration: none;
     box-shadow: 0 12px 26px rgba(251, 114, 153, 0.24);
+    transition: transform 160ms ease, box-shadow 160ms ease;
+  }
+
+  .owner-card a:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 16px 34px rgba(251, 114, 153, 0.32);
+  }
+
+  .owner-card small {
+    margin-top: 12px;
+    color: var(--muted);
+    font-size: 0.75rem;
   }
 
   .quick-stats {
@@ -526,13 +672,21 @@ function formatBytes(bytes?: number) {
     gap: 1px;
   }
 
-  .quick-stats > div {
+  .quick-stats > a {
     display: flex;
     min-height: 124px;
     flex-direction: column;
     justify-content: center;
     padding: 22px;
     background: rgba(255, 255, 255, 0.66);
+    color: inherit;
+    text-decoration: none;
+    transition: background 160ms ease, transform 160ms ease;
+  }
+
+  .quick-stats > a:hover {
+    background: rgba(255, 255, 255, 0.86);
+    transform: translateY(-2px);
   }
 
   .stat-value {
@@ -557,6 +711,7 @@ function formatBytes(bytes?: number) {
   }
 
   .game-card {
+    position: relative;
     display: flex;
     min-height: 170px;
     flex-direction: column;
@@ -580,6 +735,23 @@ function formatBytes(bytes?: number) {
     margin-bottom: 8px;
     font-size: clamp(1.55rem, 2.6vw, 2.15rem);
     line-height: 1.1;
+  }
+
+  .game-card em {
+    width: max-content;
+    margin-top: 18px;
+    border-radius: 999px;
+    padding: 9px 13px;
+    background: rgba(255, 255, 255, 0.62);
+    color: var(--accent-strong);
+    font-style: normal;
+    font-weight: 900;
+    transition: transform 160ms ease, background 160ms ease;
+  }
+
+  .game-card:hover em {
+    background: rgba(255, 255, 255, 0.84);
+    transform: translateX(4px);
   }
 
   .card-kicker {
@@ -620,6 +792,41 @@ function formatBytes(bytes?: number) {
     display: flex;
     flex-wrap: wrap;
     gap: 10px;
+  }
+
+  .category-columns {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px;
+  }
+
+  .category-group {
+    border: 1px solid var(--line);
+    border-radius: 22px;
+    padding: 18px;
+    background: rgba(255, 255, 255, 0.42);
+  }
+
+  .category-group-head {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+  }
+
+  .category-group-head strong {
+    font-size: 1.08rem;
+  }
+
+  .category-group-head a {
+    border-radius: 999px;
+    padding: 8px 12px;
+    background: color-mix(in srgb, var(--accent-strong) 12%, transparent);
+    color: var(--accent-strong);
+    font-size: 0.82rem;
+    font-weight: 900;
+    text-decoration: none;
   }
 
   .category-chip {
@@ -701,6 +908,15 @@ function formatBytes(bytes?: number) {
     border-radius: 22px;
     padding: 18px;
     background: rgba(255, 255, 255, 0.56);
+    color: inherit;
+    text-decoration: none;
+    transition: transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease;
+  }
+
+  .mini-stat:hover {
+    border-color: color-mix(in srgb, var(--accent-strong) 38%, var(--line));
+    box-shadow: var(--soft-shadow);
+    transform: translateY(-3px);
   }
 
   .mini-stat span,
@@ -713,6 +929,26 @@ function formatBytes(bytes?: number) {
     margin: 8px 0 4px;
     font-size: 2rem;
     line-height: 1;
+  }
+
+  .seo-intro {
+    color: var(--muted);
+    line-height: 1.8;
+  }
+
+  .seo-intro p {
+    margin-bottom: 0;
+  }
+
+  .site-footer {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 18px;
+    margin-top: 18px;
+    padding: 0 6px;
+    color: color-mix(in srgb, var(--muted) 82%, transparent);
+    font-size: 0.78rem;
+    line-height: 1.7;
   }
 
   .sr-only {
@@ -746,7 +982,9 @@ function formatBytes(bytes?: number) {
     }
 
     .search-entry,
-    .quick-stats > div,
+    .quick-stats > a,
+    .bili-metrics span,
+    .category-group,
     .category-chip,
     .mini-stat,
     .hero-preview-strip span {
@@ -767,6 +1005,15 @@ function formatBytes(bytes?: number) {
 
     .recent-grid {
       grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .hero-preview-strip {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      width: min(420px, 100%);
+    }
+
+    .category-columns {
+      grid-template-columns: 1fr;
     }
   }
 
@@ -806,8 +1053,14 @@ function formatBytes(bytes?: number) {
     .game-grid,
     .recent-grid,
     .stats-grid,
-    .quick-stats {
+    .quick-stats,
+    .bili-metrics {
       grid-template-columns: 1fr;
+    }
+
+    .category-group-head {
+      align-items: start;
+      flex-direction: column;
     }
 
     .split-heading {
