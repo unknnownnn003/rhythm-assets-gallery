@@ -169,7 +169,9 @@
   overflow: auto;
   flex-wrap: wrap;
   gap: 8px;
-  padding-right: 2px;
+  margin: -6px -6px -6px 0;
+  padding: 6px 8px 8px 0;
+  scroll-padding: 8px;
 }
 
 .tag-pill {
@@ -179,6 +181,8 @@
   border-radius: 16px;
   padding: 8px 10px;
   font-size: 0.88rem;
+  transform-origin: center;
+  transition: border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease, background 160ms ease;
 }
 
 .tag-pill strong {

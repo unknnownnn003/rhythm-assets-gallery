@@ -14,14 +14,11 @@ export const homepageConfig = {
 
   bilibili: {
     enabled: true,
-    mid: "385607044",
     url: "https://space.bilibili.com/385607044",
     avatar: "/site-icon.png",
     badge: "Bilibili",
     name: "Unknnownnn",
-    fansFallback: "见主页",
-    syncLabel: "实时粉丝数以 B 站主页为准",
-    description: "这里展示站点所有者的 B 站入口和账号信息，也会放一些相关内容和更新入口。",
+    description: "站点更新和相关内容会放在这里。",
     button: "打开 B 站主页",
   },
 
