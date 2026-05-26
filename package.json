@@ -16,6 +16,8 @@
     "import:incoming": "tsx scripts/import-incoming-assets.ts",
     "arcaea:metadata": "tsx scripts/update-arcaea-metadata.ts",
     "arcaea:extract": "tsx scripts/extract-arcaea-update.ts",
+    "phigros:extract": "python scripts/extract-phigros-update.py",
+    "phigros:publish": "powershell -ExecutionPolicy Bypass -File scripts/publish-phigros-update.ps1",
     "update": "npm run scan && npm run thumbs && npm run sitemap",
     "astro": "astro"
   },

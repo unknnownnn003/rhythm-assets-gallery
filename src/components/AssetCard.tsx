@@ -1,11 +1,14 @@
+import type { CSSProperties } from "react";
+
 import type { AssetItem } from "../lib/types";
 import { assetAlt } from "../lib/seo";
 
 type AssetCardProps = {
   asset: AssetItem;
+  index?: number;
 };
 
-export function AssetCard({ asset }: AssetCardProps) {
+export function AssetCard({ asset, index = 0 }: AssetCardProps) {
   const imageSrc = asset.thumbnailSmall ?? asset.thumbnailMedium ?? asset.thumbnailLarge;
   const dimensions = asset.width && asset.height ? `${asset.width} x ${asset.height}` : "未知尺寸";
   const metadata = [
@@ -20,7 +23,7 @@ export function AssetCard({ asset }: AssetCardProps) {
   ].filter(Boolean);
 
   return (
-    <a className="asset-tile" href={`/asset/${asset.id}`} title={asset.filename}>
+    <a className="asset-tile" href={`/asset/${asset.id}`} title={asset.filename} style={{ "--tile-index": index % 16 } as CSSProperties & Record<string, number>}>
       {imageSrc ? (
         <img
           src={imageSrc}

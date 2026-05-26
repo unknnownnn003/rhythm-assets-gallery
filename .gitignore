@@ -23,6 +23,7 @@ codex.ps1
 .env.production
 .deploy.env
 .deploy-work/
+.phigros-apk-work/
 
 # macOS-specific files
 .DS_Store

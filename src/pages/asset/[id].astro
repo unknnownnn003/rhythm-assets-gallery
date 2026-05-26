@@ -363,6 +363,7 @@ function formatBytes(bytes?: number) {
         }
       });
     </script>
+    <script type="module" src="/site-effects.js"></script>
   </body>
 </html>
 
@@ -430,6 +431,7 @@ function formatBytes(bytes?: number) {
     place-items: center;
     overflow: hidden;
     padding: 18px;
+    isolation: isolate;
   }
 
   .preview-panel::before {
@@ -437,9 +439,21 @@ function formatBytes(bytes?: number) {
     inset: 0;
     pointer-events: none;
     background:
-      linear-gradient(135deg, rgba(255, 255, 255, 0.52), transparent 30%),
+      linear-gradient(135deg, var(--panel-highlight), transparent 30%),
       linear-gradient(315deg, color-mix(in srgb, var(--accent-strong) 16%, transparent), transparent 44%);
     content: "";
+  }
+
+  .preview-panel::after {
+    position: absolute;
+    inset: auto -12% -30% auto;
+    width: min(36vw, 360px);
+    height: min(36vw, 360px);
+    border-radius: 999px;
+    background: radial-gradient(circle, color-mix(in srgb, var(--accent-strong) 24%, transparent), transparent 70%);
+    content: "";
+    pointer-events: none;
+    animation: detail-glow-drift 9s ease-in-out infinite alternate;
   }
 
   .preview-panel img {
@@ -453,6 +467,7 @@ function formatBytes(bytes?: number) {
     object-fit: contain;
     background: var(--surface-soft);
     box-shadow: var(--soft-shadow);
+    animation: preview-float 8s ease-in-out infinite;
   }
 
   .info-panel {
@@ -621,6 +636,7 @@ function formatBytes(bytes?: number) {
   }
 
   .related-card {
+    position: relative;
     overflow: hidden;
     border: 1px solid var(--line);
     border-radius: 22px;
@@ -632,6 +648,25 @@ function formatBytes(bytes?: number) {
       transform 180ms cubic-bezier(0.2, 0.8, 0.2, 1),
       box-shadow 180ms ease,
       border-color 180ms ease;
+    isolation: isolate;
+  }
+
+  .related-card::after {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    border-radius: inherit;
+    background: linear-gradient(115deg, transparent 24%, rgba(255, 255, 255, 0.38), transparent 58%);
+    opacity: 0;
+    transform: translateX(-34%);
+    transition: opacity 180ms ease, transform 480ms ease;
+    content: "";
+    pointer-events: none;
+  }
+
+  .related-card:hover::after {
+    opacity: 1;
+    transform: translateX(34%);
   }
 
   .related-card:hover {
@@ -686,6 +721,34 @@ function formatBytes(bytes?: number) {
     .metadata-list dd,
     .tag-list a {
       background: rgba(21, 27, 35, 0.64);
+    }
+
+    .related-card::after {
+      background: linear-gradient(115deg, transparent 24%, rgba(255, 255, 255, 0.1), transparent 58%);
+    }
+  }
+
+  @keyframes preview-float {
+    0%,
+    100% {
+      transform: translateY(0);
+    }
+
+    50% {
+      transform: translateY(-4px);
+    }
+  }
+
+  @keyframes detail-glow-drift {
+    to {
+      transform: translate3d(-24px, -18px, 0) scale(1.08);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .preview-panel::after,
+    .preview-panel img {
+      animation: none;
     }
   }
 

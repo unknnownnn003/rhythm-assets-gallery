@@ -10,6 +10,8 @@
 }
 
 .gallery-search {
+  position: relative;
+  overflow: hidden;
   border: 1px solid var(--line);
   border-radius: 24px;
   padding: 14px;
@@ -17,6 +19,23 @@
   box-shadow: var(--shadow);
   backdrop-filter: var(--glass);
   -webkit-backdrop-filter: var(--glass);
+}
+
+.gallery-search::before,
+.filter-panel::before {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background:
+    linear-gradient(135deg, var(--panel-highlight), transparent 42%),
+    radial-gradient(circle at 82% 12%, color-mix(in srgb, var(--accent-strong) 15%, transparent), transparent 34%);
+  content: "";
+  pointer-events: none;
+}
+
+.gallery-search > *,
+.filter-panel > * {
+  position: relative;
 }
 
 .gallery-search label,
@@ -97,6 +116,8 @@
 }
 
 .filter-panel {
+  position: relative;
+  overflow: hidden;
   border: 1px solid var(--line);
   border-radius: 24px;
   padding: 16px;
@@ -231,6 +252,7 @@
 }
 
 .asset-tile {
+  position: relative;
   overflow: hidden;
   border: 1px solid var(--line);
   border-radius: 22px;
@@ -238,13 +260,39 @@
   color: inherit;
   text-decoration: none;
   box-shadow: var(--soft-shadow);
-  backdrop-filter: blur(18px) saturate(1.3);
-  -webkit-backdrop-filter: blur(18px) saturate(1.3);
   transform-origin: center bottom;
   transition:
     transform 180ms cubic-bezier(0.2, 0.8, 0.2, 1),
     box-shadow 180ms ease,
     border-color 180ms ease;
+  isolation: isolate;
+}
+
+.asset-tile::after {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  border-radius: inherit;
+  background: linear-gradient(115deg, transparent 24%, rgba(255, 255, 255, 0.38), transparent 58%);
+  opacity: 0;
+  transform: translateX(-34%);
+  transition: opacity 180ms ease, transform 480ms ease;
+  content: "";
+  pointer-events: none;
+}
+
+.asset-tile:hover::after {
+  opacity: 1;
+  transform: translateX(34%);
+}
+
+.has-site-effects .asset-tile {
+  animation: tile-in 420ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  animation-delay: calc(var(--tile-index, 0) * 18ms);
+}
+
+.low-power-effects .asset-tile {
+  animation: none;
 }
 
 .asset-tile:hover {
@@ -379,6 +427,22 @@
   .load-more,
   .filter-panel-head button {
     background: rgba(21, 27, 35, 0.64);
+  }
+
+  .asset-tile::after {
+    background: linear-gradient(115deg, transparent 24%, rgba(255, 255, 255, 0.1), transparent 58%);
+  }
+}
+
+@keyframes tile-in {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.985);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
   }
 }
 

@@ -3,6 +3,7 @@ import fs from "node:fs";
 import path from "node:path";
 
 import "../styles/global.css";
+import VisitorStats from "../components/VisitorStats";
 import { homepageConfig } from "../lib/homepage-config";
 import { SITE_NAME, SITE_URL, absoluteUrl, assetAlt, assetOgImage } from "../lib/seo";
 import type { AssetItem, SiteSummary } from "../lib/types";
@@ -25,7 +26,7 @@ const summary = readJson<SiteSummary>("summary.json", {
 const recentUpdates = readJson<AssetItem[]>("recent-updates.json", []).slice(0, 8);
 const heroPreviewAssets = recentUpdates.slice(0, 6);
 const pageTitle = "Arcaea | Phigros 曲绘下载站 - Unknnownnn";
-const pageDescription = "提供 Arcaea、Phigros 曲绘、曲包封面、角色立绘、头像、背景图等音游资源浏览、搜索与下载。";
+const pageDescription = "Arcaea、Phigros 曲绘、角色立绘等音游资源浏览、搜索与下载。";
 const pageImage = recentUpdates[0] ? assetOgImage(recentUpdates[0]) : absoluteUrl("/site-icon.png");
 
 const gameStats = new Map(summary.games.map((game) => [game.game, game]));
@@ -34,6 +35,7 @@ const phigros = gameStats.get("Phigros");
 const arcaeaCategoryShortcuts = getGameCategoryShortcuts(summary, "Arcaea");
 const phigrosCategoryShortcuts = getGameCategoryShortcuts(summary, "Phigros");
 const totalCategoryCount = countUniqueCategories(summary);
+const featuredCategoryCards = buildFeaturedCategoryCards(summary);
 const generatedAt = new Intl.DateTimeFormat("zh-CN", {
   year: "numeric",
   month: "2-digit",
@@ -76,6 +78,47 @@ function countUniqueCategories(siteSummary: SiteSummary) {
   return categories.size;
 }
 
+type FeaturedCategoryCard = {
+  accent: string;
+  count: number;
+  href: string;
+  hint: string;
+  label: string;
+  tone: string;
+  wide?: boolean;
+};
+function buildFeaturedCategoryCards(siteSummary: SiteSummary) {
+  const accents = ["#0f766e", "#2563eb", "#d9466d", "#f59e0b", "#7c3aed", "#14b8a6"];
+  const cards: FeaturedCategoryCard[] = [];
+
+  for (const [gameName, tone] of [
+    ["Arcaea", "aurora"],
+    ["Phigros", "dusk"],
+  ] as const) {
+    const game = siteSummary.games.find((item) => item.game === gameName);
+    if (!game) continue;
+
+    const sorted = Object.entries(game.categories)
+      .map(([name, count]) => ({ name, count }))
+      .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name, "zh-CN"))
+      .slice(0, 3);
+
+    for (const [index, category] of sorted.entries()) {
+      cards.push({
+        accent: accents[cards.length % accents.length],
+        count: category.count,
+        href: `${gameName === "Arcaea" ? "/arcaea" : "/phigros"}?category=${encodeURIComponent(category.name)}`,
+        hint: gameName === "Arcaea" ? "Arcaea 分类" : "Phigros 分类",
+        label: category.name,
+        tone,
+        wide: index === 0,
+      });
+    }
+  }
+
+  return cards.slice(0, 6);
+}
+
 function formatBytes(bytes?: number) {
   if (!bytes) {
     return homepageConfig.sections.unknownSize;
@@ -108,23 +151,36 @@ function formatBytes(bytes?: number) {
   </head>
   <body>
     <main class="site-shell" style={homeStyle}>
-      <section class="hero">
-        <div class="hero-copy">
+      <section class="hero" data-reveal>
+        <div class="hero-copy kinetic-panel">
+          <div class="hero-orbit" aria-hidden="true">
+            <span>Arcaea</span>
+            <span>Phigros</span>
+            <span>曲绘</span>
+          </div>
           <p class="eyebrow">{homepageConfig.hero.eyebrow}</p>
           <h1>{homepageConfig.hero.title}</h1>
           <p class="hero-text">{homepageConfig.hero.description}</p>
 
-          <form class="search-entry" action="/search" method="get">
-            <label class="sr-only" for="home-search">{homepageConfig.hero.searchLabel}</label>
-            <input id="home-search" name="q" type="search" placeholder={homepageConfig.hero.searchPlaceholder} />
-            <button type="submit">{homepageConfig.hero.searchButton}</button>
+          <form class="home-search-shell" action="/search" method="get">
+            <label class="sr-only" for="home-search-input">{homepageConfig.hero.searchLabel}</label>
+            <div class="home-search-row">
+              <input
+                id="home-search-input"
+                name="q"
+                type="search"
+                placeholder={homepageConfig.hero.searchPlaceholder}
+                autoComplete="off"
+              />
+              <button type="submit">{homepageConfig.hero.searchButton}</button>
+            </div>
           </form>
 
           {
             heroPreviewAssets.length > 0 ? (
               <div class="hero-preview-strip" aria-label="最近资源预览">
-                {heroPreviewAssets.map((asset) => (
-                  <a href={`/asset/${asset.id}`}>
+                {heroPreviewAssets.map((asset, index) => (
+                  <a href={`/asset/${asset.id}`} style={`--i: ${index};`}>
                     <img
                       src={asset.thumbnailSmall ?? asset.thumbnailMedium}
                       alt={assetAlt(asset)}
@@ -141,7 +197,7 @@ function formatBytes(bytes?: number) {
           }
         </div>
 
-        <aside class="hero-side" aria-label="站点信息">
+        <aside class="hero-side" aria-label="站点信息" data-reveal>
           {
             homepageConfig.bilibili.enabled && (
               <div class="owner-card">
@@ -177,10 +233,12 @@ function formatBytes(bytes?: number) {
               <span class="stat-label">{homepageConfig.stats.categoryShortcutLabel}</span>
             </a>
           </div>
+
+          <VisitorStats client:load />
         </aside>
       </section>
 
-      <section class="game-grid" aria-label="游戏入口">
+      <section class="game-grid" aria-label="游戏入口" data-reveal>
         <a class="game-card arcaea-card" href="/arcaea">
           <span class="card-kicker">Arcaea</span>
           <strong>{arcaea?.totalAssets.toLocaleString("zh-CN") ?? 0} 张</strong>
@@ -196,7 +254,33 @@ function formatBytes(bytes?: number) {
         </a>
       </section>
 
-      <section id="categories" class="section-block category-section">
+      <section class="section-block mosaic-section" data-reveal>
+        <div class="section-heading split-heading">
+          <div>
+            <p class="eyebrow">常用分类</p>
+            <h2>分类列表</h2>
+          </div>
+        </div>
+
+        <div class="mosaic-grid">
+          {
+            featuredCategoryCards.map((card, index) => (
+              <a
+                class={`mosaic-card ${card.wide ? "mosaic-card-wide" : ""} ${index === 4 ? "mosaic-card-tall" : ""}`}
+                href={card.href}
+                style={`--mosaic-accent: ${card.accent};`}
+              >
+                <span class="mosaic-tag">{card.hint}</span>
+                <strong>{card.label}</strong>
+                <em>{card.count} 张</em>
+                <small>{card.tone === "aurora" ? "Arcaea" : "Phigros"}</small>
+              </a>
+            ))
+          }
+        </div>
+      </section>
+
+      <section id="categories" class="section-block category-section" data-reveal>
         <div class="section-heading">
           <p class="eyebrow">{homepageConfig.sections.categoriesEyebrow}</p>
           <h2>{homepageConfig.sections.categoriesTitle}</h2>
@@ -237,7 +321,7 @@ function formatBytes(bytes?: number) {
         </div>
       </section>
 
-      <section class="section-block">
+      <section class="section-block" data-reveal>
         <div class="section-heading split-heading">
           <div>
             <p class="eyebrow">{homepageConfig.sections.recentEyebrow}</p>
@@ -267,7 +351,7 @@ function formatBytes(bytes?: number) {
         </div>
       </section>
 
-      <section class="section-block stats-band">
+      <section class="section-block stats-band" data-reveal>
         <div>
           <p class="eyebrow">{homepageConfig.sections.overviewEyebrow}</p>
           <h2>{homepageConfig.sections.overviewTitle}</h2>
@@ -287,7 +371,7 @@ function formatBytes(bytes?: number) {
         </div>
       </section>
 
-      <section class="section-block seo-intro">
+      <section class="section-block seo-intro" data-reveal>
         <p>
           Arcaea 与 Phigros 曲绘下载站收集并整理相关图片资源，包括曲绘、曲包封面、角色立绘、头像、剧情 CG、启动页面和游玩背景等。本站支持按游戏、分类、曲包、BPM、版本等信息搜索和筛选，方便玩家快速找到需要的音游资源。
         </p>
@@ -300,16 +384,22 @@ function formatBytes(bytes?: number) {
         <a href="https://github.com/unknnownnn003/rhythm-assets-gallery" target="_blank" rel="noopener noreferrer">GitHub</a>
       </footer>
     </main>
+    <script is:inline>
+      fetch("/api/stats?track", { keepalive: true });
+    </script>
+    <script type="module" src="/site-effects.js"></script>
   </body>
 </html>
 
 <style>
   :global(:root) {
     color-scheme: light dark;
-    --bg: #f7fbff;
+    --bg: #f6f8ff;
+    --bg-end: #fff8ef;
     --surface: rgba(255, 255, 255, 0.74);
     --surface-solid: #ffffff;
     --surface-soft: rgba(239, 246, 255, 0.72);
+    --surface-hover: rgba(255, 255, 255, 0.9);
     --text: #102033;
     --muted: #627084;
     --line: rgba(136, 158, 182, 0.28);
@@ -322,20 +412,25 @@ function formatBytes(bytes?: number) {
     --glass: blur(22px) saturate(1.45);
     --shadow: 0 18px 44px rgba(45, 79, 118, 0.16);
     --soft-shadow: 0 10px 26px rgba(45, 79, 118, 0.12);
+    --panel-highlight: rgba(255, 255, 255, 0.72);
+    --glow-blue: rgba(37, 99, 235, 0.18);
+    --glow-pink: rgba(251, 114, 153, 0.16);
+    --glow-green: rgba(20, 184, 166, 0.14);
   }
 
   :global(body) {
     background:
-      linear-gradient(120deg, rgba(97, 165, 255, 0.18), transparent 28rem),
-      linear-gradient(240deg, rgba(255, 180, 84, 0.16), transparent 30rem),
-      linear-gradient(180deg, var(--bg), #ffffff 44rem);
+      radial-gradient(circle at 16% -8%, var(--glow-blue), transparent 34rem),
+      radial-gradient(circle at 86% 12%, var(--glow-pink), transparent 30rem),
+      radial-gradient(circle at 50% 108%, var(--glow-green), transparent 34rem),
+      linear-gradient(180deg, var(--bg), var(--bg-end) 46rem);
     color: var(--text);
   }
 
   .site-shell {
     width: min(var(--site-max-width), calc(100% - 32px));
     margin: 0 auto;
-    padding: 30px 0 56px;
+    padding: 18px 0 56px;
   }
 
   .hero {
@@ -364,10 +459,11 @@ function formatBytes(bytes?: number) {
     display: flex;
     min-height: var(--hero-min-height);
     flex-direction: column;
-    justify-content: center;
+    justify-content: flex-start;
     overflow: hidden;
     border-radius: 30px;
-    padding: clamp(26px, 5vw, 56px);
+    padding: clamp(34px, 5vw, 52px) clamp(26px, 5vw, 56px) clamp(26px, 4vw, 44px);
+    isolation: isolate;
   }
 
   .hero-copy::before {
@@ -375,8 +471,23 @@ function formatBytes(bytes?: number) {
     inset: 0;
     pointer-events: none;
     background:
-      linear-gradient(135deg, rgba(255, 255, 255, 0.74), transparent 34%),
+      linear-gradient(135deg, var(--panel-highlight), transparent 34%),
       linear-gradient(315deg, rgba(97, 165, 255, 0.18), transparent 42%);
+    content: "";
+  }
+
+  .hero-copy::after {
+    position: absolute;
+    right: -12%;
+    bottom: -24%;
+    width: min(42vw, 430px);
+    height: min(42vw, 430px);
+    border-radius: 999px;
+    background:
+      radial-gradient(circle at 38% 32%, rgba(97, 165, 255, 0.24), transparent 34%),
+      radial-gradient(circle at 66% 62%, rgba(251, 114, 153, 0.14), transparent 42%),
+      radial-gradient(circle at 48% 72%, rgba(20, 184, 166, 0.14), transparent 48%);
+    opacity: 0.62;
     content: "";
   }
 
@@ -384,8 +495,37 @@ function formatBytes(bytes?: number) {
     position: relative;
   }
 
+  .hero-orbit {
+    position: absolute;
+    inset: 12px 24px auto auto;
+    z-index: 1;
+    display: flex;
+    gap: 8px;
+    pointer-events: none;
+  }
+
+  .hero-orbit span {
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    padding: 7px 11px;
+    background: color-mix(in srgb, var(--surface-solid) 68%, transparent);
+    color: var(--muted);
+    font-size: 0.74rem;
+    font-weight: 900;
+    box-shadow: var(--soft-shadow);
+    animation: float-token 7.5s ease-in-out infinite;
+  }
+
+  .hero-orbit span:nth-child(2) {
+    animation-delay: -1.4s;
+  }
+
+  .hero-orbit span:nth-child(3) {
+    animation-delay: -2.8s;
+  }
+
   .eyebrow {
-    margin: 0 0 10px;
+    margin: 20px 0 10px;
     color: var(--accent);
     font-size: 0.78rem;
     font-weight: 900;
@@ -422,49 +562,6 @@ function formatBytes(bytes?: number) {
     line-height: 1.8;
   }
 
-  .search-entry {
-    display: flex;
-    width: min(640px, 100%);
-    gap: 10px;
-    padding: 8px;
-    border: 1px solid var(--line);
-    border-radius: 22px;
-    background: rgba(255, 255, 255, 0.72);
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
-    backdrop-filter: blur(18px);
-    -webkit-backdrop-filter: blur(18px);
-  }
-
-  .search-entry input {
-    min-width: 0;
-    flex: 1;
-    border: 0;
-    padding: 0 18px;
-    background: transparent;
-    color: var(--text);
-    font: inherit;
-    outline: none;
-  }
-
-  .search-entry button {
-    min-height: 46px;
-    border: 0;
-    border-radius: 16px;
-    padding: 12px 22px;
-    background: linear-gradient(135deg, var(--accent-strong), var(--accent));
-    color: #fff;
-    font: inherit;
-    font-weight: 800;
-    cursor: pointer;
-    box-shadow: var(--soft-shadow);
-    transition: transform 160ms ease, box-shadow 160ms ease;
-  }
-
-  .search-entry button:hover {
-    transform: translateY(-2px) scale(1.02);
-    box-shadow: 0 14px 30px rgba(37, 99, 235, 0.2);
-  }
-
   .hero-preview-strip {
     display: grid;
     grid-template-columns: repeat(6, minmax(0, 1fr));
@@ -486,6 +583,8 @@ function formatBytes(bytes?: number) {
     text-decoration: none;
     transform: rotate(var(--tilt, -2deg));
     transition: transform 180ms ease, box-shadow 180ms ease;
+    animation: preview-pop 620ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
+    animation-delay: calc(var(--i, 0) * 70ms + 180ms);
   }
 
   .hero-preview-strip a:nth-child(2) {
@@ -680,6 +779,28 @@ function formatBytes(bytes?: number) {
     color: inherit;
     text-decoration: none;
     transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
+    isolation: isolate;
+  }
+
+  .game-card::after,
+  .mosaic-card::after,
+  .asset-card::after {
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: linear-gradient(115deg, transparent 20%, rgba(255, 255, 255, 0.42), transparent 58%);
+    opacity: 0;
+    transform: translateX(-32%);
+    transition: opacity 180ms ease, transform 460ms ease;
+    content: "";
+    pointer-events: none;
+  }
+
+  .game-card:hover::after,
+  .mosaic-card:hover::after,
+  .asset-card:hover::after {
+    opacity: 1;
+    transform: translateX(32%);
   }
 
   .game-card:hover,
@@ -747,6 +868,98 @@ function formatBytes(bytes?: number) {
     justify-content: space-between;
   }
 
+  .mosaic-grid {
+    display: grid;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .mosaic-card {
+    position: relative;
+    display: flex;
+    min-height: 162px;
+    flex-direction: column;
+    justify-content: space-between;
+    overflow: hidden;
+    border: 1px solid var(--line);
+    border-radius: 24px;
+    padding: 18px;
+    background:
+      radial-gradient(circle at 14% 14%, color-mix(in srgb, var(--mosaic-accent) 24%, transparent), transparent 36%),
+      linear-gradient(135deg, rgba(255, 255, 255, 0.72), rgba(255, 255, 255, 0.5)),
+      var(--surface);
+    color: inherit;
+    text-decoration: none;
+    box-shadow: var(--soft-shadow);
+    transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
+    isolation: isolate;
+  }
+
+  .mosaic-card::before {
+    position: absolute;
+    inset: auto -20% -38% auto;
+    width: 160px;
+    height: 160px;
+    border-radius: 50%;
+    background: color-mix(in srgb, var(--mosaic-accent) 16%, transparent);
+    content: "";
+  }
+
+  .mosaic-card:hover {
+    border-color: color-mix(in srgb, var(--mosaic-accent) 52%, var(--line));
+    box-shadow: 0 24px 52px rgba(45, 79, 118, 0.2);
+    transform: translateY(-4px) scale(1.01);
+  }
+
+  .mosaic-card strong,
+  .mosaic-card em,
+  .mosaic-card small,
+  .mosaic-tag {
+    position: relative;
+  }
+
+  .mosaic-card strong {
+    font-size: clamp(1.2rem, 2vw, 1.65rem);
+    line-height: 1.1;
+  }
+
+  .mosaic-card em {
+    width: max-content;
+    border-radius: 999px;
+    padding: 8px 11px;
+    background: color-mix(in srgb, var(--mosaic-accent) 16%, var(--surface));
+    color: var(--mosaic-accent);
+    font-style: normal;
+    font-weight: 900;
+  }
+
+  .mosaic-card small {
+    color: var(--muted);
+    font-size: 0.78rem;
+    font-weight: 800;
+  }
+
+  .mosaic-tag {
+    width: max-content;
+    border-radius: 999px;
+    padding: 6px 10px;
+    background: rgba(255, 255, 255, 0.68);
+    color: var(--muted);
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+  }
+
+  .mosaic-card-wide {
+    grid-column: span 2;
+  }
+
+  .mosaic-card-tall {
+    grid-row: span 2;
+    min-height: 336px;
+  }
+
   .category-list {
     display: flex;
     flex-wrap: wrap;
@@ -812,11 +1025,13 @@ function formatBytes(bytes?: number) {
   }
 
   .asset-card {
+    position: relative;
     overflow: hidden;
     border-radius: 24px;
     color: inherit;
     text-decoration: none;
     transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
+    isolation: isolate;
   }
 
   .asset-card img {
@@ -825,6 +1040,11 @@ function formatBytes(bytes?: number) {
     aspect-ratio: 4 / 3;
     object-fit: cover;
     background: var(--surface-soft);
+    transition: transform 260ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+
+  .asset-card:hover img {
+    transform: scale(1.045);
   }
 
   .asset-card strong,
@@ -910,6 +1130,29 @@ function formatBytes(bytes?: number) {
     line-height: 1.7;
   }
 
+  @keyframes float-token {
+    0%,
+    100% {
+      transform: translateY(0);
+    }
+
+    50% {
+      transform: translateY(-8px);
+    }
+  }
+
+  @keyframes preview-pop {
+    from {
+      opacity: 0;
+      transform: translateY(12px) rotate(var(--tilt, -2deg)) scale(0.92);
+    }
+
+    to {
+      opacity: 1;
+      transform: rotate(var(--tilt, -2deg)) scale(1);
+    }
+  }
+
   .sr-only {
     position: absolute;
     width: 1px;
@@ -922,31 +1165,45 @@ function formatBytes(bytes?: number) {
   @media (prefers-color-scheme: dark) {
     :global(:root) {
       --bg: #0d1117;
+      --bg-end: #111827;
       --surface: rgba(21, 27, 35, 0.68);
       --surface-solid: #151b23;
       --surface-soft: rgba(31, 41, 55, 0.66);
+      --surface-hover: rgba(31, 41, 55, 0.86);
       --text: #f8fafc;
       --muted: #a4adbb;
       --line: rgba(148, 163, 184, 0.22);
       --accent: #5eead4;
       --accent-strong: #7dd3fc;
+      --panel-highlight: rgba(255, 255, 255, 0.08);
+      --glow-blue: rgba(125, 211, 252, 0.14);
+      --glow-pink: rgba(251, 114, 153, 0.1);
+      --glow-green: rgba(45, 212, 191, 0.09);
       --shadow: 0 20px 50px rgba(0, 0, 0, 0.35);
     }
 
     :global(body) {
       background:
-        linear-gradient(120deg, rgba(125, 211, 252, 0.12), transparent 30rem),
-        linear-gradient(240deg, rgba(251, 114, 153, 0.1), transparent 32rem),
-        linear-gradient(180deg, var(--bg), #111827 42rem);
+        radial-gradient(circle at 16% -8%, var(--glow-blue), transparent 34rem),
+        radial-gradient(circle at 86% 12%, var(--glow-pink), transparent 30rem),
+        radial-gradient(circle at 50% 108%, var(--glow-green), transparent 34rem),
+        linear-gradient(180deg, var(--bg), var(--bg-end) 42rem);
     }
 
-    .search-entry,
     .quick-stats > a,
     .category-group,
     .category-chip,
     .mini-stat,
-    .hero-preview-strip span {
+    .hero-preview-strip span,
+    .hero-orbit span {
       background: rgba(21, 27, 35, 0.68);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .hero-orbit span,
+    .hero-preview-strip a {
+      animation: none;
     }
   }
 
@@ -963,6 +1220,17 @@ function formatBytes(bytes?: number) {
 
     .recent-grid {
       grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .mosaic-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .mosaic-card-wide,
+    .mosaic-card-tall {
+      grid-column: auto;
+      grid-row: auto;
+      min-height: 162px;
     }
 
     .hero-preview-strip {
@@ -993,25 +1261,26 @@ function formatBytes(bytes?: number) {
       min-height: 300px;
     }
 
-    .hero-side,
-    .search-entry {
+    .hero-orbit {
+      display: none;
+    }
+
+    .eyebrow {
+      margin-top: 0;
+    }
+
+    .hero-side {
       grid-template-columns: 1fr;
-    }
-
-    .search-entry {
-      align-items: stretch;
-      border-radius: 18px;
-      flex-direction: column;
-    }
-
-    .search-entry input {
-      min-height: 46px;
     }
 
     .game-grid,
     .recent-grid,
     .stats-grid,
     .quick-stats {
+      grid-template-columns: 1fr;
+    }
+
+    .mosaic-grid {
       grid-template-columns: 1fr;
     }
 

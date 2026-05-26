@@ -191,8 +191,8 @@ export default function GalleryGrid({ assets, game }: GalleryGridProps) {
         <section className="gallery-results" aria-label={`${game} 资源列表`}>
           {visibleAssets.length > 0 ? (
             <div className="asset-grid">
-              {visibleAssets.map((asset) => (
-                <AssetCard key={asset.id} asset={asset} />
+              {visibleAssets.map((asset, index) => (
+                <AssetCard key={asset.id} asset={asset} index={index} />
               ))}
             </div>
           ) : (

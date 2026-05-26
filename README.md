@@ -26,6 +26,8 @@ npm run update
 npm run validate:assets
 npm run import:incoming
 npm run arcaea:extract
+npm run phigros:extract
+npm run phigros:publish
 npm run arcaea:metadata
 ```
 
@@ -36,8 +38,6 @@ npm run scan + npm run thumbs + npm run sitemap
 ```
 
 ## Arcaea APK 更新提取流程
-
-Phigros 自动更新脚本暂未实现。当前只有 Arcaea 专用流程。
 
 ### 只提取新版 APK 的新增资源
 
@@ -62,6 +62,107 @@ npm run arcaea:extract -- --new "D:\Files\曲绘\Arcaea\APK\arcaea_新版本.apk
 - 如果是 `1080_base_3` 或 `1080_base_4` 等独立难度曲绘，前缀会优先使用该难度自己的曲名、曲师、BPM、背景、谱师、曲绘画师和显示难度，避免和普通难度信息混淆。
 
 所以，**提取更新资源这一步只需要跑 `npm run arcaea:extract`**。它负责把新增内容找出来并放进你指定的文件夹，供你后续手动超分、压缩和整理。
+
+## Phigros APK 更新提取流程
+
+Phigros 是 Unity/Addressables 游戏，APK 里通常没有直接可见的 `png`/`jpg` 原图。当前基础自动化脚本会读取 APK 内的 `assets/aa/catalog.json`，比较新版和上一版的 Addressables key 与 bundle 文件，提取新版新增 bundle 里的曲绘和头像。
+
+默认 APK 目录是：
+
+```text
+D:\Files\曲绘\Phigros\APK
+```
+
+把新版 APK 放进去后运行：
+
+```powershell
+npm run phigros:extract
+```
+
+脚本会自动选择目录里版本号最高的 `Phigros_*.apk` 作为新版，选择它之前的最高版本作为旧版。输出目录默认是：
+
+```text
+D:\Files\曲绘\Phigros\版本号
+```
+
+例如 `3.19.2` 会输出到：
+
+```text
+D:\Files\曲绘\Phigros\3_19_2
+```
+
+这个脚本会：
+
+- 只读取 APK，不修改原始 APK、`public/assets` 或远程资源目录。
+- 只扫描新版 APK 中相对旧版新增的 Unity bundle，避免全量解包。
+- 从新增 bundle 中导出 `Texture2D` 图片。
+- 将 `Illustration` 且尺寸较大的图片输出到 `曲绘`。
+- 将宽高均不超过 `200` 的图片输出到 `头像`。
+- 从 Addressables key 中解析曲名和曲师，按 `曲名 - 曲师.png` 命名曲绘。
+- 写入 `phigros-update-report.json`，记录新旧 APK、候选 key、导出文件、bundle、尺寸和命名来源。
+
+也可以显式指定版本或路径：
+
+```powershell
+npm run phigros:extract -- --new 3.19.2 --old 3.19.1.1
+npm run phigros:extract -- --new "D:\Files\曲绘\Phigros\APK\Phigros_3.19.2.apk" --old "D:\Files\曲绘\Phigros\APK\Phigros_3.19.1.1.apk"
+```
+
+如果要改 APK 目录、输出父目录或直接指定输出目录：
+
+```powershell
+npm run phigros:extract -- --apk-dir "D:\Files\曲绘\Phigros\APK" --output-parent "D:\Files\曲绘\Phigros"
+npm run phigros:extract -- --out "D:\Files\曲绘\Phigros\3_19_2"
+```
+
+首次运行前需要 Python 包：
+
+```powershell
+pip install UnityPy texture2ddecoder
+```
+
+注意：当前 Phigros 脚本是基础自动化，只处理“新增 bundle”中的曲绘和头像。它不会尝试把同名但内容变化的旧 bundle 做资源级精确映射，因为 Unity Addressables 的资源定位关系需要进一步解析，否则容易把旧图误命名为新曲。
+
+### 上传整理后的 Phigros 更新并刷新网站
+
+手动核对、重命名、整理完 `D:\Files\曲绘\Phigros\版本号` 下的图片后，可以运行：
+
+```powershell
+npm run phigros:publish
+```
+
+默认行为：
+
+- 自动选择 `D:\Files\曲绘\Phigros` 下版本号最高的目录作为本地更新目录。
+- 从目录名推断版本号，例如 `3_19_2` 会推断为 `3.19.2`。
+- 上传 `曲绘` 和 `头像` 两个子目录中的图片。
+- 远程目标目录默认为 `DEPLOY_REMOTE_ASSET_ROOT/Phigros（至版本号）`。
+- 如果远程目标目录不存在，会先从服务器上最新的旧 `Phigros（至x.x.x）` 目录复制一份作为基底，再把本次新增图片覆盖进去。
+- 上传成功后，默认把上一版 Phigros 目录移到 `DEPLOY_REMOTE_WORK_PATH/asset-backups/phigros/时间戳/`，避免扫描时同时出现新旧两套 Phigros 目录。
+- 最后自动执行 `.\scripts\deploy.ps1 -Mode remote-build`，让服务器重新扫描原图、生成索引和缩略图，并切换新站点。
+
+常用参数：
+
+```powershell
+npm run phigros:publish -- -Version 3.19.2
+npm run phigros:publish -- -LocalDir "D:\Files\曲绘\Phigros\3_19_2"
+npm run phigros:publish -- -RemoteGameDir "Phigros（至3.19.2）"
+npm run phigros:publish -- -PreviousRemoteGameDir "Phigros（至3.19.1）"
+```
+
+只上传、不触发远程构建：
+
+```powershell
+npm run phigros:publish -- -SkipDeploy
+```
+
+保留远程上一版目录不移走：
+
+```powershell
+npm run phigros:publish -- -KeepPrevious
+```
+
+注意：`-KeepPrevious` 会让远程原图根目录里同时存在新旧 Phigros 目录，网站扫描时可能出现重复资源；通常只用于临时调试。
 
 ### 更新网站使用的 Arcaea 元信息
 

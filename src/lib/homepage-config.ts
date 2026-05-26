@@ -1,12 +1,12 @@
 export const homepageConfig = {
   siteTitle: "音游曲绘下载站",
-  metaDescription: "Arcaea 与 Phigros 曲绘、角色和曲包封面下载站，支持搜索、分类浏览和原图下载。",
+  metaDescription: "Arcaea 与 Phigros 曲绘、角色下载站，支持搜索、分类浏览和原图下载。",
 
   hero: {
-    eyebrow: "Rhythm Assets",
+    eyebrow: "Picture Assets",
     title: "曲绘下载站",
     description:
-      "这里主要放 Arcaea 和 Phigros 的曲绘、角色、曲包封面等图片资源。想找图就搜关键词，也可以按游戏和分类慢慢翻。",
+      "Arcaea 和 Phigros 图片资源检索，支持搜索与筛选。",
     searchLabel: "搜索曲绘",
     searchPlaceholder: "搜曲名、角色、曲包或文件名",
     searchButton: "搜索",
@@ -17,30 +17,30 @@ export const homepageConfig = {
     url: "https://space.bilibili.com/385607044",
     avatar: "/site-icon.png",
     badge: "Bilibili",
-    name: "Unknnownnn",
-    description: "站点更新和相关内容会放在这里。",
-    button: "打开 B 站主页",
+    name: "unknnownnn_003",
+    description: "up主个人主页，欢迎问题反馈与交流",
+    button: "B 站主页",
   },
 
   stats: {
     totalAssetsLabel: "张图片",
-    categoryShortcutLabel: "个分类入口",
+    categoryShortcutLabel: "个分类",
   },
 
   games: {
-    arcaeaDescription: "个分类，可直接浏览曲绘文件",
-    phigrosDescription: "个分类，可直接浏览曲绘文件",
-    entryCta: "进入资源浏览",
+    arcaeaDescription: "个分类",
+    phigrosDescription: "个分类",
+    entryCta: "进入",
   },
 
   sections: {
-    categoriesEyebrow: "Categories",
-    categoriesTitle: "按分类找",
-    recentEyebrow: "Recent",
-    recentTitle: "最近加进来的图",
-    generatedPrefix: "索引生成：",
-    overviewEyebrow: "Overview",
-    overviewTitle: "站内现在有这些",
+    categoriesEyebrow: "分类",
+    categoriesTitle: "分类浏览",
+    recentEyebrow: "最新",
+    recentTitle: "最近更新",
+    generatedPrefix: "最后更新时间：",
+    overviewEyebrow: "概览",
+    overviewTitle: "站点一览",
     categoryUnit: "个分类",
     unknownSize: "未知大小",
   },
@@ -53,7 +53,7 @@ export const homepageConfig = {
 
   theme: {
     maxWidth: "1180px",
-    heroMinHeight: "340px",
+    heroMinHeight: "310px",
     heroTitleMax: "4.4rem",
     accent: "#0f766e",
     accentStrong: "#0f4f66",

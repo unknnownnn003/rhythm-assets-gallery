@@ -22,6 +22,8 @@ Production server context:
 
 Do not add a backend, database, login system, comments, admin panel, or upload UI unless the user explicitly asks.
 
+The only server-side exception is a tiny Node.js HTTP API server at `scripts/stats-server.mjs` (deployed to `/www/wwwroot/stats-server.mjs`, managed by PM2 as `rhythm-stats-api`) for visitor counting. It stores data outside the web root at `/www/wwwroot/stats-data/stats.json` to survive atomic deploy switches. Nginx proxies `/api/` requests to this server on `127.0.0.1:3001`. This was explicitly requested.
+
 ---
 
 ## Tech Stack
@@ -410,6 +412,8 @@ DEPLOY_REMOTE_SHARP_CACHE_MEMORY_MB=64
 ```
 
 The script reuses existing deployed thumbnails. On normal metadata or page changes, it should skip existing thumbnails rather than regenerate thousands of files.
+
+The visitor stats API server (`scripts/stats-server.mjs`) runs as a separate PM2 process and is not managed by the deploy script. It stores data at `/www/wwwroot/stats-data/` (outside the web root) and listens on `127.0.0.1:3001`. Nginx proxies `/api/` to it via a location block in `/www/server/panel/vhost/nginx/www.unknnownnn.homes.conf`. This nginx config is managed by Baota — if Baota regenerates the site config, the `/api/` proxy block may need to be re-added.
 
 If the user explicitly asks to update/publish/sync the website, the normal flow is:
 
