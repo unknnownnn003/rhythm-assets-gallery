@@ -56,12 +56,65 @@ npm run arcaea:extract -- --new "D:\Files\曲绘\Arcaea\APK\arcaea_新版本.apk
 - 对比新版和旧版相同路径文件的 SHA-1，复制新增或内容变化的图片。
 - 跳过歌曲目录里的 `_256` 压缩曲绘。
 - 按资源类型输出到 `曲绘`、`曲包封面`、`剧情/cg`、`剧情贴图`、`角色/立绘`、`角色/头像`、`角色/LinkPlay预览`、`游玩背景`、`LinkPlay贴纸`、`世界模式`、`启动页面` 等子目录。
-- 同步复制新版的 `songlist`、`packlist`、`story2/ordering` 到输出目录的 `_metadata/`，方便人工核对。
+- 同步复制新版的 `songlist`、`packlist`、`char/characters.json`、`story2/ordering` 到输出目录的 `_metadata/`，方便人工核对。
 - 写入 `arcaea-update-report.json`，列出复制了哪些文件。
 - 曲绘输出文件名会根据新版 `songlist` 自动加可读前缀。
 - 如果是 `1080_base_3` 或 `1080_base_4` 等独立难度曲绘，前缀会优先使用该难度自己的曲名、曲师、BPM、背景、谱师、曲绘画师和显示难度，避免和普通难度信息混淆。
+- 角色资源输出文件名会根据新版 `char/characters.json` 自动加中文名和英文名前缀，原始数字文件名保留在末尾。
 
 所以，**提取更新资源这一步只需要跑 `npm run arcaea:extract`**。它负责把新增内容找出来并放进你指定的文件夹，供你后续手动超分、压缩和整理。
+
+### 压缩手动超分后的 Arcaea 曲绘
+
+手动超分完成后，先单独运行压缩命令：
+
+```powershell
+npm run arcaea:compress -- --dir "D:\Files\曲绘\Arcaea\曲绘（85）6.14.10"
+```
+
+默认行为：
+
+- 自动查找目录内所有文件名以 `_optimization` 结尾的 `.png`、`.jpg`、`.jpeg`。
+- 按 `D:\Files\曲绘\Arcaea\compress.py` 的逻辑转成同目录 `_opt.jpg`。
+- 默认质量 `95`，白底合成透明图，输出 RGB JPEG。
+- 转换成功后默认删除 `_optimization` 源图，避免站点同时扫到超分源图和压缩图；需要保留源图时加 `--keep-original`。
+- 如果 `_opt.jpg` 已存在，默认跳过；需要覆盖时加 `--overwrite`。
+- 写入 `arcaea-compress-report.json`。
+
+常用参数：
+
+```powershell
+npm run arcaea:compress -- --dir "D:\Files\曲绘\Arcaea\曲绘（85）6.14.10" --overwrite
+npm run arcaea:compress -- --dir "D:\Files\曲绘\Arcaea\曲绘（85）6.14.10" --keep-original
+npm run arcaea:compress -- --quality 95
+```
+
+### 同步 Arcaea 更新到远程服务器
+
+确认压缩结果无误后，再单独运行同步/发布命令：
+
+```powershell
+npm run arcaea:publish -- -LocalDir "D:\Files\曲绘\Arcaea\曲绘（85）6.14.10"
+```
+
+默认行为：
+
+- 从目录名推断版本号，例如 `曲绘（85）6.14.10` 会推断为 `6.14.10`。
+- 远程目标目录默认为 `DEPLOY_REMOTE_ASSET_ROOT/Arcaea（至版本号）`。
+- 如果远程目标目录不存在，会先从服务器上最新的旧 `Arcaea（至x.x.x）` 目录复制一份作为基底，再把本次新增图片覆盖进去。
+- 上传本地更新目录里的图片分类子目录，跳过 `_metadata` 和报告文件。
+- 上传成功后，默认把上一版 Arcaea 目录移到 `DEPLOY_REMOTE_WORK_PATH/asset-backups/arcaea/时间戳/`，避免扫描时同时出现新旧两套 Arcaea 目录。
+- 最后自动执行 `.\scripts\deploy.ps1 -Mode remote-build`，让服务器重新扫描原图、生成索引和缩略图，并切换新站点。
+
+常用参数：
+
+```powershell
+npm run arcaea:publish -- -Version 6.14.10
+npm run arcaea:publish -- -LocalDir "D:\Files\曲绘\Arcaea\曲绘（85）6.14.10" -SkipDeploy
+npm run arcaea:publish -- -RemoteGameDir "Arcaea（至6.14.10）"
+```
+
+Arcaea 更新不要把三步连成一个命令。推荐按顺序分别执行：`arcaea:extract`、手动超分、`arcaea:compress`、确认结果、`arcaea:publish`。
 
 ## Phigros APK 更新提取流程
 
@@ -176,6 +229,7 @@ npm run arcaea:metadata -- --assets-dir "D:\Files\曲绘\Arcaea\APK\arcaea_新�
 
 - `songs/songlist`
 - `songs/packlist`
+- `char/characters.json`
 - `app-data/story2/ordering`
 - `app-data/story/main/entries_*`
 - `app-data/story/side/entries_*`
@@ -191,7 +245,7 @@ scripts/data/arcaea-metadata.json
 - 曲绘关联歌曲 ID、曲名、曲师、曲包、版本、BPM、SIDE、游玩背景、反转背景。
 - 独立难度曲绘关联对应难度自己的曲名、曲师、显示难度、谱师、曲绘画师、BPM 和背景。
 - 曲包显示名会优先使用 `name_localized`，并在存在 `pack_parent` 时附带父曲包上下文，减少多个 `Collaboration Chapter 2/3` 难以区分的问题。
-- 角色立绘、头像、LinkPlay 预览关联 `搭档列表.CSV` 中的搭档名。
+- 角色立绘、头像、LinkPlay 预览优先关联 `characters.json` 中的中文名、英文名和 `pack_id` 曲包；旧 `搭档列表.CSV` 只作为兜底。
 - 剧情 CG 关联剧情章节、剧情节点、剧情类型、解锁曲包、关联曲目和关联角色。
 - 剧情贴图尽量按目录名关联到对应剧情章节。
 

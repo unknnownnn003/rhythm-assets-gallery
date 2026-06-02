@@ -39,6 +39,13 @@ type Pack = {
   name_localized?: LocalizedText;
 };
 
+type Character = {
+  character_id?: number;
+  name?: string;
+  pack_id?: string;
+  search_strings?: string[];
+};
+
 type ExtractedSource = {
   input: string;
   assetsDir: string;
@@ -85,6 +92,7 @@ async function main() {
   try {
     const songs = readSongs(newSource.assetsDir);
     const packs = readPacks(newSource.assetsDir);
+    const characters = readCharacters(newSource.assetsDir);
     const newRecords = await collectTargetRecords(newSource.assetsDir);
     const oldRecords = await collectTargetRecords(oldSource.assetsDir);
     const oldByPath = new Map(oldRecords.map((record) => [record.relativePath, record]));
@@ -96,7 +104,7 @@ async function main() {
     const copied = [];
     for (const record of changed) {
       const category = resolveCategory(record.relativePath);
-      const filename = buildOutputFilename(record.relativePath, songs, packs);
+      const filename = buildOutputFilename(record.relativePath, songs, packs, characters);
       const targetPath = path.join(outputDir, category, filename);
       await mkdir(path.dirname(targetPath), { recursive: true });
       await copyFile(record.sourcePath, targetPath);
@@ -151,6 +159,7 @@ async function prepareSource(input: string, label: string): Promise<ExtractedSou
       isTarget(relativePath) ||
       relativePath === "songs/songlist" ||
       relativePath === "songs/packlist" ||
+      relativePath === "char/characters.json" ||
       relativePath === "app-data/story2/ordering" ||
       /^app-data\/story\/(?:main|side)\/entries_/i.test(relativePath)
     );
@@ -158,10 +167,15 @@ async function prepareSource(input: string, label: string): Promise<ExtractedSou
   if (selectedEntries.length === 0) {
     throw new Error(`No supported Arcaea assets were found in APK: ${input}`);
   }
-  const listPath = path.join(workDir, "extract-list.txt");
-  await writeFile(listPath, `${selectedEntries.join("\n")}\n`, "utf8");
-  await run("tar", ["-xf", input, "-C", workDir, "-T", listPath]);
+  await extractEntries(input, workDir, selectedEntries);
   return { input, assetsDir: path.join(workDir, "assets"), cleanupDir: workDir };
+}
+
+async function extractEntries(input: string, workDir: string, entries: string[]) {
+  const chunkSize = 80;
+  for (let index = 0; index < entries.length; index += chunkSize) {
+    await run("tar", ["-xf", input, "-C", workDir, ...entries.slice(index, index + chunkSize)]);
+  }
 }
 
 async function cleanupSource(source: ExtractedSource) {
@@ -212,7 +226,12 @@ function resolveCategory(relativePath: string) {
   return TARGETS.find((target) => target.test(relativePath))?.category ?? "其他";
 }
 
-function buildOutputFilename(relativePath: string, songs: Map<string, Song>, packs: Map<string, Pack>) {
+function buildOutputFilename(
+  relativePath: string,
+  songs: Map<string, Song>,
+  packs: Map<string, Pack>,
+  characters: Map<number, Character>,
+) {
   const filename = path.posix.basename(relativePath);
   const songMatch = relativePath.match(/^songs\/([^/]+)\//i);
   if (songMatch) {
@@ -228,6 +247,17 @@ function buildOutputFilename(relativePath: string, songs: Map<string, Song>, pac
     const pack = packs.get(packMatch[1]);
     const packName = pack ? getLocalizedValue(pack.name_localized) ?? pack.id : packMatch[1];
     return `${cleanFilenamePart(packName)}_${filename}`;
+  }
+
+  const characterKey = parseCharacterAssetKey(filename);
+  if (characterKey && /^char\//i.test(relativePath)) {
+    const character = characters.get(characterKey.id);
+    const characterName = character ? getCharacterDisplayName(character, characters) : undefined;
+    if (characterName) {
+      const englishName = normalizeCharacterEnglishName(character?.name);
+      const parts = [characterName, englishName].filter((part): part is string => Boolean(part));
+      return `${parts.map(cleanFilenamePart).join("_")}_${filename}`;
+    }
   }
 
   return filename;
@@ -296,6 +326,7 @@ async function writeMetadataFiles(assetsDir: string, outputDir: string) {
   for (const source of [
     ["songlist.json", path.join(assetsDir, "songs", "songlist")],
     ["packlist.json", path.join(assetsDir, "songs", "packlist")],
+    ["characters.json", path.join(assetsDir, "char", "characters.json")],
     ["story-ordering.json", path.join(assetsDir, "app-data", "story2", "ordering")],
   ] as const) {
     if (existsSync(source[1])) {
@@ -314,6 +345,18 @@ function readPacks(assetsDir: string) {
   return new Map((packList.packs ?? []).map((pack) => [pack.id, pack]));
 }
 
+function readCharacters(assetsDir: string) {
+  const filePath = path.join(assetsDir, "char", "characters.json");
+  if (!existsSync(filePath)) {
+    return new Map<number, Character>();
+  }
+
+  const characters = readJson<Character[]>(filePath);
+  return new Map(characters
+    .filter((character) => character.character_id !== undefined)
+    .map((character) => [character.character_id as number, character]));
+}
+
 function readJson<T>(filePath: string): T {
   return JSON.parse(readFileSync(filePath, "utf8")) as T;
 }
@@ -324,6 +367,82 @@ function getLocalizedValue(value?: LocalizedText) {
 
 function cleanFilenamePart(text: string) {
   return text.replace(/[<>:"/\\|?*]/g, "").replace(/\s+/g, " ").trim();
+}
+
+function parseCharacterAssetKey(filename: string) {
+  const stem = filename.replace(/\.[^.]+$/, "").replace(/_(?:icon|mp)$/i, "");
+  const match = stem.match(/(?:^|_)(-?\d+)([a-z]*)$/i);
+  if (!match) {
+    return undefined;
+  }
+  return {
+    id: Number.parseInt(match[1], 10),
+    suffix: match[2] ?? "",
+  };
+}
+
+function getCharacterDisplayName(character: Character, characters: Map<number, Character>) {
+  const localizedName = pickChineseCharacterName(character.search_strings);
+  const romanizedName = character.name?.trim();
+  if (!localizedName) {
+    return romanizedName;
+  }
+
+  const baseName = romanizedName ? inferBaseCharacterName(romanizedName, characters) : undefined;
+  if (!baseName || baseName === romanizedName) {
+    return localizedName;
+  }
+
+  const variantName = romanizedName?.startsWith(`${baseName}_`) ? romanizedName.slice(baseName.length + 1) : undefined;
+  return variantName ? `${localizedName}（${formatRomanizedVariant(variantName)}）` : localizedName;
+}
+
+function normalizeCharacterEnglishName(value?: string) {
+  return value?.trim().replace(/_/g, " ") || undefined;
+}
+
+function inferBaseCharacterName(romanizedName: string, characters: Map<number, Character>) {
+  const candidates = [...characters.values()]
+    .map((character) => character.name?.trim())
+    .filter((name): name is string => Boolean(name) && romanizedName.startsWith(`${name}_`))
+    .sort((a, b) => b.length - a.length);
+  return candidates[0];
+}
+
+function formatRomanizedVariant(value: string) {
+  return value
+    .split("_")
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ");
+}
+
+function pickChineseCharacterName(values?: string[]) {
+  const candidates = (values ?? []).map((value) => value.trim()).filter(Boolean);
+  const cjkOnly = candidates.filter((value) => hasCjk(value) && !hasKanaOrHangul(value));
+  const preferred = cjkOnly
+    .map((value, index) => ({ value, score: scoreChineseName(value), index }))
+    .sort((a, b) => b.score - a.score || a.index - b.index)[0]?.value;
+  return preferred ?? candidates[0];
+}
+
+function scoreChineseName(value: string) {
+  let score = 0;
+  if (/[对红调梦凛丽爱托云闪]/.test(value)) {
+    score += 2;
+  }
+  if (/[対紅調夢凜麗閃雲]/.test(value)) {
+    score -= 1;
+  }
+  return score;
+}
+
+function hasCjk(value: string) {
+  return /[\u3400-\u9fff]/.test(value);
+}
+
+function hasKanaOrHangul(value: string) {
+  return /[\u3040-\u30ff\uac00-\ud7af]/.test(value);
 }
 
 function sha1(filePath: string) {

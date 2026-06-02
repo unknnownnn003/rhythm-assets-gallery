@@ -46,6 +46,7 @@ export type AssetItem = {
   jacketDesigner?: string;
   characterId?: number;
   characterName?: string;
+  characterEnglishName?: string;
   characterVariant?: string;
   relatedCharacterIds?: number[];
   relatedCharacterNames?: string[];

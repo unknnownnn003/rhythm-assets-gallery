@@ -45,6 +45,13 @@ type PackList = {
   }>;
 };
 
+type CharacterMetadata = {
+  character_id?: number;
+  name?: string;
+  pack_id?: string;
+  search_strings?: string[];
+};
+
 type StoryOrdering = {
   ordering?: Array<{
     act?: number;
@@ -84,6 +91,7 @@ async function main() {
   const outputPath = path.resolve(PROJECT_ROOT, args.out ?? DEFAULT_OUTPUT);
   const songList = readJson<SongList>(path.join(resolvedAssetsDir, "songs", "songlist"));
   const packList = readJson<PackList>(path.join(resolvedAssetsDir, "songs", "packlist"));
+  const characters = readOptionalJson<CharacterMetadata[]>(path.join(resolvedAssetsDir, "char", "characters.json")) ?? [];
   const storyNodes = await readStoryNodes(resolvedAssetsDir);
 
   const metadata = {
@@ -91,11 +99,12 @@ async function main() {
     generatedAt: new Date().toISOString(),
     songs: songList.songs ?? [],
     packs: packList.packs ?? [],
+    characters,
     storyNodes,
   };
 
   await writeFile(outputPath, `${JSON.stringify(metadata, null, 2)}\n`, "utf8");
-  console.log(`update-arcaea-metadata: songs=${metadata.songs.length}, packs=${metadata.packs.length}, storyNodes=${storyNodes.length}`);
+  console.log(`update-arcaea-metadata: songs=${metadata.songs.length}, packs=${metadata.packs.length}, characters=${characters.length}, storyNodes=${storyNodes.length}`);
   console.log(`update-arcaea-metadata: wrote ${outputPath}`);
 }
 
@@ -159,6 +168,13 @@ function slugifyStoryPathTitle(value?: string) {
 function readJson<T>(filePath: string): T {
   if (!existsSync(filePath)) {
     throw new Error(`Missing required Arcaea metadata file: ${filePath}`);
+  }
+  return JSON.parse(readFileSync(filePath, "utf8")) as T;
+}
+
+function readOptionalJson<T>(filePath: string): T | undefined {
+  if (!existsSync(filePath)) {
+    return undefined;
   }
   return JSON.parse(readFileSync(filePath, "utf8")) as T;
 }

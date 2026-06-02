@@ -108,7 +108,7 @@ export default function GalleryGrid({ assets, game }: GalleryGridProps) {
   const fuse = useMemo(
     () =>
       new Fuse(assets, {
-        keys: ["title", "artist", "filename", "category", "tags", "pack", "packDisplayName", "packDescription", "version", "bydVersion", "etrVersion", "bg", "bgInverse", "sideLabel", "idx", "songId", "difficultyRating", "difficultyRatings", "chartDesigner", "jacketDesigner", "characterName", "characterVariant", "relatedCharacterNames", "storyNode", "storyPathTitle", "relatedSongId", "relatedSongTitle"],
+        keys: ["title", "artist", "filename", "category", "tags", "pack", "packDisplayName", "packDescription", "version", "bydVersion", "etrVersion", "bg", "bgInverse", "sideLabel", "idx", "songId", "difficultyRating", "difficultyRatings", "chartDesigner", "jacketDesigner", "characterName", "characterEnglishName", "characterVariant", "relatedCharacterNames", "storyNode", "storyPathTitle", "relatedSongId", "relatedSongTitle"],
         threshold: 0.32,
         ignoreLocation: true,
       }),

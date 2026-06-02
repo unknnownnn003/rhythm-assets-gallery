@@ -23,8 +23,9 @@ const summary = readJson<SiteSummary>("summary.json", {
   games: [],
   generatedAt: new Date(0).toISOString(),
 });
-const recentUpdates = readJson<AssetItem[]>("recent-updates.json", []).slice(0, 8);
-const heroPreviewAssets = recentUpdates.slice(0, 6);
+const allRecentUpdates = readJson<AssetItem[]>("recent-updates.json", []);
+const recentUpdates = allRecentUpdates.slice(0, 8);
+const heroPreviewAssets = allRecentUpdates.filter((asset) => !isAiUpscaledAsset(asset)).slice(0, 6);
 const pageTitle = "Arcaea | Phigros 曲绘下载站 - Unknnownnn";
 const pageDescription = "Arcaea、Phigros 曲绘、角色立绘等音游资源浏览、搜索与下载。";
 const pageImage = recentUpdates[0] ? assetOgImage(recentUpdates[0]) : absoluteUrl("/site-icon.png");
@@ -50,6 +51,10 @@ function readJson<T>(filename: string, fallback: T): T {
     return fallback;
   }
   return JSON.parse(fs.readFileSync(filePath, "utf8")) as T;
+}
+
+function isAiUpscaledAsset(asset: AssetItem) {
+  return asset.category === "曲绘（AI超分后）" || asset.relativePath.includes("曲绘（AI超分后）/");
 }
 
 function getGameCategoryShortcuts(siteSummary: SiteSummary, gameName: "Arcaea" | "Phigros") {

@@ -68,9 +68,18 @@ type ArcaeaStoryNodeMetadata = {
   clearSongId?: string;
 };
 
+type ArcaeaCharacterSourceMetadata = {
+  character_id?: number;
+  name?: string;
+  pack_id?: string;
+  search_strings?: string[];
+};
+
 type ArcaeaCharacterMetadata = {
   id: number;
   name: string;
+  englishName?: string;
+  packId?: string;
   type?: string;
   skill?: string;
 };
@@ -213,6 +222,7 @@ function loadArcaeaContentMetadata(packMetadata: Map<string, ArcaeaPackMetadata>
       songs?: ArcaeaSongMetadata[];
       packs?: ArcaeaPackMetadata[];
       storyNodes?: ArcaeaStoryNodeMetadata[];
+      characters?: ArcaeaCharacterSourceMetadata[];
     };
 
     for (const pack of data.packs ?? []) {
@@ -239,6 +249,30 @@ function loadArcaeaContentMetadata(packMetadata: Map<string, ArcaeaPackMetadata>
       if (slug && !metadata.storyPathsBySlug.has(slug)) {
         metadata.storyPathsBySlug.set(slug, storyNode);
       }
+    }
+
+    for (const character of data.characters ?? []) {
+      if (character.character_id === undefined) {
+        continue;
+      }
+      const name = pickChineseCharacterName(character.search_strings);
+      const englishName = normalizeCharacterEnglishName(character.name);
+      const current = metadata.characters.get(character.character_id);
+      if (!name && !englishName) {
+        continue;
+      }
+      const incoming = {
+        id: character.character_id,
+        name: name ?? current?.name ?? englishName,
+        englishName,
+        packId: character.pack_id?.trim() || undefined,
+        type: current?.type,
+        skill: current?.skill,
+      };
+      if (!incoming.name) {
+        continue;
+      }
+      metadata.characters.set(character.character_id, preferCharacterMetadata(current, incoming));
     }
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
@@ -275,6 +309,7 @@ function loadArcaeaCharacterMetadata() {
       characters.set(id, {
         id,
         name,
+        englishName: undefined,
         type: row[2]?.trim() || undefined,
         skill: row[11]?.trim() || undefined,
       });
@@ -661,8 +696,10 @@ function enrichArcaeaAsset(
     const variant = formatCharacterVariant(characterKey.suffix, category);
     return withoutEmpty({
       title: character ? `${character.name}（${variant}）` : `搭档 ${characterKey.raw}（${variant}）`,
+      pack: character?.packId,
       characterId: characterKey.id,
       characterName: character?.name,
+      characterEnglishName: character?.englishName,
       characterVariant: variant,
     });
   }
@@ -730,6 +767,21 @@ function resolveStoryCharacters(storyNode: ArcaeaStoryNodeMetadata, metadata: Ar
     .filter((character): character is ArcaeaCharacterMetadata => Boolean(character));
 }
 
+function preferCharacterMetadata(current: ArcaeaCharacterMetadata | undefined, incoming: ArcaeaCharacterMetadata) {
+  if (!current) {
+    return incoming;
+  }
+
+  const incomingKeepsChinese = hasCjk(incoming.name);
+  const currentHasSpecificVariant = current.name.includes("（") && !incoming.name.includes("（");
+  return {
+    ...current,
+    name: incomingKeepsChinese && !currentHasSpecificVariant ? incoming.name : current.name,
+    englishName: incoming.englishName ?? current.englishName,
+    packId: incoming.packId ?? current.packId,
+  };
+}
+
 function normalizeStoryNodeKey(filename: string) {
   return stripImageExtension(stripOptimizationSuffix(stripImageExtension(filename)));
 }
@@ -775,7 +827,7 @@ function parseDifficultyRating(value: string) {
 
 function parseCharacterAssetKey(filename: string) {
   const stem = stripImageExtension(filename).replace(/_(?:icon|mp)$/i, "");
-  const match = stem.match(/^(-?\d+)(.*)$/);
+  const match = stem.match(/(?:^|_)(-?\d+)([a-z]*)$/i);
   if (!match) {
     return undefined;
   }
@@ -784,6 +836,38 @@ function parseCharacterAssetKey(filename: string) {
     id: Number.parseInt(match[1], 10),
     suffix: match[2] ?? "",
   };
+}
+
+function normalizeCharacterEnglishName(value?: string) {
+  return value?.trim().replace(/_/g, " ") || undefined;
+}
+
+function pickChineseCharacterName(values?: string[]) {
+  const candidates = (values ?? []).map((value) => value.trim()).filter(Boolean);
+  const cjkOnly = candidates.filter((value) => hasCjk(value) && !hasKanaOrHangul(value));
+  const preferred = cjkOnly
+    .map((value, index) => ({ value, score: scoreChineseName(value), index }))
+    .sort((a, b) => b.score - a.score || a.index - b.index)[0]?.value;
+  return preferred ?? candidates.find((value) => !hasKanaOrHangul(value)) ?? candidates[0];
+}
+
+function scoreChineseName(value: string) {
+  let score = 0;
+  if (/[对红调梦凛丽爱托云闪]/.test(value)) {
+    score += 2;
+  }
+  if (/[対紅調夢凜麗閃雲]/.test(value)) {
+    score -= 1;
+  }
+  return score;
+}
+
+function hasCjk(value: string) {
+  return /[\u3400-\u9fff]/.test(value);
+}
+
+function hasKanaOrHangul(value: string) {
+  return /[\u3040-\u30ff\uac00-\ud7af]/.test(value);
 }
 
 function formatCharacterVariant(suffix: string, category: AssetCategory) {
@@ -1031,6 +1115,7 @@ function buildTags(input: AssetItem, pathSegments: string[]) {
   addTag(tags, input.chartDesigner ? `谱师 ${input.chartDesigner}` : undefined);
   addTag(tags, input.jacketDesigner ? `曲绘 ${input.jacketDesigner}` : undefined);
   addTag(tags, input.characterName);
+  addTag(tags, input.characterEnglishName);
   addTag(tags, input.storyPathTitle);
   return [...tags].filter(Boolean).sort((a, b) => a.localeCompare(b));
 }

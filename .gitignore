@@ -36,3 +36,6 @@ public/assets/
 public/thumbs/
 public/data/*.json
 public/sitemap.xml
+
+# tool configs
+.claude/
