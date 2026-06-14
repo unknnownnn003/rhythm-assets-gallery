@@ -34,6 +34,7 @@ codex.ps1
 
 public/assets/
 public/thumbs/
+public/downloads/
 public/data/*.json
 public/sitemap.xml
 

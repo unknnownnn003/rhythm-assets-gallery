@@ -1,5 +1,3 @@
-import { TagPill } from "./TagPill";
-
 type CountItem = {
   name: string;
   count: number;
@@ -13,13 +11,10 @@ type FilterPanelProps = {
     value: string;
     items: CountItem[];
   }>;
-  tags: CountItem[];
   selectedCategory: string;
-  selectedTag: string;
   selectedMeta: Record<string, string>;
   sort: string;
   onCategoryChange: (value: string) => void;
-  onTagChange: (value: string) => void;
   onMetaChange: (key: string, value: string) => void;
   onSortChange: (value: string) => void;
   onClear: () => void;
@@ -28,13 +23,10 @@ type FilterPanelProps = {
 export function FilterPanel({
   categories,
   metaFilters,
-  tags,
   selectedCategory,
-  selectedTag,
   selectedMeta,
   sort,
   onCategoryChange,
-  onTagChange,
   onMetaChange,
   onSortChange,
   onClear,
@@ -42,7 +34,7 @@ export function FilterPanel({
   return (
     <div className="filter-panel">
       <div className="filter-panel-head">
-        <strong>筛选</strong>
+        <strong>筛选条件</strong>
         <button type="button" onClick={onClear}>
           清空
         </button>
@@ -57,30 +49,10 @@ export function FilterPanel({
         </select>
       </label>
 
-      <div className="filter-group">
-        <span>分类</span>
-        <div className="filter-options">
-          <TagPill
-            label="全部"
-            active={!selectedCategory}
-            onClick={() => onCategoryChange("")}
-          />
-          {categories.map((category) => (
-            <TagPill
-              key={category.name}
-              label={category.name}
-              count={category.count}
-              active={selectedCategory === category.name}
-              onClick={() => onCategoryChange(category.name)}
-            />
-          ))}
-        </div>
-      </div>
-
       {metaFilters.map((filter) => (
-        <div class="filter-field" key={filter.value}>
+        <div className="filter-field" key={filter.value}>
           <span>{filter.label}</span>
-          <div class="filter-field-row">
+          <div className="filter-field-row">
             <select
               value={selectedMeta[filter.value] ?? ""}
               onChange={(event) => onMetaChange(filter.value, event.currentTarget.value)}
@@ -93,29 +65,18 @@ export function FilterPanel({
               ))}
             </select>
             {selectedMeta[filter.value] ? (
-              <button type="button" class="filter-clear-btn" onClick={() => onMetaChange(filter.value, "")} title={`清除${filter.label}`}>
+              <button
+                type="button"
+                className="filter-clear-btn"
+                onClick={() => onMetaChange(filter.value, "")}
+                title={`清除${filter.label}`}
+              >
                 ×
               </button>
             ) : null}
           </div>
         </div>
       ))}
-
-      <div className="filter-group">
-        <span>标签</span>
-        <div className="filter-options">
-          <TagPill label="全部" active={!selectedTag} onClick={() => onTagChange("")} />
-          {tags.map((tag) => (
-            <TagPill
-              key={tag.name}
-              label={tag.name}
-              count={tag.count}
-              active={selectedTag === tag.name}
-              onClick={() => onTagChange(tag.name)}
-            />
-          ))}
-        </div>
-      </div>
     </div>
   );
 }

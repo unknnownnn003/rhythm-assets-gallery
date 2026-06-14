@@ -7,6 +7,10 @@ interface DayStats {
 }
 
 interface StatsResponse {
+  todayVisitors: number;
+  todayViews: number;
+  weekVisitors: number;
+  weekViews: number;
   days: DayStats[];
 }
 
@@ -16,11 +20,11 @@ function buildEmptyDays() {
   const now = new Date();
   const days: DayStats[] = [];
 
-  for (let i = 6; i >= 0; i--) {
-    const d = new Date(now);
-    d.setDate(d.getDate() - i);
+  for (let i = 6; i >= 0; i -= 1) {
+    const date = new Date(now);
+    date.setDate(date.getDate() - i);
     days.push({
-      date: d.toISOString().slice(0, 10),
+      date: date.toISOString().slice(0, 10),
       visitors: 0,
       views: 0,
     });
@@ -30,7 +34,13 @@ function buildEmptyDays() {
 }
 
 function buildFallbackStats(): StatsResponse {
-  return { days: buildEmptyDays() };
+  return {
+    todayVisitors: 0,
+    todayViews: 0,
+    weekVisitors: 0,
+    weekViews: 0,
+    days: buildEmptyDays(),
+  };
 }
 
 function formatDay(dateStr: string) {
@@ -39,25 +49,33 @@ function formatDay(dateStr: string) {
 
 async function fetchStats(): Promise<StatsResponse | null> {
   const candidates = ["/api/stats"];
-  if (typeof window !== "undefined" && (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1")) {
+  if (
+    typeof window !== "undefined" &&
+    (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1")
+  ) {
     candidates.push("http://127.0.0.1:3001/api/stats");
   }
 
-  try {
-    for (const url of candidates) {
-      try {
-        const res = await fetch(url, { cache: "no-store" });
-        if (!res.ok) continue;
-        const data = (await res.json()) as Partial<StatsResponse>;
-        if (Array.isArray(data.days) && data.days.length === 7) {
-          return { days: data.days };
-        }
-      } catch {
-        // Try the next endpoint.
+  for (const url of candidates) {
+    try {
+      const response = await fetch(url, { cache: "no-store" });
+      if (!response.ok) {
+        continue;
       }
+
+      const data = (await response.json()) as Partial<StatsResponse>;
+      if (Array.isArray(data.days) && data.days.length === 7) {
+        return {
+          todayVisitors: data.todayVisitors ?? 0,
+          todayViews: data.todayViews ?? 0,
+          weekVisitors: data.weekVisitors ?? 0,
+          weekViews: data.weekViews ?? 0,
+          days: data.days,
+        };
+      }
+    } catch {
+      // Try the next candidate.
     }
-  } catch {
-    // Fall back to placeholder data below.
   }
 
   return null;
@@ -69,47 +87,69 @@ export default function VisitorStats() {
 
   useEffect(() => {
     let cancelled = false;
-    fetchStats().then((d) => {
-      if (cancelled) return;
-      if (d) {
-        setData(d);
+
+    fetchStats().then((nextData) => {
+      if (cancelled) {
+        return;
+      }
+
+      if (nextData) {
+        setData(nextData);
         setError(false);
       } else {
         setError(true);
       }
     });
+
     return () => {
       cancelled = true;
     };
   }, []);
 
-  const maxViews = Math.max(...data.days.map((d) => d.views), 1);
+  const maxViews = Math.max(...data.days.map((day) => day.views), 1);
   const today = new Date().toISOString().slice(0, 10);
 
   return (
-    <div className="chart-wrap">
-      <div className="chart-strip" aria-label="7日访问量">
-        {data.days.map((day, i) => {
-          const isToday = day.date === today;
-          return (
-            <div key={day.date} className={"chart-col" + (isToday ? " today" : "")}>
-              <span className="chart-val">{day.views || "·"}</span>
-              <div
-                className="chart-bar"
-                style={
-                  {
-                    "--i": i,
-                    "--h": day.views / maxViews,
-                    minHeight: day.views > 0 ? "4px" : "0",
-                  } as React.CSSProperties
-                }
-              />
-              <span className="chart-day">{formatDay(day.date)}</span>
-            </div>
-          );
-        })}
+    <section className="visitor-panel glass-panel">
+      <div className="visitor-kpis">
+        <div className="visitor-kpi">
+          <span>今日访问</span>
+          <strong>{data.todayViews.toLocaleString("zh-CN")}</strong>
+          <small>独立访客 {data.todayVisitors.toLocaleString("zh-CN")}</small>
+        </div>
+        <div className="visitor-kpi">
+          <span>本周访问</span>
+          <strong>{data.weekViews.toLocaleString("zh-CN")}</strong>
+          <small>独立访客 {data.weekVisitors.toLocaleString("zh-CN")}</small>
+        </div>
       </div>
-      {error ? <p className="chart-note">统计服务暂不可用，正在显示近 7 日占位图。</p> : null}
-    </div>
+
+      <div className="chart-wrap">
+        <div className="chart-strip" aria-label="近 7 日访问量">
+          {data.days.map((day, index) => {
+            const isToday = day.date === today;
+            return (
+              <div key={day.date} className={"chart-col" + (isToday ? " today" : "")}>
+                <span className="chart-val">{day.views || "0"}</span>
+                <div
+                  className="chart-bar"
+                  style={
+                    {
+                      "--i": index,
+                      "--h": day.views / maxViews,
+                      minHeight: day.views > 0 ? "4px" : "0",
+                    } as React.CSSProperties
+                  }
+                />
+                <span className="chart-day">{formatDay(day.date)}</span>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {error ? <p className="chart-note">统计服务暂不可用，当前展示的是占位图表。</p> : null}
+      <p className="visitor-note">主数字为浏览量，副标题展示独立访客数。</p>
+    </section>
   );
 }

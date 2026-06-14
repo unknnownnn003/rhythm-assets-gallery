@@ -1,4 +1,6 @@
 (() => {
+  const themeStorageKey = "rhythm-gallery-theme";
+  const prefersDark = window.matchMedia("(prefers-color-scheme: dark)");
   const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
   const canAnimate = !reduceMotion.matches;
   const cores = navigator.hardwareConcurrency || 4;
@@ -10,6 +12,70 @@
   if (isLowPower) {
     document.documentElement.classList.add("low-power-effects");
   }
+
+  function getStoredTheme() {
+    try {
+      return localStorage.getItem(themeStorageKey);
+    } catch {
+      return null;
+    }
+  }
+
+  function setStoredTheme(theme) {
+    try {
+      localStorage.setItem(themeStorageKey, theme);
+    } catch {
+      // Ignore storage failures.
+    }
+  }
+
+  function applyTheme(theme) {
+    document.documentElement.dataset.theme = theme;
+  }
+
+  function currentTheme() {
+    return document.documentElement.dataset.theme || (prefersDark.matches ? "dark" : "light");
+  }
+
+  function syncThemeButtons() {
+    const nextLabel = currentTheme() === "dark" ? "切换浅色" : "切换深色";
+    const buttons = document.querySelectorAll("[data-theme-toggle]");
+
+    for (const button of buttons) {
+      button.setAttribute("aria-pressed", currentTheme() === "dark" ? "true" : "false");
+      const label = button.querySelector("[data-theme-toggle-label]");
+      if (label) {
+        label.textContent = nextLabel;
+      }
+    }
+  }
+
+  const storedTheme = getStoredTheme();
+  if (storedTheme === "dark" || storedTheme === "light") {
+    applyTheme(storedTheme);
+  } else {
+    applyTheme(prefersDark.matches ? "dark" : "light");
+  }
+  syncThemeButtons();
+
+  document.addEventListener("click", (event) => {
+    const target = event.target instanceof Element ? event.target.closest("[data-theme-toggle]") : null;
+    if (!target) {
+      return;
+    }
+
+    const nextTheme = currentTheme() === "dark" ? "light" : "dark";
+    applyTheme(nextTheme);
+    setStoredTheme(nextTheme);
+    syncThemeButtons();
+  });
+
+  prefersDark.addEventListener("change", () => {
+    if (!getStoredTheme()) {
+      applyTheme(prefersDark.matches ? "dark" : "light");
+      syncThemeButtons();
+    }
+  });
 
   function addAmbientLayer() {
     if (document.querySelector(".ambient-canvas")) {
@@ -76,37 +142,37 @@
       lastFrame = now;
       ctx.clearRect(0, 0, width, height);
 
-      for (const p of particles) {
-        p.x += p.vx;
-        p.y += p.vy;
-        if (p.x < -12) p.x = width + 12;
-        if (p.x > width + 12) p.x = -12;
-        if (p.y < -12) p.y = height + 12;
-        if (p.y > height + 12) p.y = -12;
+      for (const particle of particles) {
+        particle.x += particle.vx;
+        particle.y += particle.vy;
+        if (particle.x < -12) particle.x = width + 12;
+        if (particle.x > width + 12) particle.x = -12;
+        if (particle.y < -12) particle.y = height + 12;
+        if (particle.y > height + 12) particle.y = -12;
 
         ctx.beginPath();
-        ctx.globalAlpha = p.alpha;
-        ctx.fillStyle = p.color;
-        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+        ctx.globalAlpha = particle.alpha;
+        ctx.fillStyle = particle.color;
+        ctx.arc(particle.x, particle.y, particle.r, 0, Math.PI * 2);
         ctx.fill();
       }
 
       if (connectDistance > 0) {
         for (let i = 0; i < particles.length; i += 1) {
           for (let j = i + 1; j < particles.length; j += 1) {
-            const a = particles[i];
-            const b = particles[j];
-            const dx = a.x - b.x;
-            const dy = a.y - b.y;
+            const left = particles[i];
+            const right = particles[j];
+            const dx = left.x - right.x;
+            const dy = left.y - right.y;
             const distSq = dx * dx + dy * dy;
             const maxSq = connectDistance * connectDistance;
             if (distSq < maxSq) {
               ctx.beginPath();
               ctx.globalAlpha = (1 - distSq / maxSq) * 0.05;
-              ctx.strokeStyle = a.color;
+              ctx.strokeStyle = left.color;
               ctx.lineWidth = 0.55;
-              ctx.moveTo(a.x, a.y);
-              ctx.lineTo(b.x, b.y);
+              ctx.moveTo(left.x, left.y);
+              ctx.lineTo(right.x, right.y);
               ctx.stroke();
             }
           }
@@ -122,7 +188,9 @@
   }
 
   function initReveal() {
-    const targets = document.querySelectorAll("[data-reveal], .gallery-page-hero, .hero, .section-block, .related-section");
+    const targets = document.querySelectorAll(
+      "[data-reveal], .gallery-page-hero, .home-hero, .home-section, .related-section",
+    );
     if (!targets.length) {
       return;
     }
@@ -150,9 +218,7 @@
 
   function initRipple() {
     document.addEventListener("pointerdown", (event) => {
-      const target = event.target instanceof Element
-        ? event.target.closest("a, button")
-        : null;
+      const target = event.target instanceof Element ? event.target.closest("a, button") : null;
       if (!target || target.closest(".asset-grid")) {
         return;
       }
@@ -180,7 +246,9 @@
       return;
     }
 
-    const cards = document.querySelectorAll(".game-card, .mosaic-card, .owner-card");
+    const cards = document.querySelectorAll(
+      ".game-spotlight, .featured-category, .side-card, .home-stat-card, .hero-preview-card",
+    );
     for (const card of cards) {
       card.addEventListener("pointermove", (event) => {
         const rect = card.getBoundingClientRect();
@@ -198,8 +266,28 @@
     }
   }
 
+  function initNavSearch() {
+    const navSearch = document.querySelector("[data-nav-search]");
+    const hero = document.querySelector(".home-hero");
+    if (!navSearch || !hero) {
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          navSearch.classList.toggle("is-visible", !entry.isIntersecting);
+        }
+      },
+      { rootMargin: "-88px 0px 0px 0px" },
+    );
+
+    observer.observe(hero);
+  }
+
   addAmbientLayer();
   initReveal();
   initRipple();
   initTilt();
+  initNavSearch();
 })();

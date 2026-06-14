@@ -17,6 +17,7 @@
     "arcaea:metadata": "tsx scripts/update-arcaea-metadata.ts",
     "arcaea:extract": "tsx scripts/extract-arcaea-update.ts",
     "arcaea:compress": "tsx scripts/compress-arcaea-update.ts",
+    "arcaea:check-apk": "tsx scripts/check-arcaea-apk.ts",
     "arcaea:publish": "powershell -ExecutionPolicy Bypass -File scripts/publish-arcaea-update.ps1",
     "phigros:extract": "python scripts/extract-phigros-update.py",
     "phigros:publish": "powershell -ExecutionPolicy Bypass -File scripts/publish-phigros-update.ps1",
@@ -32,6 +33,7 @@
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.2.4",
+    "playwright": "^1.60.0",
     "sharp": "^0.34.5",
     "tailwindcss": "^4.2.4",
     "tsx": "^4.21.0"

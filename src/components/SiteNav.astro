@@ -1,0 +1,62 @@
+---
+type NavLink = {
+  href: string;
+  label: string;
+  external?: boolean;
+};
+
+type Props = {
+  links: NavLink[];
+  compactBrand?: boolean;
+};
+
+const { links, compactBrand = false } = Astro.props as Props;
+const currentPath = Astro.url.pathname;
+
+function isActive(href: string) {
+  if (href === "/") {
+    return currentPath === "/";
+  }
+
+  return currentPath === href || currentPath.startsWith(`${href}/`);
+}
+---
+
+<header class="site-nav-shell" data-reveal>
+  <div class="site-nav glass-panel">
+    <a class={`nav-brand${compactBrand ? " is-compact" : ""}`} href="/">
+      <span>UNKN.</span>
+      {compactBrand ? null : <small>Rhythm Assets Gallery</small>}
+    </a>
+
+    <nav class="nav-links" aria-label="主导航">
+      {
+        links.map((link) => (
+          <a
+            class={isActive(link.href) ? "is-active" : undefined}
+            href={link.href}
+            target={link.external ? "_blank" : undefined}
+            rel={link.external ? "noreferrer noopener" : undefined}
+          >
+            {link.label}
+          </a>
+        ))
+      }
+    </nav>
+
+    <form class="nav-search" action="/search" method="get" data-nav-search>
+      <input
+        name="q"
+        type="search"
+        placeholder="搜索曲名、画师、曲包…"
+        autocomplete="off"
+      />
+      <button type="submit" aria-label="搜索">→</button>
+    </form>
+
+    <button class="theme-toggle" type="button" data-theme-toggle aria-label="切换主题">
+      <span aria-hidden="true">◐</span>
+      <span data-theme-toggle-label>切换深色</span>
+    </button>
+  </div>
+</header>

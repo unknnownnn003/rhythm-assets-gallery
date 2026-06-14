@@ -1,6 +1,7 @@
 import Fuse from "fuse.js";
 import { useEffect, useMemo, useState } from "react";
 
+import { downloadAssetsAsZip } from "../lib/client-zip";
 import type { AssetItem, GameName } from "../lib/types";
 import { AssetCard } from "./AssetCard";
 import { FilterPanel } from "./FilterPanel";
@@ -12,25 +13,83 @@ type GalleryGridProps = {
   game: Exclude<GameName, "Unknown"> | "All";
 };
 
+type CountItem = {
+  name: string;
+  count: number;
+  value?: string;
+};
+
 const PAGE_SIZE = 40;
+const META_FILTER_KEYS = [
+  "pack",
+  "side",
+  "version",
+] as const;
+
+const GAME_SPECIFIC_META_KEYS = new Set<string>(["side", "version", "pack"]);
+const SELECTED_STORAGE_KEY = "gallery-selected-ids";
+
+function loadSelectedIds() {
+  if (typeof window === "undefined") {
+    return new Set<string>();
+  }
+  try {
+    const raw = sessionStorage.getItem(SELECTED_STORAGE_KEY);
+    if (raw) {
+      return new Set<string>(JSON.parse(raw) as string[]);
+    }
+  } catch {
+    // ignore corrupted data
+  }
+  return new Set<string>();
+}
+
+function saveSelectedIds(ids: Set<string>) {
+  if (typeof window === "undefined") {
+    return;
+  }
+  try {
+    sessionStorage.setItem(SELECTED_STORAGE_KEY, JSON.stringify([...ids]));
+  } catch {
+    // ignore quota errors
+  }
+}
 
 export default function GalleryGrid({ assets, game }: GalleryGridProps) {
   const [query, setQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("");
-  const [selectedTag, setSelectedTag] = useState("");
   const [selectedMeta, setSelectedMeta] = useState<Record<string, string>>({});
   const [sort, setSort] = useState("recent");
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   const [hasLoadedUrlParams, setHasLoadedUrlParams] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(() => new Set());
+  const [isDownloading, setIsDownloading] = useState(false);
+  const [didRestoreSelection, setDidRestoreSelection] = useState(false);
+  const [downloadError, setDownloadError] = useState("");
+  const [downloadNotice, setDownloadNotice] = useState("");
+  const [downloadProgress, setDownloadProgress] = useState({
+    completed: 0,
+    total: 0,
+    current: "",
+  });
+  const [showSelectedPanel, setShowSelectedPanel] = useState(false);
+
+  useEffect(() => {
+    const restored = loadSelectedIds();
+    if (restored.size > 0) {
+      setSelectedIds(restored);
+    }
+    setDidRestoreSelection(true);
+  }, []);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const urlQuery = params.get("q")?.trim() ?? "";
     const urlCategory = params.get("category")?.trim() ?? "";
-    const urlTag = params.get("tag")?.trim() ?? "";
     const urlSort = params.get("sort")?.trim() ?? "";
     const nextMeta: Record<string, string> = {};
+
     for (const key of META_FILTER_KEYS) {
       const value = params.get(key)?.trim();
       if (value) {
@@ -45,13 +104,11 @@ export default function GalleryGrid({ assets, game }: GalleryGridProps) {
     if (urlCategory) {
       setSelectedCategory(urlCategory);
     }
-    if (urlTag) {
-      setSelectedTag(urlTag);
-    }
-    setSelectedMeta(nextMeta);
-    if (["recent", "name", "category"].includes(urlSort)) {
+    if (urlSort && ["recent", "name", "category"].includes(urlSort)) {
       setSort(urlSort);
     }
+
+    setSelectedMeta(nextMeta);
     setHasLoadedUrlParams(true);
   }, []);
 
@@ -72,9 +129,6 @@ export default function GalleryGrid({ assets, game }: GalleryGridProps) {
     if (selectedCategory) {
       params.set("category", selectedCategory);
     }
-    if (selectedTag) {
-      params.set("tag", selectedTag);
-    }
     for (const [key, value] of Object.entries(selectedMeta)) {
       if (value) {
         params.set(key, value);
@@ -86,29 +140,72 @@ export default function GalleryGrid({ assets, game }: GalleryGridProps) {
 
     const nextUrl = `${window.location.pathname}${params.toString() ? `?${params}` : ""}`;
     window.history.replaceState(null, "", nextUrl);
-  }, [debouncedQuery, hasLoadedUrlParams, selectedCategory, selectedMeta, selectedTag, sort]);
+  }, [debouncedQuery, hasLoadedUrlParams, selectedCategory, selectedMeta, sort]);
 
   useEffect(() => {
     setVisibleCount(PAGE_SIZE);
-  }, [debouncedQuery, selectedCategory, selectedMeta, selectedTag, sort]);
+  }, [debouncedQuery, selectedCategory, selectedMeta, sort]);
+
+  useEffect(() => {
+    if (didRestoreSelection) {
+      saveSelectedIds(selectedIds);
+    }
+  }, [selectedIds, didRestoreSelection]);
+
+  useEffect(() => {
+    if (!downloadNotice) {
+      return;
+    }
+
+    const timeout = window.setTimeout(() => setDownloadNotice(""), 3600);
+    return () => window.clearTimeout(timeout);
+  }, [downloadNotice]);
 
   const categories = useMemo(() => countBy(assets.map((asset) => asset.category)), [assets]);
-  const tags = useMemo(
+  const metaFilters = useMemo(() => buildMetaFilters(assets, game), [assets, game]);
+  const queryKeywords = useMemo(() => extractKeywords(debouncedQuery), [debouncedQuery]);
+  const searchDocuments = useMemo(
     () =>
-      countBy(
-        assets
-          .flatMap((asset) => asset.tags)
-          .filter((tag) => game === "All" || tag !== game)
-          .filter((tag) => !isStructuredTag(tag)),
-      ),
-    [assets, game],
+      assets.map((asset) => ({
+        asset,
+        text: buildSearchText(asset),
+      })),
+    [assets],
   );
-  const metaFilters = useMemo(() => buildMetaFilters(assets), [assets]);
 
   const fuse = useMemo(
     () =>
       new Fuse(assets, {
-        keys: ["title", "artist", "filename", "category", "tags", "pack", "packDisplayName", "packDescription", "version", "bydVersion", "etrVersion", "bg", "bgInverse", "sideLabel", "idx", "songId", "difficultyRating", "difficultyRatings", "chartDesigner", "jacketDesigner", "characterName", "characterEnglishName", "characterVariant", "relatedCharacterNames", "storyNode", "storyPathTitle", "relatedSongId", "relatedSongTitle"],
+        keys: [
+          "title",
+          "artist",
+          "filename",
+          "category",
+          "tags",
+          "pack",
+          "packDisplayName",
+          "packDescription",
+          "version",
+          "bydVersion",
+          "etrVersion",
+          "bg",
+          "bgInverse",
+          "sideLabel",
+          "idx",
+          "songId",
+          "difficultyRating",
+          "difficultyRatings",
+          "chartDesigner",
+          "jacketDesigner",
+          "characterName",
+          "characterEnglishName",
+          "characterVariant",
+          "relatedCharacterNames",
+          "storyNode",
+          "storyPathTitle",
+          "relatedSongId",
+          "relatedSongTitle",
+        ],
         threshold: 0.32,
         ignoreLocation: true,
       }),
@@ -116,24 +213,49 @@ export default function GalleryGrid({ assets, game }: GalleryGridProps) {
   );
 
   const filteredAssets = useMemo(() => {
-    const searched = debouncedQuery ? fuse.search(debouncedQuery).map((result) => result.item) : assets;
+    let searched = assets;
+
+    if (queryKeywords.length === 1) {
+      searched = fuse.search(queryKeywords[0]).map((result) => result.item);
+    } else if (queryKeywords.length > 1) {
+      searched = searchDocuments
+        .filter((entry) => queryKeywords.every((keyword) => entry.text.includes(keyword)))
+        .map((entry) => entry.asset);
+    }
 
     return searched
       .filter((asset) => !selectedCategory || asset.category === selectedCategory)
-      .filter((asset) => !selectedTag || asset.tags.includes(selectedTag))
       .filter((asset) => matchesMetaFilters(asset, selectedMeta))
-      .sort((a, b) => sortAssets(a, b, sort));
-  }, [assets, debouncedQuery, fuse, selectedCategory, selectedMeta, selectedTag, sort]);
+      .sort((left, right) => sortAssets(left, right, sort));
+  }, [
+    assets,
+    fuse,
+    queryKeywords,
+    searchDocuments,
+    selectedCategory,
+    selectedMeta,
+    sort,
+  ]);
 
+  const assetMap = useMemo(() => new Map(assets.map((asset) => [asset.id, asset])), [assets]);
+  const selectedAssets = useMemo(
+    () =>
+      [...selectedIds]
+        .map((id) => assetMap.get(id))
+        .filter((asset): asset is AssetItem => Boolean(asset)),
+    [assetMap, selectedIds],
+  );
   const visibleAssets = filteredAssets.slice(0, visibleCount);
   const hasMore = visibleCount < filteredAssets.length;
+  const allVisibleSelected =
+    visibleAssets.length > 0 && visibleAssets.every((asset) => selectedIds.has(asset.id));
 
   const clearFilters = () => {
     setSelectedCategory("");
-    setSelectedTag("");
     setSelectedMeta({});
     setSort("recent");
   };
+
   const handleMetaChange = (key: string, value: string) => {
     setSelectedMeta((current) => {
       const next = { ...current };
@@ -146,23 +268,104 @@ export default function GalleryGrid({ assets, game }: GalleryGridProps) {
     });
   };
 
+  const toggleSelection = (assetId: string) => {
+    setSelectedIds((current) => {
+      const next = new Set(current);
+      if (next.has(assetId)) {
+        next.delete(assetId);
+      } else {
+        next.add(assetId);
+      }
+      return next;
+    });
+  };
+
+  const toggleVisibleSelection = () => {
+    setSelectedIds((current) => {
+      const next = new Set(current);
+
+      if (allVisibleSelected) {
+        for (const asset of visibleAssets) {
+          next.delete(asset.id);
+        }
+      } else {
+        for (const asset of visibleAssets) {
+          next.add(asset.id);
+        }
+      }
+
+      return next;
+    });
+  };
+
+  const clearSelection = () => {
+    setSelectedIds(new Set());
+    setDownloadError("");
+    setDownloadNotice("");
+  };
+
+  const handleBatchDownload = async () => {
+    if (selectedAssets.length === 0 || isDownloading) {
+      return;
+    }
+
+    setIsDownloading(true);
+    setDownloadError("");
+    setDownloadNotice("");
+    setDownloadProgress({
+      completed: 0,
+      total: selectedAssets.length,
+      current: "",
+    });
+
+    try {
+      await downloadAssetsAsZip(selectedAssets, {
+        archiveName: buildArchiveName(game),
+        onProgress: (completed, total, filename) => {
+          setDownloadProgress({
+            completed,
+            total,
+            current: filename,
+          });
+        },
+      });
+
+      setDownloadNotice(`已开始打包下载 ${selectedAssets.length} 个资源。`);
+    } catch (error) {
+      setDownloadError(error instanceof Error ? error.message : "打包失败，请稍后重试。");
+    } finally {
+      setIsDownloading(false);
+    }
+  };
+
   return (
     <div className="gallery-app">
       <div className="gallery-toolbar">
         <SearchBar value={query} onChange={setQuery} resultCount={filteredAssets.length} />
+
+        <div className="gallery-actions">
+          <button type="button" className="toolbar-button" onClick={toggleVisibleSelection} disabled={!visibleAssets.length}>
+            {allVisibleSelected ? "取消已加载项" : `勾选已加载项 (${visibleAssets.length})`}
+          </button>
+          <button type="button" className="toolbar-button" onClick={clearSelection} disabled={!selectedAssets.length}>
+            清空选择
+          </button>
+          <span>
+            {selectedAssets.length > 0
+              ? `当前已选 ${selectedAssets.length} 项，可在底部一键打包。`
+              : "勾选卡片右上角“选择”即可进行前端批量打包。"}
+          </span>
+        </div>
 
         <details className="mobile-filter">
           <summary>筛选与排序</summary>
           <FilterPanel
             categories={categories}
             metaFilters={metaFilters}
-            tags={tags}
             selectedCategory={selectedCategory}
-            selectedTag={selectedTag}
             selectedMeta={selectedMeta}
             sort={sort}
             onCategoryChange={setSelectedCategory}
-            onTagChange={setSelectedTag}
             onMetaChange={handleMetaChange}
             onSortChange={setSort}
             onClear={clearFilters}
@@ -170,18 +373,36 @@ export default function GalleryGrid({ assets, game }: GalleryGridProps) {
         </details>
       </div>
 
+      <div className="category-tabs">
+        <button
+          type="button"
+          className={!selectedCategory ? "is-active" : ""}
+          onClick={() => setSelectedCategory("")}
+        >
+          全部
+        </button>
+        {categories.map((cat) => (
+          <button
+            key={cat.name}
+            type="button"
+            className={selectedCategory === cat.name ? "is-active" : ""}
+            onClick={() => setSelectedCategory(cat.name)}
+          >
+            {cat.name}
+            <span>{cat.count}</span>
+          </button>
+        ))}
+      </div>
+
       <div className="gallery-layout">
         <aside className="desktop-filter" aria-label="图库筛选">
           <FilterPanel
             categories={categories}
             metaFilters={metaFilters}
-            tags={tags}
             selectedCategory={selectedCategory}
-            selectedTag={selectedTag}
             selectedMeta={selectedMeta}
             sort={sort}
             onCategoryChange={setSelectedCategory}
-            onTagChange={setSelectedTag}
             onMetaChange={handleMetaChange}
             onSortChange={setSort}
             onClear={clearFilters}
@@ -192,13 +413,19 @@ export default function GalleryGrid({ assets, game }: GalleryGridProps) {
           {visibleAssets.length > 0 ? (
             <div className="asset-grid">
               {visibleAssets.map((asset, index) => (
-                <AssetCard key={asset.id} asset={asset} index={index} />
+                <AssetCard
+                  key={asset.id}
+                  asset={asset}
+                  index={index}
+                  selected={selectedIds.has(asset.id)}
+                  onToggleSelect={() => toggleSelection(asset.id)}
+                />
               ))}
             </div>
           ) : (
             <div className="empty-state">
               <strong>没有匹配的资源</strong>
-              <span>换一个关键词，或清空分类和标签筛选。</span>
+              <span>换一个关键词，或者清空分类、标签和元数据筛选后再试。</span>
             </div>
           )}
 
@@ -217,27 +444,96 @@ export default function GalleryGrid({ assets, game }: GalleryGridProps) {
           ) : null}
         </section>
       </div>
+
+      <div className={`batch-download-bar${selectedAssets.length > 0 ? " is-visible" : ""}`} aria-live="polite">
+        <div className="batch-download-copy">
+          <strong>已选择 {selectedAssets.length} 项</strong>
+          <span>
+            {isDownloading
+              ? `正在收集 ${downloadProgress.completed}/${downloadProgress.total}：${downloadProgress.current}`
+              : downloadError || downloadNotice || "打包时直接平铺图片文件，同名文件自动添加序号。"}
+          </span>
+        </div>
+
+        <div className="batch-download-actions">
+          <button
+            type="button"
+            className="toolbar-button"
+            onClick={() => setShowSelectedPanel((v) => !v)}
+            disabled={isDownloading || selectedAssets.length === 0}
+          >
+            {showSelectedPanel ? "收起已选" : `查看已选 (${selectedAssets.length})`}
+          </button>
+          <button type="button" className="toolbar-button" onClick={clearSelection} disabled={isDownloading}>
+            清空
+          </button>
+          <button
+            type="button"
+            className="toolbar-button is-primary"
+            onClick={handleBatchDownload}
+            disabled={isDownloading || selectedAssets.length === 0}
+          >
+            {isDownloading
+              ? `打包中 ${downloadProgress.completed}/${downloadProgress.total}`
+              : "一键打包下载 .zip"}
+          </button>
+        </div>
+      </div>
+
+      <div className={`selected-panel${showSelectedPanel && selectedAssets.length > 0 ? " is-open" : ""}`}>
+        <div className="selected-panel-head">
+          <strong>已选图片 ({selectedAssets.length})</strong>
+          <button type="button" className="toolbar-button" onClick={() => setShowSelectedPanel(false)}>
+            收起
+          </button>
+        </div>
+        <div className="selected-panel-list">
+          {selectedAssets.map((asset) => (
+            <div key={asset.id} className="selected-panel-item">
+              <img
+                src={asset.thumbnailSmall ?? asset.thumbnailMedium ?? asset.thumbnailLarge}
+                alt={asset.filename}
+                loading="lazy"
+              />
+              <span className="selected-panel-name" title={asset.filename}>{asset.filename}</span>
+              <button
+                type="button"
+                className="selected-panel-remove"
+                onClick={() => toggleSelection(asset.id)}
+                aria-label={`移除 ${asset.filename}`}
+              >
+                &times;
+              </button>
+            </div>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }
 
-const META_FILTER_KEYS = ["version", "pack", "difficulty", "rating", "side", "bg", "character", "story", "chartDesigner", "jacketDesigner"] as const;
-
-function buildMetaFilters(assets: AssetItem[]) {
+function buildMetaFilters(assets: AssetItem[], game: GalleryGridProps["game"]) {
   const filters = [
-    { label: "更新版本", value: "version", items: countBySong(assets, (asset) => asset.version ?? "", compareVersionDesc) },
-    { label: "曲包 / 章节", value: "pack", items: countPacksBySong(assets) },
-    { label: "独立难度曲绘", value: "difficulty", items: countBy(assets.map((asset) => asset.difficulty ?? ""), compareDifficulty) },
-    { label: "谱面难度", value: "rating", items: countBy(assets.flatMap((asset) => asset.difficultyRatings ?? (asset.difficultyRating ? [asset.difficultyRating] : [])), compareRating) },
-    { label: "背景侧", value: "side", items: countBySong(assets, (asset) => asset.sideLabel ?? "") },
-    { label: "游玩背景", value: "bg", items: countBySong(assets, (asset) => asset.bg ?? "") },
-    { label: "搭档", value: "character", items: countBySong(assets, (asset) => asset.characterName ?? "") },
-    { label: "剧情章节", value: "story", items: countBySong(assets, (asset) => asset.storyPathTitle ?? "") },
-    { label: "谱师", value: "chartDesigner", items: countBySong(assets, (asset) => asset.chartDesigner ?? "") },
-    { label: "曲绘画师", value: "jacketDesigner", items: countBySong(assets, (asset) => asset.jacketDesigner ?? "") },
+    {
+      label: "曲包 / 章节",
+      value: "pack",
+      items: countPacksBySong(assets),
+    },
+    {
+      label: "侧别",
+      value: "side",
+      items: countBySong(assets, (asset) => asset.sideLabel ?? ""),
+    },
+    {
+      label: "更新版本",
+      value: "version",
+      items: countBySong(assets, (asset) => asset.version ?? "", compareVersionDesc),
+    },
   ];
 
-  return filters.filter((filter) => filter.items.length > 0);
+  return filters.filter(
+    (filter) => !(game === "All" && GAME_SPECIFIC_META_KEYS.has(filter.value)) && filter.items.length > 0,
+  );
 }
 
 function matchesMetaFilters(asset: AssetItem, selectedMeta: Record<string, string>) {
@@ -246,46 +542,76 @@ function matchesMetaFilters(asset: AssetItem, selectedMeta: Record<string, strin
       return true;
     }
 
-    if (key === "version") {
-      return asset.version === value;
-    }
     if (key === "pack") {
       return asset.pack === value;
-    }
-    if (key === "difficulty") {
-      return asset.difficulty === value;
-    }
-    if (key === "rating") {
-      return asset.difficultyRating === value || asset.difficultyRatings?.includes(value);
     }
     if (key === "side") {
       return asset.sideLabel === value;
     }
-    if (key === "bg") {
-      return asset.bg === value;
-    }
-    if (key === "character") {
-      return asset.characterName === value;
-    }
-    if (key === "story") {
-      return asset.storyPathTitle === value;
-    }
-    if (key === "chartDesigner") {
-      return asset.chartDesigner === value;
-    }
-    if (key === "jacketDesigner") {
-      return asset.jacketDesigner === value;
+    if (key === "version") {
+      return asset.version === value;
     }
     return true;
   });
 }
 
-function isStructuredTag(tag: string) {
-  return /^(?:BYD|ETR|IDX|谱师|曲绘)\b/i.test(tag);
+function buildSearchText(asset: AssetItem) {
+  return [
+    asset.title,
+    asset.artist,
+    asset.filename,
+    asset.category,
+    asset.tags.join(" "),
+    asset.pack,
+    asset.packDisplayName,
+    asset.packDescription,
+    asset.version,
+    asset.bydVersion,
+    asset.etrVersion,
+    asset.bg,
+    asset.bgInverse,
+    asset.sideLabel,
+    asset.idx ? String(asset.idx) : "",
+    asset.songId,
+    asset.difficultyRating,
+    asset.difficultyRatings?.join(" "),
+    asset.chartDesigner,
+    asset.jacketDesigner,
+    asset.characterName,
+    asset.characterEnglishName,
+    asset.characterVariant,
+    asset.relatedCharacterNames?.join(" "),
+    asset.storyNode,
+    asset.storyPathTitle,
+    asset.relatedSongId,
+    asset.relatedSongTitle,
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .normalize("NFC")
+    .toLowerCase();
 }
 
-function countBySong(assets: AssetItem[], getField: (asset: AssetItem) => string, sortItems?: (a: CountItem, b: CountItem) => number) {
+function extractKeywords(query: string) {
+  return query
+    .normalize("NFC")
+    .toLowerCase()
+    .split(/[\s,，、]+/)
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
+function buildArchiveName(game: GalleryGridProps["game"]) {
+  return `rhythm-assets-${game.toLowerCase()}-${new Date().toISOString().slice(0, 10)}.zip`;
+}
+
+function countBySong(
+  assets: AssetItem[],
+  getField: (asset: AssetItem) => string,
+  sortItems?: (a: CountItem, b: CountItem) => number,
+) {
   const seen = new Map<string, string>();
+
   for (const asset of assets) {
     const key = asset.songId ?? asset.id;
     if (!seen.has(key)) {
@@ -346,33 +672,6 @@ function countBy(values: string[], sortItems?: (a: CountItem, b: CountItem) => n
     .sort(sortItems ?? ((a, b) => b.count - a.count || a.name.localeCompare(b.name, "zh-CN")));
 }
 
-type CountItem = {
-  name: string;
-  count: number;
-  value?: string;
-};
-
-function countPacks(assets: AssetItem[]) {
-  const counts = new Map<string, CountItem>();
-  for (const asset of assets) {
-    if (!asset.pack) {
-      continue;
-    }
-    const current = counts.get(asset.pack);
-    if (current) {
-      current.count += 1;
-    } else {
-      counts.set(asset.pack, {
-        name: asset.packDisplayName ?? asset.pack,
-        value: asset.pack,
-        count: 1,
-      });
-    }
-  }
-
-  return [...counts.values()].sort((a, b) => b.count - a.count || a.name.localeCompare(b.name, "zh-CN"));
-}
-
 function compareVersionDesc(a: CountItem, b: CountItem) {
   return compareVersionNameDesc(a.name, b.name) || b.count - a.count || a.name.localeCompare(b.name, "zh-CN");
 }
@@ -406,23 +705,6 @@ function parseVersionParts(value: string) {
   return value.split(".").map((part) => Number.parseInt(part, 10));
 }
 
-function compareDifficulty(a: CountItem, b: CountItem) {
-  const order = ["PST", "PRS", "FTR", "BYD", "ETR"];
-  return order.indexOf(a.name) - order.indexOf(b.name);
-}
-
-function compareRating(a: CountItem, b: CountItem) {
-  return parseRatingName(a.name) - parseRatingName(b.name) || b.count - a.count || a.name.localeCompare(b.name, "zh-CN");
-}
-
-function parseRatingName(value: string) {
-  const match = value.match(/^(\d+)(\+)?$/);
-  if (!match) {
-    return Number.POSITIVE_INFINITY;
-  }
-  return Number.parseInt(match[1], 10) + (match[2] ? 0.5 : 0);
-}
-
 function sortAssets(a: AssetItem, b: AssetItem, sort: string) {
   const sameSongArt = getSongArtKey(a) && getSongArtKey(a) === getSongArtKey(b);
   if (sameSongArt) {
@@ -437,10 +719,7 @@ function sortAssets(a: AssetItem, b: AssetItem, sort: string) {
   }
 
   if (sort === "category") {
-    return (
-      a.category.localeCompare(b.category, "zh-CN") ||
-      a.title.localeCompare(b.title, "zh-CN")
-    );
+    return a.category.localeCompare(b.category, "zh-CN") || a.title.localeCompare(b.title, "zh-CN");
   }
 
   return (b.mtimeMs ?? 0) - (a.mtimeMs ?? 0) || a.title.localeCompare(b.title, "zh-CN");

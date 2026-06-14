@@ -1,22 +1,15 @@
-﻿---
+---
 import fs from "node:fs";
 import path from "node:path";
 
-import "../styles/global.css";
+import SiteNav from "../components/SiteNav.astro";
 import VisitorStats from "../components/VisitorStats";
+import "../styles/global.css";
 import { homepageConfig } from "../lib/homepage-config";
 import { SITE_NAME, SITE_URL, absoluteUrl, assetAlt, assetOgImage } from "../lib/seo";
 import type { AssetItem, SiteSummary } from "../lib/types";
 
 const dataDir = path.join(process.cwd(), "public", "data");
-const homeStyle = [
-  `--site-max-width: ${homepageConfig.theme.maxWidth}`,
-  `--hero-min-height: ${homepageConfig.theme.heroMinHeight}`,
-  `--hero-title-max: ${homepageConfig.theme.heroTitleMax}`,
-  `--accent: ${homepageConfig.theme.accent}`,
-  `--accent-strong: ${homepageConfig.theme.accentStrong}`,
-  `--bili: ${homepageConfig.theme.bilibiliPink}`,
-].join(";");
 
 const summary = readJson<SiteSummary>("summary.json", {
   totalAssets: 0,
@@ -24,19 +17,14 @@ const summary = readJson<SiteSummary>("summary.json", {
   generatedAt: new Date(0).toISOString(),
 });
 const allRecentUpdates = readJson<AssetItem[]>("recent-updates.json", []);
-const recentUpdates = allRecentUpdates.slice(0, 8);
-const heroPreviewAssets = allRecentUpdates.filter((asset) => !isAiUpscaledAsset(asset)).slice(0, 6);
-const pageTitle = "Arcaea | Phigros 曲绘下载站 - Unknnownnn";
-const pageDescription = "Arcaea、Phigros 曲绘、角色立绘等音游资源浏览、搜索与下载。";
-const pageImage = recentUpdates[0] ? assetOgImage(recentUpdates[0]) : absoluteUrl("/site-icon.png");
-
+const recentUpdates = allRecentUpdates.slice(0, 6);
 const gameStats = new Map(summary.games.map((game) => [game.game, game]));
 const arcaea = gameStats.get("Arcaea");
 const phigros = gameStats.get("Phigros");
 const arcaeaCategoryShortcuts = getGameCategoryShortcuts(summary, "Arcaea");
 const phigrosCategoryShortcuts = getGameCategoryShortcuts(summary, "Phigros");
-const totalCategoryCount = countUniqueCategories(summary);
 const featuredCategoryCards = buildFeaturedCategoryCards(summary);
+const totalCategoryCount = countUniqueCategories(summary);
 const generatedAt = new Intl.DateTimeFormat("zh-CN", {
   year: "numeric",
   month: "2-digit",
@@ -45,16 +33,45 @@ const generatedAt = new Intl.DateTimeFormat("zh-CN", {
   minute: "2-digit",
 }).format(new Date(summary.generatedAt));
 
+const pageTitle = `${homepageConfig.siteTitle} - Unknnownnn`;
+const pageDescription = homepageConfig.metaDescription;
+const pageImage = recentUpdates[0] ? assetOgImage(recentUpdates[0]) : absoluteUrl("/site-icon.png");
+const navLinks = [
+  { href: "/", label: "首页" },
+  { href: "/arcaea", label: "Arcaea" },
+  { href: "/phigros", label: "Phigros" },
+  { href: "/search", label: "搜索" },
+];
+const apkMeta = readJson<{ latest?: { version: string; filename: string; sizeBytes: number } | null; history: Array<{ version: string; scrapedAt: string; sizeBytes: number }> }>("arcaea-apk.json", { history: [] });
+const hasApk = apkMeta.latest && apkMeta.history.length > 0;
+const apkDownload = hasApk
+  ? {
+      title: "Arcaea 客户端",
+      status: "可用",
+      version: apkMeta.latest!.version,
+      updatedAt: new Intl.DateTimeFormat("zh-CN", {
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+      }).format(new Date(apkMeta.history[0].scrapedAt)),
+      downloadCount: apkMeta.history.length > 1 ? `累计 ${apkMeta.history.length} 个版本` : "最新版本",
+      href: `/downloads/arcaea/${apkMeta.latest!.filename}`,
+      button: `下载 ${apkMeta.latest!.version}`,
+      note: `文件大小 ${(apkMeta.latest!.sizeBytes / 1024 / 1024).toFixed(1)} MB，服务器保留最近 ${Math.min(apkMeta.history.length, 3)} 个版本。`,
+    }
+  : null;
+
+const announcementItems = [
+  `最近数据更新时间：${generatedAt}`,
+  ...homepageConfig.announcements,
+];
+
 function readJson<T>(filename: string, fallback: T): T {
   const filePath = path.join(dataDir, filename);
   if (!fs.existsSync(filePath)) {
     return fallback;
   }
   return JSON.parse(fs.readFileSync(filePath, "utf8")) as T;
-}
-
-function isAiUpscaledAsset(asset: AssetItem) {
-  return asset.category === "曲绘（AI超分后）" || asset.relativePath.includes("曲绘（AI超分后）/");
 }
 
 function getGameCategoryShortcuts(siteSummary: SiteSummary, gameName: "Arcaea" | "Phigros") {
@@ -84,39 +101,35 @@ function countUniqueCategories(siteSummary: SiteSummary) {
 }
 
 type FeaturedCategoryCard = {
-  accent: string;
+  label: string;
   count: number;
   href: string;
   hint: string;
-  label: string;
-  tone: string;
-  wide?: boolean;
+  accent: string;
 };
+
 function buildFeaturedCategoryCards(siteSummary: SiteSummary) {
-  const accents = ["#0f766e", "#2563eb", "#d9466d", "#f59e0b", "#7c3aed", "#14b8a6"];
+  const accents = ["sea", "sky", "ember", "gold", "mint", "ink"];
   const cards: FeaturedCategoryCard[] = [];
 
-  for (const [gameName, tone] of [
-    ["Arcaea", "aurora"],
-    ["Phigros", "dusk"],
-  ] as const) {
+  for (const gameName of ["Arcaea", "Phigros"] as const) {
     const game = siteSummary.games.find((item) => item.game === gameName);
-    if (!game) continue;
+    if (!game) {
+      continue;
+    }
 
-    const sorted = Object.entries(game.categories)
+    const topCategories = Object.entries(game.categories)
       .map(([name, count]) => ({ name, count }))
       .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name, "zh-CN"))
       .slice(0, 3);
 
-    for (const [index, category] of sorted.entries()) {
+    for (const category of topCategories) {
       cards.push({
-        accent: accents[cards.length % accents.length],
+        label: category.name,
         count: category.count,
         href: `${gameName === "Arcaea" ? "/arcaea" : "/phigros"}?category=${encodeURIComponent(category.name)}`,
-        hint: gameName === "Arcaea" ? "Arcaea 分类" : "Phigros 分类",
-        label: category.name,
-        tone,
-        wide: index === 0,
+        hint: gameName,
+        accent: accents[cards.length % accents.length],
       });
     }
   }
@@ -126,7 +139,7 @@ function buildFeaturedCategoryCards(siteSummary: SiteSummary) {
 
 function formatBytes(bytes?: number) {
   if (!bytes) {
-    return homepageConfig.sections.unknownSize;
+    return "未知大小";
   }
   if (bytes < 1024 * 1024) {
     return `${Math.round(bytes / 1024)} KB`;
@@ -155,232 +168,237 @@ function formatBytes(bytes?: number) {
     <title>{pageTitle}</title>
   </head>
   <body>
-    <main class="site-shell" style={homeStyle}>
-      <section class="hero" data-reveal>
-        <div class="hero-copy kinetic-panel">
-          <div class="hero-orbit" aria-hidden="true">
-            <span>Arcaea</span>
-            <span>Phigros</span>
-            <span>曲绘</span>
-          </div>
+    <SiteNav links={navLinks} />
+
+    <main class="home-shell">
+      <section class="home-hero" data-reveal>
+        <div class="home-hero-copy">
           <p class="eyebrow">{homepageConfig.hero.eyebrow}</p>
           <h1>{homepageConfig.hero.title}</h1>
-          <p class="hero-text">{homepageConfig.hero.description}</p>
+          <p class="hero-description">{homepageConfig.hero.description}</p>
 
-          <form class="home-search-shell" action="/search" method="get">
+          <form class="hero-search" action="/search" method="get">
             <label class="sr-only" for="home-search-input">{homepageConfig.hero.searchLabel}</label>
-            <div class="home-search-row">
-              <input
-                id="home-search-input"
-                name="q"
-                type="search"
-                placeholder={homepageConfig.hero.searchPlaceholder}
-                autoComplete="off"
-              />
-              <button type="submit">{homepageConfig.hero.searchButton}</button>
-            </div>
+            <input
+              id="home-search-input"
+              name="q"
+              type="search"
+              placeholder={homepageConfig.hero.searchPlaceholder}
+              autoComplete="off"
+            />
+            <button type="submit">{homepageConfig.hero.searchButton}</button>
           </form>
 
-          {
-            heroPreviewAssets.length > 0 ? (
-              <div class="hero-preview-strip" aria-label="最近资源预览">
-                {heroPreviewAssets.map((asset, index) => (
-                  <a href={`/asset/${asset.id}`} style={`--i: ${index};`}>
-                    <img
-                      src={asset.thumbnailSmall ?? asset.thumbnailMedium}
-                      alt={assetAlt(asset)}
-                      width={asset.width ?? 240}
-                      height={asset.height ?? 180}
-                      loading="lazy"
-                      decoding="async"
-                    />
-                    <span>{asset.game}</span>
-                  </a>
-                ))}
-              </div>
-            ) : null
-          }
-        </div>
+          <div class="hero-chip-row" aria-label="快捷入口">
+            {
+              homepageConfig.hero.chips.map((chip) => (
+                <a class="hero-chip" href={chip.href}>
+                  {chip.label}
+                </a>
+              ))
+            }
+          </div>
 
-        <aside class="hero-side" aria-label="站点信息" data-reveal>
+          <div class="hero-download-card">
+            <div class="hero-download-head">
+              <span class={`hero-download-badge${hasApk ? " is-ready" : ""}`}>
+                {apkDownload?.status ?? homepageConfig.clientDownload.status}
+              </span>
+              <strong>{apkDownload?.title ?? homepageConfig.clientDownload.title}</strong>
+            </div>
+            <div class="hero-download-stats">
+              <div>
+                <small>版本</small>
+                <span>{apkDownload?.version ?? homepageConfig.clientDownload.version}</span>
+              </div>
+              <div>
+                <small>更新日期</small>
+                <span>{apkDownload?.updatedAt ?? homepageConfig.clientDownload.updatedAt}</span>
+              </div>
+              <div>
+                <small>下载次数</small>
+                <span>{apkDownload?.downloadCount ?? homepageConfig.clientDownload.downloadCount}</span>
+              </div>
+            </div>
+            {
+              (apkDownload?.href ?? homepageConfig.clientDownload.href) ? (
+                <a class="hero-download-btn" href={apkDownload?.href ?? homepageConfig.clientDownload.href}>
+                  {apkDownload?.button ?? homepageConfig.clientDownload.button}
+                </a>
+              ) : (
+                <span class="hero-download-btn is-pending">
+                  {homepageConfig.clientDownload.button}
+                </span>
+              )
+            }
+          </div>
+        </div>
+      </section>
+
+      <div class="home-content">
+      <section class="home-stat-strip" data-reveal>
+        <a class="home-stat-card is-primary" href="/search">
+          <span>全站资源</span>
+          <strong>{summary.totalAssets.toLocaleString("zh-CN")}</strong>
+          <small>{totalCategoryCount} 个有效分类</small>
+        </a>
+        <a class="home-stat-card" href="/arcaea">
+          <span>Arcaea</span>
+          <strong>{arcaea?.totalAssets.toLocaleString("zh-CN") ?? 0}</strong>
+          <small>{Object.keys(arcaea?.categories ?? {}).length} 个分类</small>
+        </a>
+        <a class="home-stat-card" href="/phigros">
+          <span>Phigros</span>
+          <strong>{phigros?.totalAssets.toLocaleString("zh-CN") ?? 0}</strong>
+          <small>{Object.keys(phigros?.categories ?? {}).length} 个分类</small>
+        </a>
+      </section>
+
+      <div class="home-layout">
+        <section class="home-primary">
+          <section class="home-section" data-reveal>
+            <div class="section-head">
+              <div>
+                <p class="eyebrow">Recent Updates</p>
+                <h2>最近更新曲绘</h2>
+              </div>
+              <span>最新索引同步于 {generatedAt}</span>
+            </div>
+
+            <div class="home-update-grid">
+              {
+                recentUpdates.map((asset) => (
+                  <article class="update-card glass-panel">
+                    <a class="update-card-media" href={`/asset/${asset.id}`}>
+                      <img
+                        src={asset.thumbnailSmall ?? asset.thumbnailMedium}
+                        alt={assetAlt(asset)}
+                        loading="lazy"
+                        decoding="async"
+                        width={asset.width ?? 320}
+                        height={asset.height ?? 240}
+                      />
+                    </a>
+                    <div class="update-card-body">
+                      <p>{asset.game} / {asset.category}</p>
+                      <h3>{asset.title}</h3>
+                      <span>{asset.artist ?? asset.packDisplayName ?? asset.pack ?? asset.filename}</span>
+                      <div class="update-card-actions">
+                        <a href={`/asset/${asset.id}`}>查看详情</a>
+                        <a href={asset.url} download={asset.filename}>下载原图</a>
+                      </div>
+                      <small>{formatBytes(asset.sizeBytes)}</small>
+                    </div>
+                  </article>
+                ))
+              }
+            </div>
+          </section>
+
+          <section class="home-section" data-reveal>
+            <div class="section-head">
+              <div>
+                <p class="eyebrow">Category Shortcuts</p>
+                <h2>常用分类与快速跳转</h2>
+              </div>
+            </div>
+
+            <div class="featured-category-grid">
+              {
+                featuredCategoryCards.map((card) => (
+                  <a class={`featured-category is-${card.accent}`} href={card.href}>
+                    <span>{card.hint}</span>
+                    <strong>{card.label}</strong>
+                    <small>{card.count} 张</small>
+                  </a>
+                ))
+              }
+            </div>
+
+            <div class="shortcut-columns">
+              <section class="shortcut-column">
+                <div class="shortcut-column-head">
+                  <strong>Arcaea</strong>
+                  <a href="/arcaea">进入 Arcaea</a>
+                </div>
+                <div class="shortcut-link-list">
+                  {
+                    arcaeaCategoryShortcuts.map((item) => (
+                      <a href={item.href}>
+                        <span>{item.name}</span>
+                        <strong>{item.count}</strong>
+                      </a>
+                    ))
+                  }
+                </div>
+              </section>
+
+              <section class="shortcut-column">
+                <div class="shortcut-column-head">
+                  <strong>Phigros</strong>
+                  <a href="/phigros">进入 Phigros</a>
+                </div>
+                <div class="shortcut-link-list">
+                  {
+                    phigrosCategoryShortcuts.map((item) => (
+                      <a href={item.href}>
+                        <span>{item.name}</span>
+                        <strong>{item.count}</strong>
+                      </a>
+                    ))
+                  }
+                </div>
+              </section>
+            </div>
+          </section>
+
+          <section class="home-section home-seo-note" data-reveal>
+            <p>
+              本站继续使用现有的静态 JSON 索引与图片目录结构，面向 Arcaea 与 Phigros
+              的曲绘、角色立绘、曲包封面、剧情 CG、启动页面和游玩背景等资源提供更高效的浏览、筛选与下载入口。
+            </p>
+          </section>
+        </section>
+
+        <aside class="home-sidebar">
+          <VisitorStats client:load />
+
           {
-            homepageConfig.bilibili.enabled && (
-              <div class="owner-card">
-                <div class="owner-head">
+            homepageConfig.bilibili.enabled ? (
+              <section class="side-card glass-panel" data-reveal>
+                <div class="side-card-head">
+                  <span>{homepageConfig.bilibili.badge}</span>
+                  <strong>{homepageConfig.bilibili.name}</strong>
+                </div>
+                <div class="owner-card-body">
                   <img
                     src={homepageConfig.bilibili.avatar}
                     alt={`${homepageConfig.bilibili.name} 的头像`}
-                    width="56"
-                    height="56"
+                    width="72"
+                    height="72"
                     loading="lazy"
                     decoding="async"
                   />
-                  <div>
-                    <span class="bili-mark">{homepageConfig.bilibili.badge}</span>
-                    <strong>{homepageConfig.bilibili.name}</strong>
-                  </div>
+                  <p>{homepageConfig.bilibili.description}</p>
                 </div>
-                <p>{homepageConfig.bilibili.description}</p>
-                <a href={homepageConfig.bilibili.url} target="_blank" rel="noopener noreferrer">
+                <a class="side-card-link is-bilibili" href={homepageConfig.bilibili.url} target="_blank" rel="noopener noreferrer">
                   {homepageConfig.bilibili.button}
                 </a>
-              </div>
-            )
+              </section>
+            ) : null
           }
 
-          <div class="quick-stats" aria-label="资源统计">
-            <a href="/search">
-              <span class="stat-value">{summary.totalAssets.toLocaleString("zh-CN")}</span>
-              <span class="stat-label">{homepageConfig.stats.totalAssetsLabel}</span>
-            </a>
-            <a href="#categories">
-              <span class="stat-value">{totalCategoryCount}</span>
-              <span class="stat-label">{homepageConfig.stats.categoryShortcutLabel}</span>
-            </a>
-          </div>
-
-          <VisitorStats client:load />
+          <section class="side-card glass-panel" data-reveal>
+            <div class="side-card-head">
+              <span>Announcements</span>
+              <strong>站点公告</strong>
+            </div>
+            <ul class="announcement-list">
+              {announcementItems.map((item) => <li>{item}</li>)}
+            </ul>
+          </section>
         </aside>
-      </section>
-
-      <section class="game-grid" aria-label="游戏入口" data-reveal>
-        <a class="game-card arcaea-card" href="/arcaea">
-          <span class="card-kicker">Arcaea</span>
-          <strong>{arcaea?.totalAssets.toLocaleString("zh-CN") ?? 0} 张</strong>
-          <span>{Object.keys(arcaea?.categories ?? {}).length} {homepageConfig.games.arcaeaDescription}</span>
-          <em>{homepageConfig.games.entryCta}</em>
-        </a>
-
-        <a class="game-card phigros-card" href="/phigros">
-          <span class="card-kicker">Phigros</span>
-          <strong>{phigros?.totalAssets.toLocaleString("zh-CN") ?? 0} 张</strong>
-          <span>{Object.keys(phigros?.categories ?? {}).length} {homepageConfig.games.phigrosDescription}</span>
-          <em>{homepageConfig.games.entryCta}</em>
-        </a>
-      </section>
-
-      <section class="section-block mosaic-section" data-reveal>
-        <div class="section-heading split-heading">
-          <div>
-            <p class="eyebrow">常用分类</p>
-            <h2>分类列表</h2>
-          </div>
-        </div>
-
-        <div class="mosaic-grid">
-          {
-            featuredCategoryCards.map((card, index) => (
-              <a
-                class={`mosaic-card ${card.wide ? "mosaic-card-wide" : ""} ${index === 4 ? "mosaic-card-tall" : ""}`}
-                href={card.href}
-                style={`--mosaic-accent: ${card.accent};`}
-              >
-                <span class="mosaic-tag">{card.hint}</span>
-                <strong>{card.label}</strong>
-                <em>{card.count} 张</em>
-                <small>{card.tone === "aurora" ? "Arcaea" : "Phigros"}</small>
-              </a>
-            ))
-          }
-        </div>
-      </section>
-
-      <section id="categories" class="section-block category-section" data-reveal>
-        <div class="section-heading">
-          <p class="eyebrow">{homepageConfig.sections.categoriesEyebrow}</p>
-          <h2>{homepageConfig.sections.categoriesTitle}</h2>
-        </div>
-        <div class="category-columns">
-          <div class="category-group">
-            <div class="category-group-head">
-              <strong>Arcaea</strong>
-              <a href="/arcaea">进入 Arcaea 浏览</a>
-            </div>
-            <div class="category-list">
-              {
-                arcaeaCategoryShortcuts.map((category) => (
-                  <a href={category.href} class="category-chip">
-                    <span>{category.name}</span>
-                    <strong>{category.count}</strong>
-                  </a>
-                ))
-              }
-            </div>
-          </div>
-          <div class="category-group">
-            <div class="category-group-head">
-              <strong>Phigros</strong>
-              <a href="/phigros">进入 Phigros 浏览</a>
-            </div>
-            <div class="category-list">
-              {
-                phigrosCategoryShortcuts.map((category) => (
-                  <a href={category.href} class="category-chip">
-                    <span>{category.name}</span>
-                    <strong>{category.count}</strong>
-                  </a>
-                ))
-              }
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section class="section-block" data-reveal>
-        <div class="section-heading split-heading">
-          <div>
-            <p class="eyebrow">{homepageConfig.sections.recentEyebrow}</p>
-            <h2>{homepageConfig.sections.recentTitle}</h2>
-          </div>
-          <span class="muted">{homepageConfig.sections.generatedPrefix}{generatedAt}</span>
-        </div>
-
-        <div class="recent-grid">
-          {
-            recentUpdates.map((asset) => (
-              <a class="asset-card" href={`/asset/${asset.id}`}>
-                <img
-                  src={asset.thumbnailSmall ?? asset.thumbnailMedium}
-                  alt={assetAlt(asset)}
-                  loading="lazy"
-                  decoding="async"
-                  width={asset.width ?? 320}
-                  height={asset.height ?? 240}
-                />
-                <span class="asset-meta">{asset.game} / {asset.category}</span>
-                <strong>{asset.title}</strong>
-                <span>{formatBytes(asset.sizeBytes)}</span>
-              </a>
-            ))
-          }
-        </div>
-      </section>
-
-      <section class="section-block stats-band" data-reveal>
-        <div>
-          <p class="eyebrow">{homepageConfig.sections.overviewEyebrow}</p>
-          <h2>{homepageConfig.sections.overviewTitle}</h2>
-        </div>
-        <div class="stats-grid">
-          {
-            summary.games
-              .filter((game) => game.game !== "Unknown" || game.totalAssets > 0)
-              .map((game) => (
-                <a class="mini-stat" href={game.game === "Arcaea" ? "/arcaea" : game.game === "Phigros" ? "/phigros" : "/search"}>
-                  <span>{game.game}</span>
-                  <strong>{game.totalAssets.toLocaleString("zh-CN")}</strong>
-                  <small>{Object.keys(game.categories).length} {homepageConfig.sections.categoryUnit}</small>
-                </a>
-              ))
-          }
-        </div>
-      </section>
-
-      <section class="section-block seo-intro" data-reveal>
-        <p>
-          Arcaea 与 Phigros 曲绘下载站收集并整理相关图片资源，包括曲绘、曲包封面、角色立绘、头像、剧情 CG、启动页面和游玩背景等。本站支持按游戏、分类、曲包、BPM、版本等信息搜索和筛选，方便玩家快速找到需要的音游资源。
-        </p>
-      </section>
+      </div>
 
       <footer class="site-footer">
         <span>{homepageConfig.footer.copyright}</span>
@@ -388,915 +406,12 @@ function formatBytes(bytes?: number) {
         <span>{homepageConfig.footer.contact}</span>
         <a href="https://github.com/unknnownnn003/rhythm-assets-gallery" target="_blank" rel="noopener noreferrer">GitHub</a>
       </footer>
+      </div>
     </main>
+
     <script is:inline>
       fetch("/api/stats?track", { keepalive: true });
     </script>
     <script type="module" src="/site-effects.js"></script>
   </body>
 </html>
-
-<style>
-  :global(:root) {
-    color-scheme: light dark;
-    --bg: #f6f8ff;
-    --bg-end: #fff8ef;
-    --surface: rgba(255, 255, 255, 0.74);
-    --surface-solid: #ffffff;
-    --surface-soft: rgba(239, 246, 255, 0.72);
-    --surface-hover: rgba(255, 255, 255, 0.9);
-    --text: #102033;
-    --muted: #627084;
-    --line: rgba(136, 158, 182, 0.28);
-    --accent: #0f8f8a;
-    --accent-strong: #2563eb;
-    --warm: #ffb454;
-    --rose: #fb7299;
-    --blue: #61a5ff;
-    --bili: #fb7299;
-    --glass: blur(22px) saturate(1.45);
-    --shadow: 0 18px 44px rgba(45, 79, 118, 0.16);
-    --soft-shadow: 0 10px 26px rgba(45, 79, 118, 0.12);
-    --panel-highlight: rgba(255, 255, 255, 0.72);
-    --glow-blue: rgba(37, 99, 235, 0.18);
-    --glow-pink: rgba(251, 114, 153, 0.16);
-    --glow-green: rgba(20, 184, 166, 0.14);
-  }
-
-  :global(body) {
-    background:
-      radial-gradient(circle at 16% -8%, var(--glow-blue), transparent 34rem),
-      radial-gradient(circle at 86% 12%, var(--glow-pink), transparent 30rem),
-      radial-gradient(circle at 50% 108%, var(--glow-green), transparent 34rem),
-      linear-gradient(180deg, var(--bg), var(--bg-end) 46rem);
-    color: var(--text);
-  }
-
-  .site-shell {
-    width: min(var(--site-max-width), calc(100% - 32px));
-    margin: 0 auto;
-    padding: 18px 0 56px;
-  }
-
-  .hero {
-    display: grid;
-    grid-template-columns: minmax(0, 1.25fr) minmax(280px, 0.75fr);
-    gap: 20px;
-    align-items: stretch;
-    perspective: 1200px;
-  }
-
-  .hero-copy,
-  .owner-card,
-  .quick-stats,
-  .game-card,
-  .section-block,
-  .asset-card {
-    border: 1px solid var(--line);
-    background: var(--surface);
-    backdrop-filter: var(--glass);
-    -webkit-backdrop-filter: var(--glass);
-    box-shadow: var(--shadow);
-  }
-
-  .hero-copy {
-    position: relative;
-    display: flex;
-    min-height: var(--hero-min-height);
-    flex-direction: column;
-    justify-content: flex-start;
-    overflow: hidden;
-    border-radius: 30px;
-    padding: clamp(34px, 5vw, 52px) clamp(26px, 5vw, 56px) clamp(26px, 4vw, 44px);
-    isolation: isolate;
-  }
-
-  .hero-copy::before {
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-    background:
-      linear-gradient(135deg, var(--panel-highlight), transparent 34%),
-      linear-gradient(315deg, rgba(97, 165, 255, 0.18), transparent 42%);
-    content: "";
-  }
-
-  .hero-copy::after {
-    position: absolute;
-    right: -12%;
-    bottom: -24%;
-    width: min(42vw, 430px);
-    height: min(42vw, 430px);
-    border-radius: 999px;
-    background:
-      radial-gradient(circle at 38% 32%, rgba(97, 165, 255, 0.24), transparent 34%),
-      radial-gradient(circle at 66% 62%, rgba(251, 114, 153, 0.14), transparent 42%),
-      radial-gradient(circle at 48% 72%, rgba(20, 184, 166, 0.14), transparent 48%);
-    opacity: 0.62;
-    content: "";
-  }
-
-  .hero-copy > * {
-    position: relative;
-  }
-
-  .hero-orbit {
-    position: absolute;
-    inset: 12px 24px auto auto;
-    z-index: 1;
-    display: flex;
-    gap: 8px;
-    pointer-events: none;
-  }
-
-  .hero-orbit span {
-    border: 1px solid var(--line);
-    border-radius: 999px;
-    padding: 7px 11px;
-    background: color-mix(in srgb, var(--surface-solid) 68%, transparent);
-    color: var(--muted);
-    font-size: 0.74rem;
-    font-weight: 900;
-    box-shadow: var(--soft-shadow);
-    animation: float-token 7.5s ease-in-out infinite;
-  }
-
-  .hero-orbit span:nth-child(2) {
-    animation-delay: -1.4s;
-  }
-
-  .hero-orbit span:nth-child(3) {
-    animation-delay: -2.8s;
-  }
-
-  .eyebrow {
-    margin: 20px 0 10px;
-    color: var(--accent);
-    font-size: 0.78rem;
-    font-weight: 900;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-  }
-
-  h1,
-  h2,
-  p {
-    margin-top: 0;
-  }
-
-  h1 {
-    max-width: 680px;
-    margin-bottom: 16px;
-    font-size: clamp(2.55rem, 5.2vw, var(--hero-title-max));
-    line-height: 1.02;
-    letter-spacing: 0;
-  }
-
-  h2 {
-    margin-bottom: 0;
-    font-size: clamp(1.35rem, 2.4vw, 2rem);
-    line-height: 1.15;
-    letter-spacing: 0;
-  }
-
-  .hero-text {
-    max-width: 680px;
-    margin-bottom: 26px;
-    color: var(--muted);
-    font-size: 1rem;
-    line-height: 1.8;
-  }
-
-  .hero-preview-strip {
-    display: grid;
-    grid-template-columns: repeat(6, minmax(0, 1fr));
-    width: min(640px, 100%);
-    gap: 12px;
-    margin-top: 22px;
-  }
-
-  .hero-preview-strip a {
-    position: relative;
-    display: block;
-    width: 100%;
-    overflow: hidden;
-    border: 1px solid rgba(255, 255, 255, 0.72);
-    border-radius: 22px;
-    background: var(--surface-soft);
-    box-shadow: var(--soft-shadow);
-    color: inherit;
-    text-decoration: none;
-    transform: rotate(var(--tilt, -2deg));
-    transition: transform 180ms ease, box-shadow 180ms ease;
-    animation: preview-pop 620ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
-    animation-delay: calc(var(--i, 0) * 70ms + 180ms);
-  }
-
-  .hero-preview-strip a:nth-child(2) {
-    --tilt: 2deg;
-  }
-
-  .hero-preview-strip a:nth-child(3) {
-    --tilt: -1deg;
-  }
-
-  .hero-preview-strip a:nth-child(4) {
-    --tilt: 1.5deg;
-  }
-
-  .hero-preview-strip a:nth-child(5) {
-    --tilt: -2.5deg;
-  }
-
-  .hero-preview-strip a:nth-child(6) {
-    --tilt: 2.5deg;
-  }
-
-  .hero-preview-strip a:hover {
-    transform: translateY(-4px) rotate(0deg) scale(1.04);
-    box-shadow: 0 16px 32px rgba(45, 79, 118, 0.18);
-  }
-
-  .hero-preview-strip img {
-    display: block;
-    width: 100%;
-    aspect-ratio: 1;
-    object-fit: cover;
-  }
-
-  .hero-preview-strip span {
-    position: absolute;
-    right: 7px;
-    bottom: 7px;
-    border-radius: 999px;
-    padding: 4px 7px;
-    background: rgba(255, 255, 255, 0.72);
-    color: var(--text);
-    font-size: 0.7rem;
-    font-weight: 900;
-    backdrop-filter: blur(12px);
-  }
-
-  .hero-side {
-    display: grid;
-    grid-template-rows: auto auto;
-    gap: 20px;
-  }
-
-  .owner-card {
-    display: flex;
-    min-height: 184px;
-    flex-direction: column;
-    justify-content: space-between;
-    border-radius: 28px;
-    padding: 22px;
-    background:
-      radial-gradient(circle at 12% 16%, rgba(251, 114, 153, 0.28), transparent 28%),
-      linear-gradient(135deg, rgba(251, 114, 153, 0.18), rgba(255, 255, 255, 0.66) 52%),
-      var(--surface);
-    transition: transform 180ms ease, box-shadow 180ms ease;
-  }
-
-  .owner-card:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 24px 50px rgba(251, 114, 153, 0.18);
-  }
-
-  .owner-head {
-    display: flex;
-    gap: 12px;
-    align-items: center;
-  }
-
-  .owner-head img {
-    display: block;
-    width: 56px;
-    height: 56px;
-    flex: 0 0 auto;
-    border: 3px solid rgba(255, 255, 255, 0.78);
-    border-radius: 22px;
-    object-fit: cover;
-    box-shadow: 0 12px 28px rgba(251, 114, 153, 0.18);
-  }
-
-  .bili-mark {
-    display: inline-flex;
-    width: max-content;
-    margin-bottom: 8px;
-    border-radius: 999px;
-    padding: 7px 11px;
-    background: color-mix(in srgb, var(--bili) 16%, var(--surface));
-    color: var(--bili);
-    font-size: 0.82rem;
-    font-weight: 900;
-  }
-
-  .owner-card strong,
-  .owner-card p {
-    display: block;
-  }
-
-  .owner-card strong {
-    margin-bottom: 0;
-    font-size: 1.28rem;
-    line-height: 1.18;
-  }
-
-  .owner-card p {
-    margin: 18px 0 0;
-    color: var(--muted);
-    line-height: 1.7;
-  }
-
-  .owner-card a {
-    width: max-content;
-    margin-top: 14px;
-    border-radius: 16px;
-    padding: 11px 16px;
-    background: linear-gradient(135deg, var(--bili), #ff9fb7);
-    color: #fff;
-    font-weight: 900;
-    text-decoration: none;
-    box-shadow: 0 12px 26px rgba(251, 114, 153, 0.24);
-    transition: transform 160ms ease, box-shadow 160ms ease;
-  }
-
-  .owner-card a:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 16px 34px rgba(251, 114, 153, 0.32);
-  }
-
-  .quick-stats {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    overflow: hidden;
-    border-radius: 28px;
-    background: var(--line);
-    gap: 1px;
-  }
-
-  .quick-stats > a {
-    display: flex;
-    min-height: 124px;
-    flex-direction: column;
-    justify-content: center;
-    padding: 22px;
-    background: rgba(255, 255, 255, 0.66);
-    color: inherit;
-    text-decoration: none;
-    transition: background 160ms ease, transform 160ms ease;
-  }
-
-  .quick-stats > a:hover {
-    background: rgba(255, 255, 255, 0.86);
-    transform: translateY(-2px);
-  }
-
-  .stat-value {
-    font-size: clamp(1.8rem, 4vw, 3rem);
-    font-weight: 900;
-    line-height: 1;
-  }
-
-  .stat-label,
-  .muted,
-  .asset-card span,
-  .game-card span,
-  .mini-stat small {
-    color: var(--muted);
-  }
-
-  .game-grid {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 20px;
-    margin-top: 20px;
-  }
-
-  .game-card {
-    position: relative;
-    display: flex;
-    min-height: 170px;
-    flex-direction: column;
-    justify-content: flex-end;
-    border-radius: 28px;
-    padding: 26px;
-    color: inherit;
-    text-decoration: none;
-    transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
-    isolation: isolate;
-  }
-
-  .game-card::after,
-  .mosaic-card::after,
-  .asset-card::after {
-    position: absolute;
-    inset: 0;
-    border-radius: inherit;
-    background: linear-gradient(115deg, transparent 20%, rgba(255, 255, 255, 0.42), transparent 58%);
-    opacity: 0;
-    transform: translateX(-32%);
-    transition: opacity 180ms ease, transform 460ms ease;
-    content: "";
-    pointer-events: none;
-  }
-
-  .game-card:hover::after,
-  .mosaic-card:hover::after,
-  .asset-card:hover::after {
-    opacity: 1;
-    transform: translateX(32%);
-  }
-
-  .game-card:hover,
-  .asset-card:hover,
-  .category-chip:hover {
-    border-color: color-mix(in srgb, var(--accent-strong) 38%, var(--line));
-    box-shadow: 0 22px 46px rgba(45, 79, 118, 0.18);
-    transform: translateY(-4px) scale(1.01);
-  }
-
-  .game-card strong {
-    margin-bottom: 8px;
-    font-size: clamp(1.55rem, 2.6vw, 2.15rem);
-    line-height: 1.1;
-  }
-
-  .game-card em {
-    width: max-content;
-    margin-top: 18px;
-    border-radius: 999px;
-    padding: 9px 13px;
-    background: rgba(255, 255, 255, 0.62);
-    color: var(--accent-strong);
-    font-style: normal;
-    font-weight: 900;
-    transition: transform 160ms ease, background 160ms ease;
-  }
-
-  .game-card:hover em {
-    background: rgba(255, 255, 255, 0.84);
-    transform: translateX(4px);
-  }
-
-  .card-kicker {
-    margin-bottom: auto;
-    font-weight: 900;
-  }
-
-  .arcaea-card {
-    background:
-      linear-gradient(135deg, rgba(103, 232, 249, 0.2), rgba(255, 255, 255, 0.7)),
-      var(--surface);
-  }
-
-  .phigros-card {
-    background:
-      linear-gradient(135deg, rgba(253, 164, 175, 0.22), rgba(255, 246, 214, 0.68)),
-      var(--surface);
-  }
-
-  .section-block {
-    margin-top: 20px;
-    border-radius: 28px;
-    padding: clamp(22px, 4vw, 34px);
-  }
-
-  .section-heading {
-    margin-bottom: 22px;
-  }
-
-  .split-heading {
-    display: flex;
-    gap: 16px;
-    align-items: end;
-    justify-content: space-between;
-  }
-
-  .mosaic-grid {
-    display: grid;
-    grid-template-columns: repeat(6, minmax(0, 1fr));
-    gap: 12px;
-  }
-
-  .mosaic-card {
-    position: relative;
-    display: flex;
-    min-height: 162px;
-    flex-direction: column;
-    justify-content: space-between;
-    overflow: hidden;
-    border: 1px solid var(--line);
-    border-radius: 24px;
-    padding: 18px;
-    background:
-      radial-gradient(circle at 14% 14%, color-mix(in srgb, var(--mosaic-accent) 24%, transparent), transparent 36%),
-      linear-gradient(135deg, rgba(255, 255, 255, 0.72), rgba(255, 255, 255, 0.5)),
-      var(--surface);
-    color: inherit;
-    text-decoration: none;
-    box-shadow: var(--soft-shadow);
-    transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
-    isolation: isolate;
-  }
-
-  .mosaic-card::before {
-    position: absolute;
-    inset: auto -20% -38% auto;
-    width: 160px;
-    height: 160px;
-    border-radius: 50%;
-    background: color-mix(in srgb, var(--mosaic-accent) 16%, transparent);
-    content: "";
-  }
-
-  .mosaic-card:hover {
-    border-color: color-mix(in srgb, var(--mosaic-accent) 52%, var(--line));
-    box-shadow: 0 24px 52px rgba(45, 79, 118, 0.2);
-    transform: translateY(-4px) scale(1.01);
-  }
-
-  .mosaic-card strong,
-  .mosaic-card em,
-  .mosaic-card small,
-  .mosaic-tag {
-    position: relative;
-  }
-
-  .mosaic-card strong {
-    font-size: clamp(1.2rem, 2vw, 1.65rem);
-    line-height: 1.1;
-  }
-
-  .mosaic-card em {
-    width: max-content;
-    border-radius: 999px;
-    padding: 8px 11px;
-    background: color-mix(in srgb, var(--mosaic-accent) 16%, var(--surface));
-    color: var(--mosaic-accent);
-    font-style: normal;
-    font-weight: 900;
-  }
-
-  .mosaic-card small {
-    color: var(--muted);
-    font-size: 0.78rem;
-    font-weight: 800;
-  }
-
-  .mosaic-tag {
-    width: max-content;
-    border-radius: 999px;
-    padding: 6px 10px;
-    background: rgba(255, 255, 255, 0.68);
-    color: var(--muted);
-    font-size: 0.72rem;
-    font-weight: 800;
-    letter-spacing: 0.02em;
-    text-transform: uppercase;
-  }
-
-  .mosaic-card-wide {
-    grid-column: span 2;
-  }
-
-  .mosaic-card-tall {
-    grid-row: span 2;
-    min-height: 336px;
-  }
-
-  .category-list {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-  }
-
-  .category-columns {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 18px;
-  }
-
-  .category-group {
-    border: 1px solid var(--line);
-    border-radius: 22px;
-    padding: 18px;
-    background: rgba(255, 255, 255, 0.42);
-  }
-
-  .category-group-head {
-    display: flex;
-    gap: 12px;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 14px;
-  }
-
-  .category-group-head strong {
-    font-size: 1.08rem;
-  }
-
-  .category-group-head a {
-    border-radius: 999px;
-    padding: 8px 12px;
-    background: color-mix(in srgb, var(--accent-strong) 12%, transparent);
-    color: var(--accent-strong);
-    font-size: 0.82rem;
-    font-weight: 900;
-    text-decoration: none;
-  }
-
-  .category-chip {
-    display: inline-flex;
-    align-items: center;
-    gap: 12px;
-    border: 1px solid var(--line);
-    border-radius: 18px;
-    padding: 10px 14px;
-    background: rgba(255, 255, 255, 0.58);
-    color: inherit;
-    text-decoration: none;
-    transition: transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease;
-  }
-
-  .category-chip strong {
-    color: var(--accent-strong);
-  }
-
-  .recent-grid {
-    display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 16px;
-  }
-
-  .asset-card {
-    position: relative;
-    overflow: hidden;
-    border-radius: 24px;
-    color: inherit;
-    text-decoration: none;
-    transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
-    isolation: isolate;
-  }
-
-  .asset-card img {
-    display: block;
-    width: 100%;
-    aspect-ratio: 4 / 3;
-    object-fit: cover;
-    background: var(--surface-soft);
-    transition: transform 260ms cubic-bezier(0.2, 0.8, 0.2, 1);
-  }
-
-  .asset-card:hover img {
-    transform: scale(1.045);
-  }
-
-  .asset-card strong,
-  .asset-card span {
-    display: block;
-    padding-inline: 14px;
-  }
-
-  .asset-card strong {
-    padding-top: 6px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  .asset-card span:last-child {
-    padding-bottom: 14px;
-  }
-
-  .asset-meta {
-    padding-top: 12px;
-    font-size: 0.82rem;
-  }
-
-  .stats-band {
-    display: grid;
-    grid-template-columns: 0.7fr 1.3fr;
-    gap: 20px;
-    align-items: center;
-  }
-
-  .stats-grid {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 12px;
-  }
-
-  .mini-stat {
-    border: 1px solid var(--line);
-    border-radius: 22px;
-    padding: 18px;
-    background: rgba(255, 255, 255, 0.56);
-    color: inherit;
-    text-decoration: none;
-    transition: transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease;
-  }
-
-  .mini-stat:hover {
-    border-color: color-mix(in srgb, var(--accent-strong) 38%, var(--line));
-    box-shadow: var(--soft-shadow);
-    transform: translateY(-3px);
-  }
-
-  .mini-stat span,
-  .mini-stat strong,
-  .mini-stat small {
-    display: block;
-  }
-
-  .mini-stat strong {
-    margin: 8px 0 4px;
-    font-size: 2rem;
-    line-height: 1;
-  }
-
-  .seo-intro {
-    color: var(--muted);
-    line-height: 1.8;
-  }
-
-  .seo-intro p {
-    margin-bottom: 0;
-  }
-
-  .site-footer {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px 18px;
-    margin-top: 18px;
-    padding: 0 6px;
-    color: color-mix(in srgb, var(--muted) 82%, transparent);
-    font-size: 0.78rem;
-    line-height: 1.7;
-  }
-
-  @keyframes float-token {
-    0%,
-    100% {
-      transform: translateY(0);
-    }
-
-    50% {
-      transform: translateY(-8px);
-    }
-  }
-
-  @keyframes preview-pop {
-    from {
-      opacity: 0;
-      transform: translateY(12px) rotate(var(--tilt, -2deg)) scale(0.92);
-    }
-
-    to {
-      opacity: 1;
-      transform: rotate(var(--tilt, -2deg)) scale(1);
-    }
-  }
-
-  .sr-only {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    overflow: hidden;
-    clip: rect(0, 0, 0, 0);
-    white-space: nowrap;
-  }
-
-  @media (prefers-color-scheme: dark) {
-    :global(:root) {
-      --bg: #0d1117;
-      --bg-end: #111827;
-      --surface: rgba(21, 27, 35, 0.68);
-      --surface-solid: #151b23;
-      --surface-soft: rgba(31, 41, 55, 0.66);
-      --surface-hover: rgba(31, 41, 55, 0.86);
-      --text: #f8fafc;
-      --muted: #a4adbb;
-      --line: rgba(148, 163, 184, 0.22);
-      --accent: #5eead4;
-      --accent-strong: #7dd3fc;
-      --panel-highlight: rgba(255, 255, 255, 0.08);
-      --glow-blue: rgba(125, 211, 252, 0.14);
-      --glow-pink: rgba(251, 114, 153, 0.1);
-      --glow-green: rgba(45, 212, 191, 0.09);
-      --shadow: 0 20px 50px rgba(0, 0, 0, 0.35);
-    }
-
-    :global(body) {
-      background:
-        radial-gradient(circle at 16% -8%, var(--glow-blue), transparent 34rem),
-        radial-gradient(circle at 86% 12%, var(--glow-pink), transparent 30rem),
-        radial-gradient(circle at 50% 108%, var(--glow-green), transparent 34rem),
-        linear-gradient(180deg, var(--bg), var(--bg-end) 42rem);
-    }
-
-    .quick-stats > a,
-    .category-group,
-    .category-chip,
-    .mini-stat,
-    .hero-preview-strip span,
-    .hero-orbit span {
-      background: rgba(21, 27, 35, 0.68);
-    }
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    .hero-orbit span,
-    .hero-preview-strip a {
-      animation: none;
-    }
-  }
-
-  @media (max-width: 900px) {
-    .hero,
-    .stats-band {
-      grid-template-columns: 1fr;
-    }
-
-    .hero-side {
-      grid-template-columns: minmax(0, 1fr) minmax(260px, 0.85fr);
-      grid-template-rows: auto;
-    }
-
-    .recent-grid {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-
-    .mosaic-grid {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-
-    .mosaic-card-wide,
-    .mosaic-card-tall {
-      grid-column: auto;
-      grid-row: auto;
-      min-height: 162px;
-    }
-
-    .hero-preview-strip {
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      width: min(420px, 100%);
-    }
-
-    .category-columns {
-      grid-template-columns: 1fr;
-    }
-  }
-
-  @media (max-width: 620px) {
-    .site-shell {
-      width: min(100% - 20px, var(--site-max-width));
-      padding-top: 10px;
-    }
-
-    .hero-copy,
-    .owner-card,
-    .quick-stats,
-    .game-card,
-    .section-block {
-      border-radius: 16px;
-    }
-
-    .hero-copy {
-      min-height: 300px;
-    }
-
-    .hero-orbit {
-      display: none;
-    }
-
-    .eyebrow {
-      margin-top: 0;
-    }
-
-    .hero-side {
-      grid-template-columns: 1fr;
-    }
-
-    .game-grid,
-    .recent-grid,
-    .stats-grid,
-    .quick-stats {
-      grid-template-columns: 1fr;
-    }
-
-    .mosaic-grid {
-      grid-template-columns: 1fr;
-    }
-
-    .category-group-head {
-      align-items: start;
-      flex-direction: column;
-    }
-
-    .split-heading {
-      align-items: start;
-      flex-direction: column;
-    }
-  }
-</style>

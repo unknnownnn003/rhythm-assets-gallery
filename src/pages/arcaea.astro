@@ -1,8 +1,9 @@
-﻿---
+---
 import fs from "node:fs";
 import path from "node:path";
 
 import GalleryGrid from "../components/GalleryGrid";
+import SiteNav from "../components/SiteNav.astro";
 import "../styles/global.css";
 import { SITE_NAME, absoluteUrl, assetOgImage } from "../lib/seo";
 import type { AssetItem } from "../lib/types";
@@ -12,6 +13,12 @@ const pageTitle = "Arcaea 曲绘资源下载 - Unknnownnn";
 const pageDescription = "浏览和搜索 Arcaea 曲绘、曲包封面、角色立绘、剧情 CG、启动页面和游玩背景资源。";
 const pageUrl = absoluteUrl("/arcaea/");
 const pageImage = assets[0] ? assetOgImage(assets[0]) : absoluteUrl("/site-icon.png");
+const navLinks = [
+  { href: "/", label: "首页" },
+  { href: "/arcaea", label: "Arcaea" },
+  { href: "/phigros", label: "Phigros" },
+  { href: "/search", label: "搜索" },
+];
 
 function readAssets(filename: string): AssetItem[] {
   const filePath = path.join(process.cwd(), "public", "data", filename);
@@ -42,23 +49,20 @@ function readAssets(filename: string): AssetItem[] {
     <title>{pageTitle}</title>
   </head>
   <body class="theme-arcaea">
+    <SiteNav links={navLinks} />
+
     <main class="gallery-page-shell">
-      <header class="gallery-page-hero">
-        <nav>
-          <a href="/">首页</a>
-          <a href="/phigros">Phigros</a>
-        </nav>
+      <header class="gallery-page-hero glass-panel" data-reveal>
         <p class="eyebrow">Arcaea Gallery</p>
         <h1>Arcaea 资源图库</h1>
-        <p>当前索引 {assets.length.toLocaleString("zh-CN")} 个资源。搜索和筛选仅加载 Arcaea 索引。</p>
-        <p class="seo-copy">本页整理 Arcaea 曲绘、曲包封面、角色立绘、剧情 CG、启动页面、游玩背景等资源。你可以通过曲名、作者、曲包、BPM、SIDE 或版本号进行搜索。</p>
+        <div class="gallery-hero-badges">
+          <span>曲绘 / 立绘 / 游玩背景</span>
+          <span>支持多条件筛选</span>
+          <span>支持前端批量打包</span>
+        </div>
       </header>
 
       <GalleryGrid assets={assets} game="Arcaea" client:load />
-
-      <footer class="gallery-footer">
-        <a href="https://github.com/unknnownnn003/rhythm-assets-gallery" target="_blank" rel="noopener noreferrer">GitHub</a>
-      </footer>
     </main>
     <script type="module" src="/site-effects.js"></script>
   </body>
