@@ -53,7 +53,10 @@ STATS_DATA_DIR=/www/wwwroot/stats-data
 ARCAEA_APK_RUNTIME_DIR=/www/wwwroot/stats-data/arcaea-apk
 ARCAEA_APK_META_FILE=/www/wwwroot/stats-data/arcaea-apk/arcaea-apk.json
 ARCAEA_APK_DOWNLOAD_DIR=/www/wwwroot/stats-data/arcaea-apk/files
+STATS_SALT=<long-random-secret>
 ```
+
+Security and Nginx hardening notes: `docs/SECURITY-HARDENING.md`
 
 鐗规€ц鏄庯細
 

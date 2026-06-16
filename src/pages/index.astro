@@ -8,6 +8,7 @@ import VisitorStats from "../components/VisitorStats";
 import "../styles/global.css";
 import { homepageConfig } from "../lib/homepage-config";
 import { SITE_NAME, SITE_URL, absoluteUrl, assetAlt, assetOgImage } from "../lib/seo";
+import { SITE_CSP } from "../lib/security";
 import type { AssetItem, SiteSummary } from "../lib/types";
 
 const dataDir = path.join(process.cwd(), "public", "data");
@@ -158,6 +159,7 @@ function formatBytes(bytes?: number) {
     <meta property="og:description" content={pageDescription} />
     <meta property="og:url" content={SITE_URL + "/"} />
     <meta property="og:image" content={pageImage} />
+    <meta http-equiv="Content-Security-Policy" content={SITE_CSP} />
     <title>{pageTitle}</title>
   </head>
   <body>
@@ -367,9 +369,6 @@ function formatBytes(bytes?: number) {
       </div>
     </main>
 
-    <script is:inline>
-      fetch("/api/stats?track", { keepalive: true });
-    </script>
     <script is:inline src="/search-autocomplete.js"></script>
     <script type="module" src="/site-effects.js"></script>
   </body>

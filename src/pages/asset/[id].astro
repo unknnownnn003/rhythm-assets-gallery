@@ -4,6 +4,7 @@ import path from "node:path";
 
 import "../../styles/global.css";
 import { SITE_NAME, absoluteUrl, assetAlt, assetMetaDescription, assetMetaTitle, assetOgImage } from "../../lib/seo";
+import { SITE_CSP } from "../../lib/security";
 import type { AssetItem } from "../../lib/types";
 
 export function getStaticPaths() {
@@ -245,6 +246,7 @@ function formatBytes(bytes?: number) {
     <meta property="og:description" content={pageDescription} />
     <meta property="og:url" content={pageUrl} />
     <meta property="og:image" content={pageImage} />
+    <meta http-equiv="Content-Security-Policy" content={SITE_CSP} />
     <title>{pageTitle}</title>
   </head>
   <body class={asset.game === "Phigros" ? "theme-phigros" : "theme-arcaea"}>
@@ -274,7 +276,7 @@ function formatBytes(bytes?: number) {
           <div class="action-row">
             <a class="primary-action" href={originalUrl} download={asset.filename}>下载原图</a>
             <button class="secondary-action" type="button" data-copy-url={originalUrl}>复制直链</button>
-            {asset.wikiUrl ? <a class="secondary-action" href={asset.wikiUrl} target="_blank" rel="noreferrer">{wikiLabel}</a> : null}
+            {asset.wikiUrl ? <a class="secondary-action" href={asset.wikiUrl} target="_blank" rel="noopener noreferrer">{wikiLabel}</a> : null}
             <a class="secondary-action" href={gameHref}>{gameLabel}</a>
           </div>
 
@@ -346,24 +348,7 @@ function formatBytes(bytes?: number) {
       </section>
     </main>
 
-    <script>
-      const button = document.querySelector("[data-copy-url]");
-      button?.addEventListener("click", async () => {
-        const url = new URL(button.getAttribute("data-copy-url") || "", window.location.origin).toString();
-        try {
-          await navigator.clipboard.writeText(url);
-          button.textContent = "已复制";
-          window.setTimeout(() => {
-            button.textContent = "复制直链";
-          }, 1600);
-        } catch {
-          button.textContent = "复制失败";
-          window.setTimeout(() => {
-            button.textContent = "复制直链";
-          }, 1600);
-        }
-      });
-    </script>
+    <script is:inline src="/copy-url.js"></script>
     <script type="module" src="/site-effects.js"></script>
   </body>
 </html>

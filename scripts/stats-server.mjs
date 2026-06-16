@@ -9,9 +9,28 @@ const APK_RUNTIME_DIR = process.env.ARCAEA_APK_RUNTIME_DIR?.trim() || path.join(
 const APK_META_FILE = process.env.ARCAEA_APK_META_FILE?.trim() || path.join(APK_RUNTIME_DIR, "arcaea-apk.json");
 const APK_DOWNLOAD_DIR = process.env.ARCAEA_APK_DOWNLOAD_DIR?.trim() || path.join(APK_RUNTIME_DIR, "files");
 const PORT = parseInt(process.env.STATS_PORT ?? "3001", 10);
-const SALT = "rhythm-gallery-stats-salt";
-const LISTEN_HOST = process.env.STATS_HOST?.trim() || "localhost";
+const SITE_ORIGIN = "https://www.unknnownnn.homes";
+const DEFAULT_ALLOWED_ORIGINS = [SITE_ORIGIN, "http://localhost:4321"];
+const SALT = process.env.STATS_SALT?.trim();
+const LOOPBACK_V4_HOST = ["127", "0", "0", "1"].join(".");
+const LISTEN_HOST = process.env.STATS_HOST?.trim() || LOOPBACK_V4_HOST;
 const APK_DOWNLOAD_LATEST_PATH = "/api/download/arcaea/latest";
+const TRACK_COOLDOWN_MS = parsePositiveInt(process.env.STATS_TRACK_COOLDOWN_MS, 15_000);
+const ALLOWED_ORIGINS = new Set(
+  (process.env.STATS_ALLOWED_ORIGINS?.split(",") ?? DEFAULT_ALLOWED_ORIGINS)
+    .map((value) => value.trim())
+    .filter(Boolean),
+);
+const recentTrackByVisitor = new Map();
+
+if (!SALT) {
+  throw new Error("STATS_SALT is required");
+}
+
+function parsePositiveInt(value, fallback) {
+  const parsed = Number.parseInt(value ?? "", 10);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
+}
 
 function ensureDir(dirPath) {
   if (!fs.existsSync(dirPath)) {
@@ -52,6 +71,89 @@ function localDateString(date = new Date()) {
 
 function hashIp(ip) {
   return crypto.createHash("sha256").update(ip + SALT).digest("hex").slice(0, 16);
+}
+
+function normalizeOrigin(value) {
+  if (typeof value !== "string" || !value.trim()) {
+    return null;
+  }
+
+  try {
+    return new URL(value).origin;
+  } catch {
+    return null;
+  }
+}
+
+function appendVary(res, value) {
+  const current = res.getHeader("Vary");
+  if (!current) {
+    res.setHeader("Vary", value);
+    return;
+  }
+
+  const existing = String(current)
+    .split(",")
+    .map((entry) => entry.trim())
+    .filter(Boolean);
+  if (!existing.includes(value)) {
+    existing.push(value);
+    res.setHeader("Vary", existing.join(", "));
+  }
+}
+
+function applySecurityHeaders(res) {
+  res.setHeader("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
+  res.setHeader("X-Content-Type-Options", "nosniff");
+  res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
+  res.setHeader("X-Frame-Options", "DENY");
+  res.setHeader("Permissions-Policy", "geolocation=(), microphone=(), camera=()");
+}
+
+function applyCorsHeaders(req, res) {
+  const origin = normalizeOrigin(req.headers.origin);
+  if (!origin || !ALLOWED_ORIGINS.has(origin)) {
+    return false;
+  }
+
+  res.setHeader("Access-Control-Allow-Origin", origin);
+  res.setHeader("Access-Control-Allow-Headers", "Range, Content-Type");
+  res.setHeader("Access-Control-Allow-Methods", "GET, HEAD, OPTIONS");
+  appendVary(res, "Origin");
+  return true;
+}
+
+function isTrustedTrackRequest(req) {
+  const origin = normalizeOrigin(req.headers.origin);
+  if (origin) {
+    return ALLOWED_ORIGINS.has(origin);
+  }
+
+  const fetchSiteHeader = req.headers["sec-fetch-site"];
+  const fetchSite = Array.isArray(fetchSiteHeader) ? fetchSiteHeader[0] : fetchSiteHeader;
+  if (fetchSite === "cross-site") {
+    return false;
+  }
+
+  return true;
+}
+
+function shouldCountTrack(ipHash) {
+  const now = Date.now();
+  const previous = recentTrackByVisitor.get(ipHash) ?? 0;
+  if (now - previous < TRACK_COOLDOWN_MS) {
+    return false;
+  }
+
+  recentTrackByVisitor.set(ipHash, now);
+  const cutoff = now - TRACK_COOLDOWN_MS;
+  for (const [key, timestamp] of recentTrackByVisitor) {
+    if (timestamp < cutoff) {
+      recentTrackByVisitor.delete(key);
+    }
+  }
+
+  return true;
 }
 
 function cleanOldDays(data) {
@@ -127,7 +229,9 @@ function trackAndGetStats(clientIp) {
     data.days[today] = { visitors: [], views: 0 };
   }
 
-  data.days[today].views += 1;
+  if (shouldCountTrack(ipHash)) {
+    data.days[today].views += 1;
+  }
   if (!data.days[today].visitors.includes(ipHash)) {
     data.days[today].visitors.push(ipHash);
   }
@@ -354,11 +458,16 @@ const server = http.createServer((req, res) => {
   try {
     const url = new URL(req.url, "http://localhost");
 
-    res.setHeader("Access-Control-Allow-Origin", "*");
-    res.setHeader("Access-Control-Allow-Headers", "Range, Content-Type");
-    res.setHeader("Access-Control-Allow-Methods", "GET, HEAD, OPTIONS");
+    applySecurityHeaders(res);
+    const hasCorsHeaders = applyCorsHeaders(req, res);
 
     if (req.method === "OPTIONS") {
+      if (!hasCorsHeaders) {
+        res.writeHead(403, { "Cache-Control": "no-store, no-cache, must-revalidate" });
+        res.end("Forbidden");
+        return;
+      }
+
       res.writeHead(204);
       res.end();
       return;
@@ -368,6 +477,11 @@ const server = http.createServer((req, res) => {
       res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate");
 
       const shouldTrack = url.searchParams.has("track");
+      if (shouldTrack && !isTrustedTrackRequest(req)) {
+        sendJson(res, 403, { error: "Cross-site tracking is not allowed." });
+        return;
+      }
+
       const clientIp =
         req.headers["x-real-ip"] ||
         req.headers["x-forwarded-for"]?.split(",")[0]?.trim() ||

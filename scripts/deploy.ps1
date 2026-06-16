@@ -113,6 +113,12 @@ function Quote-RemotePath {
   return "'" + $Value.Replace("'", "'""'""'") + "'"
 }
 
+function Normalize-RemoteScript {
+  param([string]$Script)
+
+  return $Script -replace "`r`n?", "`n"
+}
+
 function Get-RemoteParentPath {
   param([string]$Path)
 
@@ -520,7 +526,7 @@ if ($Mode -eq "remote-build") {
 
   Invoke-Step "Clean old remote build files" {
     $remoteScript = Get-RemoteCleanupScript -DeployPath $deployPath -RemoteWorkPath $remoteWorkPath
-    & ssh @sshBaseArgs $remote $remoteScript
+    & ssh @sshBaseArgs $remote (Normalize-RemoteScript $remoteScript)
   }
 
   Invoke-Step "Check remote free disk space" {
@@ -532,7 +538,7 @@ mkdir -p -- $quotedDeployParentPath
 mkdir -p -- $quotedRemoteWorkPath
 df -Pk -- $quotedDeployParentPath | awk 'NR==2 {print `$4}'
 "@
-    $availableKbOutput = & ssh @sshBaseArgs $remote $remoteScript
+    $availableKbOutput = & ssh @sshBaseArgs $remote (Normalize-RemoteScript $remoteScript)
     if ($LASTEXITCODE -ne 0) {
       throw "Unable to check remote disk space"
     }
@@ -617,12 +623,12 @@ rm -rf -- $quotedTempPath
 mv -- dist $quotedTempPath
 rm -f -- $quotedRemoteArchivePath
 "@
-    & ssh @sshBaseArgs $remote $remoteScript
+    & ssh @sshBaseArgs $remote (Normalize-RemoteScript $remoteScript)
   }
 
   Invoke-Step "Switch remote release atomically" {
     $remoteScript = Get-RemoteSwitchScript -DeployPath $deployPath -TempPath $tempPath -OldPath $oldPath -CleanupPath $remoteSourcePath
-    & ssh @sshBaseArgs $remote $remoteScript
+    & ssh @sshBaseArgs $remote (Normalize-RemoteScript $remoteScript)
   }
 
   Write-Host ""
@@ -675,7 +681,7 @@ set -e
 mkdir -p -- $quotedDeployParentPath
 df -Pk -- $quotedDeployParentPath | awk 'NR==2 {print `$4}'
 "@
-  $availableKbOutput = & ssh @sshBaseArgs $remote $remoteScript
+  $availableKbOutput = & ssh @sshBaseArgs $remote (Normalize-RemoteScript $remoteScript)
   if ($LASTEXITCODE -ne 0) {
     throw "Unable to check remote disk space"
   }
@@ -710,7 +716,7 @@ Invoke-Step "Upload dist contents with scp" {
 
 Invoke-Step "Switch remote release atomically" {
   $remoteScript = Get-RemoteSwitchScript -DeployPath $deployPath -TempPath $tempPath -OldPath $oldPath
-  & ssh @sshBaseArgs $remote $remoteScript
+  & ssh @sshBaseArgs $remote (Normalize-RemoteScript $remoteScript)
 }
 
 Write-Host ""

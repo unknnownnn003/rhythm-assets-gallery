@@ -13,6 +13,13 @@ type DownloadCardFallback = {
   note: string;
 };
 
+type CardAction = "download" | "pending" | "retry";
+type RequestState = "idle" | "loading" | "complete";
+
+type CardData = DownloadCardFallback & {
+  action: CardAction;
+};
+
 type Props = {
   fallback: DownloadCardFallback;
 };
@@ -41,7 +48,7 @@ function formatDate(value: string) {
 
 function formatBytes(bytes: number) {
   if (!Number.isFinite(bytes) || bytes <= 0) {
-    return "未知大小";
+    return "\u672a\u77e5\u5927\u5c0f";
   }
 
   if (bytes < 1024 * 1024) {
@@ -97,38 +104,75 @@ async function fetchArcaeaApkMeta(): Promise<ArcaeaApkPublicMeta | null> {
   return null;
 }
 
-function buildCardData(meta: ArcaeaApkPublicMeta | null, fallback: DownloadCardFallback) {
-  if (!meta?.latest) {
-    return fallback;
+function buildCardData(
+  meta: ArcaeaApkPublicMeta | null,
+  fallback: DownloadCardFallback,
+  requestState: RequestState,
+): CardData {
+  if (meta?.latest) {
+    const updatedAt = formatDate(meta.latest.scrapedAt);
+    const downloadCount = meta.downloadCount ?? 0;
+
+    return {
+      title: fallback.title,
+      status: "\u53ef\u7528",
+      version: meta.latest.version,
+      updatedAt: updatedAt || fallback.updatedAt,
+      cacheCount: `${downloadCount} \u6b21`,
+      href: meta.downloadHref || DOWNLOAD_PATH,
+      button: `\u4e0b\u8f7d ${meta.latest.version}`,
+      note: `\u6587\u4ef6\u5927\u5c0f ${formatBytes(meta.latest.sizeBytes)}\uff0c\u652f\u6301\u65ad\u70b9\u7eed\u4f20\u3002`,
+      action: "download",
+    };
   }
 
-  const updatedAt = formatDate(meta.latest.scrapedAt);
-  const downloadCount = meta.downloadCount ?? 0;
+  if (requestState === "loading") {
+    return {
+      ...fallback,
+      status: "\u83b7\u53d6\u4e2d",
+      href: "",
+      button: "\u6b63\u5728\u83b7\u53d6\u6700\u65b0\u7248\u672c",
+      note: fallback.note || "\u6b63\u5728\u540c\u6b65\u6700\u65b0\u5ba2\u6237\u7aef\u4fe1\u606f\uff0c\u8bf7\u7a0d\u5019\u3002",
+      action: "pending",
+    };
+  }
+
+  if (requestState === "complete") {
+    return {
+      ...fallback,
+      status: "\u6682\u65f6\u4e0d\u53ef\u7528",
+      href: "",
+      button: "\u5237\u65b0\u9875\u9762\u91cd\u8bd5",
+      note:
+        fallback.note ||
+        "\u6682\u65f6\u65e0\u6cd5\u83b7\u53d6\u6700\u65b0\u5ba2\u6237\u7aef\u4fe1\u606f\uff0c\u8bf7\u5237\u65b0\u9875\u9762\u540e\u91cd\u8bd5\u3002",
+      action: "retry",
+    };
+  }
 
   return {
-    title: fallback.title,
-    status: "可用",
-    version: meta.latest.version,
-    updatedAt: updatedAt || fallback.updatedAt,
-    cacheCount: `${downloadCount} 次`,
-    href: meta.downloadHref || DOWNLOAD_PATH,
-    button: `下载 ${meta.latest.version}`,
-    note: `文件大小 ${formatBytes(meta.latest.sizeBytes)}，支持断点续传。`,
+    ...fallback,
+    href: "",
+    action: "pending",
   };
 }
 
 export default function ArcaeaApkDownloadCard({ fallback }: Props) {
   const [meta, setMeta] = useState<ArcaeaApkPublicMeta | null>(null);
+  const [requestState, setRequestState] = useState<RequestState>("idle");
 
   useEffect(() => {
     let cancelled = false;
 
+    setRequestState("loading");
+
     fetchArcaeaApkMeta().then((nextMeta) => {
-      if (cancelled || !nextMeta) {
+      if (cancelled) {
         return;
       }
 
       setMeta(nextMeta);
+      setRequestState("complete");
     });
 
     return () => {
@@ -136,8 +180,8 @@ export default function ArcaeaApkDownloadCard({ fallback }: Props) {
     };
   }, []);
 
-  const card = buildCardData(meta, fallback);
-  const isReady = Boolean(meta?.latest && card.href);
+  const card = buildCardData(meta, fallback, requestState);
+  const isReady = card.action === "download" && Boolean(card.href);
 
   return (
     <div className="hero-download-card">
@@ -149,22 +193,30 @@ export default function ArcaeaApkDownloadCard({ fallback }: Props) {
       </div>
       <div className="hero-download-stats">
         <div>
-          <small>版本</small>
+          <small>{"\u7248\u672c"}</small>
           <span>{card.version}</span>
         </div>
         <div>
-          <small>更新日期</small>
+          <small>{"\u66f4\u65b0\u65e5\u671f"}</small>
           <span>{card.updatedAt}</span>
         </div>
         <div>
-          <small>累计下载</small>
+          <small>{"\u7d2f\u8ba1\u4e0b\u8f7d"}</small>
           <span>{card.cacheCount}</span>
         </div>
       </div>
-      {card.href ? (
+      {card.action === "download" && card.href ? (
         <a className="hero-download-btn" href={card.href}>
           {card.button}
         </a>
+      ) : card.action === "retry" ? (
+        <button
+          className="hero-download-btn"
+          type="button"
+          onClick={() => window.location.reload()}
+        >
+          {card.button}
+        </button>
       ) : (
         <span className="hero-download-btn is-pending">{card.button}</span>
       )}

@@ -16,15 +16,23 @@ interface StatsResponse {
 
 const PRODUCTION_HOST = "www.unknnownnn.homes";
 const LOCAL_API_ORIGIN = "http://localhost:3001";
-const DAY_LABELS = ["周日", "周一", "周二", "周三", "周四", "周五", "周六"];
+const DAY_LABELS = [
+  "\u5468\u65e5",
+  "\u5468\u4e00",
+  "\u5468\u4e8c",
+  "\u5468\u4e09",
+  "\u5468\u56db",
+  "\u5468\u4e94",
+  "\u5468\u516d",
+];
 
 function buildEmptyDays() {
   const now = new Date();
   const days: DayStats[] = [];
 
-  for (let i = 6; i >= 0; i -= 1) {
+  for (let index = 6; index >= 0; index -= 1) {
     const date = new Date(now);
-    date.setDate(date.getDate() - i);
+    date.setDate(date.getDate() - index);
     days.push({
       date: date.toISOString().slice(0, 10),
       visitors: 0,
@@ -45,23 +53,32 @@ function buildFallbackStats(): StatsResponse {
   };
 }
 
-function formatDay(dateStr: string) {
-  return DAY_LABELS[new Date(dateStr).getDay()];
+function formatDay(dateString: string) {
+  return DAY_LABELS[new Date(dateString).getDay()];
 }
 
-async function fetchStats(): Promise<StatsResponse | null> {
-  const candidates = ["/api/stats"];
+function buildStatCandidates() {
+  const candidates = ["/api/stats?track=1"];
+
   if (
     typeof window !== "undefined" &&
     window.location.hostname &&
     window.location.hostname !== PRODUCTION_HOST
   ) {
-    candidates.push(`${LOCAL_API_ORIGIN}/api/stats`);
+    candidates.push(`${LOCAL_API_ORIGIN}/api/stats?track=1`);
   }
 
-  for (const url of candidates) {
+  return candidates;
+}
+
+async function fetchStats(): Promise<StatsResponse | null> {
+  for (const url of buildStatCandidates()) {
     try {
-      const response = await fetch(url, { cache: "no-store" });
+      const response = await fetch(url, {
+        cache: "no-store",
+        credentials: "same-origin",
+        keepalive: true,
+      });
       if (!response.ok) {
         continue;
       }
@@ -116,19 +133,19 @@ export default function VisitorStats() {
     <section className="visitor-panel glass-panel">
       <div className="visitor-kpis">
         <div className="visitor-kpi">
-          <span>今日访问</span>
+          <span>{"\u4eca\u65e5\u8bbf\u95ee"}</span>
           <strong>{data.todayViews.toLocaleString("zh-CN")}</strong>
-          <small>独立访客 {data.todayVisitors.toLocaleString("zh-CN")}</small>
+          <small>{"\u72ec\u7acb\u8bbf\u5ba2 "}{data.todayVisitors.toLocaleString("zh-CN")}</small>
         </div>
         <div className="visitor-kpi">
-          <span>本周访问</span>
+          <span>{"\u672c\u5468\u8bbf\u95ee"}</span>
           <strong>{data.weekViews.toLocaleString("zh-CN")}</strong>
-          <small>独立访客 {data.weekVisitors.toLocaleString("zh-CN")}</small>
+          <small>{"\u72ec\u7acb\u8bbf\u5ba2 "}{data.weekVisitors.toLocaleString("zh-CN")}</small>
         </div>
       </div>
 
       <div className="chart-wrap">
-        <div className="chart-strip" aria-label="最近 7 日访问量">
+        <div className="chart-strip" aria-label="\u6700\u8fd1 7 \u65e5\u8bbf\u95ee\u91cf">
           {data.days.map((day, index) => {
             const isToday = day.date === today;
             return (
@@ -151,8 +168,8 @@ export default function VisitorStats() {
         </div>
       </div>
 
-      {error ? <p className="chart-note">统计服务暂不可用，当前显示的是占位图表。</p> : null}
-      <p className="visitor-note">主数字为浏览量，副标题显示独立访客数。</p>
+      {error ? <p className="chart-note">{"\u7edf\u8ba1\u670d\u52a1\u6682\u4e0d\u53ef\u7528\uff0c\u5f53\u524d\u663e\u793a\u7684\u662f\u5360\u4f4d\u56fe\u8868\u3002"}</p> : null}
+      <p className="visitor-note">{"\u4e3b\u6570\u5b57\u4e3a\u6d4f\u89c8\u91cf\uff0c\u526f\u6807\u9898\u663e\u793a\u72ec\u7acb\u8bbf\u5ba2\u6570\u3002"}</p>
     </section>
   );
 }
