@@ -44,11 +44,12 @@ function isActive(href: string) {
       }
     </nav>
 
+    <div class="site-nav-right">
     <form class="nav-search" action="/search" method="get" data-nav-search>
       <input
         name="q"
         type="search"
-        placeholder="搜索曲名、画师、曲包…"
+        placeholder="搜曲名、画师、曲包…"
         autocomplete="off"
       />
       <button type="submit" aria-label="搜索">→</button>
@@ -58,5 +59,6 @@ function isActive(href: string) {
       <span aria-hidden="true">◐</span>
       <span data-theme-toggle-label>切换深色</span>
     </button>
+    </div>
   </div>
 </header>

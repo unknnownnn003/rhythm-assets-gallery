@@ -1,6 +1,6 @@
 {
-  "source": "D:/Files/曲绘/Arcaea/APK/arcaea_6.14.0c/assets",
-  "generatedAt": "2026-05-10T04:52:25.423Z",
+  "source": ".arcaea-metadata-src/assets",
+  "generatedAt": "2026-06-15T12:03:14.840Z",
   "songs": [
     {
       "idx": 0,
@@ -34011,6 +34011,261 @@
           "rating": 10
         }
       ]
+    },
+    {
+      "idx": 532,
+      "id": "cosmogyral",
+      "title_localized": {
+        "en": "Cosmogyral"
+      },
+      "artist": "Darren + Altermis",
+      "search_title": {
+        "ja": [
+          "こすもじゃいらる"
+        ],
+        "ko": [
+          "코스모자이럴",
+          "코스모자이랄"
+        ]
+      },
+      "search_artist": {
+        "ja": [
+          "だれん",
+          "おるたーみす"
+        ],
+        "ko": [
+          "대런",
+          "다렌",
+          "알터미스"
+        ]
+      },
+      "bpm": "180",
+      "bpm_base": 180,
+      "set": "extend_4",
+      "purchase": "extend_4",
+      "audioPreview": 0,
+      "audioPreviewEnd": 0,
+      "side": 0,
+      "bg": "nijuusei2_light",
+      "bg_inverse": "nijuusei2_conflict",
+      "remote_dl": true,
+      "world_unlock": true,
+      "date": 1779926400,
+      "version": "6.14",
+      "difficulties": [
+        {
+          "ratingClass": 0,
+          "chartDesigner": "Interator",
+          "jacketDesigner": "57_dayo",
+          "rating": 2
+        },
+        {
+          "ratingClass": 1,
+          "chartDesigner": "Interator",
+          "jacketDesigner": "57_dayo",
+          "rating": 5
+        },
+        {
+          "ratingClass": 2,
+          "chartDesigner": "Interator",
+          "jacketDesigner": "57_dayo",
+          "rating": 8
+        },
+        {
+          "ratingClass": 4,
+          "chartDesigner": "Interator",
+          "jacketDesigner": "57_dayo",
+          "rating": 9,
+          "ratingPlus": true
+        }
+      ]
+    },
+    {
+      "idx": 533,
+      "id": "flexidefine",
+      "title_localized": {
+        "en": "flexidefine"
+      },
+      "artist": "Lamanya",
+      "search_title": {
+        "ja": [
+          "ふれきしでぃふぁいん"
+        ],
+        "ko": [
+          "플렉시디파인"
+        ]
+      },
+      "search_artist": {
+        "ja": [
+          "らまにゃ"
+        ],
+        "ko": [
+          "라마냐"
+        ]
+      },
+      "bpm": "197",
+      "bpm_base": 197,
+      "set": "extend_4",
+      "purchase": "extend_4",
+      "audioPreview": 0,
+      "audioPreviewEnd": 0,
+      "side": 1,
+      "bg": "prelude_conflict",
+      "bg_inverse": "prelude_light",
+      "remote_dl": true,
+      "world_unlock": true,
+      "date": 1779926401,
+      "version": "6.14",
+      "difficulties": [
+        {
+          "ratingClass": 0,
+          "chartDesigner": "flexi::feline",
+          "jacketDesigner": "Lamanya",
+          "rating": 2
+        },
+        {
+          "ratingClass": 1,
+          "chartDesigner": "flexi::feline",
+          "jacketDesigner": "Lamanya",
+          "rating": 6
+        },
+        {
+          "ratingClass": 2,
+          "chartDesigner": "flexi::feline",
+          "jacketDesigner": "Lamanya",
+          "rating": 9,
+          "ratingPlus": true
+        }
+      ]
+    },
+    {
+      "idx": 534,
+      "id": "altersist",
+      "title_localized": {
+        "en": "Altersist"
+      },
+      "artist": "void (Mournfinale)",
+      "search_title": {
+        "ja": [
+          "おるたーしすと"
+        ],
+        "ko": [
+          "알터시스트"
+        ]
+      },
+      "search_artist": {
+        "ja": [
+          "ぼいど"
+        ],
+        "ko": [
+          "보이드"
+        ]
+      },
+      "bpm": "138",
+      "bpm_base": 138,
+      "set": "single",
+      "purchase": "altersist",
+      "category": "variety",
+      "audioPreview": 0,
+      "audioPreviewEnd": 0,
+      "side": 0,
+      "bg": "eden_light",
+      "bg_inverse": "eden_conflict",
+      "remote_dl": true,
+      "world_unlock": false,
+      "date": 1779926402,
+      "version": "6.14",
+      "difficulties": [
+        {
+          "ratingClass": 0,
+          "chartDesigner": "sidewaves",
+          "jacketDesigner": "HARDLOVE",
+          "rating": 2
+        },
+        {
+          "ratingClass": 1,
+          "chartDesigner": "sidewaves",
+          "jacketDesigner": "HARDLOVE",
+          "rating": 6
+        },
+        {
+          "ratingClass": 2,
+          "chartDesigner": "sidewaves",
+          "jacketDesigner": "HARDLOVE",
+          "rating": 8
+        },
+        {
+          "ratingClass": 4,
+          "chartDesigner": "sidewaves",
+          "jacketDesigner": "HARDLOVE",
+          "rating": 9,
+          "ratingPlus": true
+        }
+      ]
+    },
+    {
+      "idx": 535,
+      "id": "csqn",
+      "title_localized": {
+        "en": "c.s.q.n."
+      },
+      "artist": "Aoi",
+      "search_title": {
+        "ja": [
+          "しーえすきゅーえぬ"
+        ],
+        "ko": [
+          "시 에스 큐 엔"
+        ]
+      },
+      "search_artist": {
+        "ja": [
+          "あおい"
+        ],
+        "ko": [
+          "아오이"
+        ]
+      },
+      "bpm": "174",
+      "bpm_base": 174,
+      "set": "single",
+      "purchase": "csqn",
+      "category": "variety",
+      "audioPreview": 0,
+      "audioPreviewEnd": 0,
+      "side": 1,
+      "bg": "single2_conflict",
+      "bg_inverse": "single2_light",
+      "remote_dl": true,
+      "world_unlock": false,
+      "date": 1779926403,
+      "version": "6.14",
+      "difficulties": [
+        {
+          "ratingClass": 0,
+          "chartDesigner": "Nitro",
+          "jacketDesigner": "出前",
+          "rating": 4
+        },
+        {
+          "ratingClass": 1,
+          "chartDesigner": "Nitro",
+          "jacketDesigner": "出前",
+          "rating": 7
+        },
+        {
+          "ratingClass": 2,
+          "chartDesigner": "Nitro",
+          "jacketDesigner": "出前",
+          "rating": 9
+        },
+        {
+          "ratingClass": 4,
+          "chartDesigner": "Nitro",
+          "jacketDesigner": "出前",
+          "rating": 10
+        }
+      ]
     }
   ],
   "packs": [
@@ -34973,6 +35228,2777 @@
         "zh-Hant": "與人氣音樂手遊 Dynamix \n的薩菲亞一起徜徉于這些動人心弦的曲目，\n揭開沉睡在秘術之地裡的全新樂章！",
         "zh-Hans": "与来自著名音乐手游Dynamix \n的萨菲亚一起欣赏精彩而又动人的乐曲，\n揭开沉睡在Arcaea世界中的全新乐章！"
       }
+    }
+  ],
+  "characters": [
+    {
+      "character_id": 0,
+      "base_character": true,
+      "name": "hikari",
+      "is_available": false,
+      "is_previewable": false,
+      "base_frag": 55,
+      "base_prog": 35,
+      "base_over": 35,
+      "max_frag": 78,
+      "max_prog": 61,
+      "max_over": 61,
+      "char_type": 1,
+      "skill_unlock_level": 0,
+      "skill_id": "gauge_easy",
+      "uncap_cores": [
+        {
+          "core_type": "core_hollow",
+          "amount": 25
+        },
+        {
+          "core_type": "core_desolate",
+          "amount": 5
+        }
+      ],
+      "uncap_version_from": "0.0.0",
+      "version_from": "0.0.0",
+      "search_strings": [
+        "光",
+        "ひかり",
+        "히카리"
+      ]
+    },
+    {
+      "character_id": 1,
+      "base_character": true,
+      "name": "tairitsu",
+      "is_available": false,
+      "is_previewable": false,
+      "base_frag": 55,
+      "base_prog": 55,
+      "base_over": 55,
+      "max_frag": 80,
+      "max_prog": 80,
+      "max_over": 80,
+      "char_type": 0,
+      "skill_unlock_level": 0,
+      "skill_id": "",
+      "uncap_cores": [
+        {
+          "core_type": "core_desolate",
+          "amount": 25
+        },
+        {
+          "core_type": "core_hollow",
+          "amount": 5
+        }
+      ],
+      "uncap_version_from": "0.0.0",
+      "version_from": "0.0.0",
+      "search_strings": [
+        "対立",
+        "对立",
+        "對立",
+        "たいりつ",
+        "타이리츠"
+      ]
+    },
+    {
+      "character_id": 2,
+      "base_character": true,
+      "name": "kou",
+      "is_available": true,
+      "is_previewable": true,
+      "base_frag": 60,
+      "base_prog": 47.5,
+      "base_over": 25,
+      "max_frag": 90,
+      "max_prog": 70,
+      "max_over": 47.5,
+      "char_type": 0,
+      "skill_unlock_level": 20,
+      "skill_requires_uncap": true,
+      "skill_id": "frags_kou",
+      "uncap_cores": [
+        {
+          "core_type": "core_crimson",
+          "amount": 25
+        },
+        {
+          "core_type": "core_hollow",
+          "amount": 5
+        }
+      ],
+      "uncap_version_from": "0.0.0",
+      "version_from": "0.0.0",
+      "search_strings": [
+        "紅",
+        "红",
+        "こう",
+        "코우"
+      ],
+      "pack_id": "shiawase"
+    },
+    {
+      "character_id": 3,
+      "name": "sapphire",
+      "base_character": true,
+      "is_available": true,
+      "is_previewable": true,
+      "base_frag": 50,
+      "base_prog": 50,
+      "base_over": 50,
+      "max_frag": 75,
+      "max_prog": 75,
+      "max_over": 75,
+      "char_type": 0,
+      "skill_unlock_level": 0,
+      "skill_id": "",
+      "uncap_cores": [],
+      "version_from": "0.0.0",
+      "search_strings": [
+        "サファイア",
+        "사파이어"
+      ],
+      "pack_id": "dynamix"
+    },
+    {
+      "character_id": 4,
+      "base_character": true,
+      "name": "lethe",
+      "is_available": true,
+      "is_previewable": true,
+      "base_frag": 47.5,
+      "base_prog": 60,
+      "base_over": 47.5,
+      "max_frag": 70,
+      "max_prog": 90,
+      "max_over": 70,
+      "char_type": 0,
+      "skill_unlock_level": 8,
+      "skill_id": "note_mirror",
+      "skill_id_uncap": "visual_ink",
+      "uncap_cores": [
+        {
+          "core_type": "core_ambivalent",
+          "amount": 25
+        },
+        {
+          "core_type": "core_desolate",
+          "amount": 5
+        }
+      ],
+      "uncap_version_from": "0.0.0",
+      "version_from": "0.0.0",
+      "search_strings": [
+        "レーテー",
+        "忘却",
+        "忘卻",
+        "레테"
+      ],
+      "pack_id": "mirai"
+    },
+    {
+      "character_id": 5,
+      "base_character_id": 1,
+      "base_character": false,
+      "name": "hikari_tairitsu_reunion",
+      "is_available": false,
+      "is_previewable": false,
+      "base_frag": 55,
+      "base_prog": 45,
+      "base_over": 45,
+      "max_frag": 79,
+      "max_prog": 70.5,
+      "max_over": 70.5,
+      "char_type": 0,
+      "skill_unlock_level": 0,
+      "skill_id": "skill_reunion",
+      "uncap_cores": [],
+      "version_from": "4.0.255",
+      "search_strings": [
+        "光と対立",
+        "光 & 对立",
+        "光 & 對立",
+        "りゆにおんひかりとたいりつ",
+        "ひかりとたいりつりゆにおん",
+        "ひかりたいりつりゆにおん",
+        "りゆにおんひかりたいりつ",
+        "리유니온 히카리와 타이리츠",
+        "히카리와 타이리츠 리유니온"
+      ],
+      "pack_id": "epilogue"
+    },
+    {
+      "character_id": 6,
+      "base_character_id": 1,
+      "base_character": false,
+      "name": "tairitsu_yugamu",
+      "is_available": false,
+      "is_previewable": false,
+      "base_frag": 47.5,
+      "base_prog": 60,
+      "base_over": 72.5,
+      "max_frag": 70,
+      "max_prog": 90,
+      "max_over": 95,
+      "char_type": 0,
+      "skill_unlock_level": 0,
+      "skill_id": "",
+      "uncap_cores": [],
+      "version_from": "0.0.0",
+      "search_strings": [
+        "対立",
+        "对立",
+        "對立",
+        "たいりつあくしうむ",
+        "あくしうむたいりつ",
+        "액시움 타이리츠",
+        "타이리츠 액시움"
+      ],
+      "pack_id": "yugamu"
+    },
+    {
+      "character_id": 7,
+      "base_character_id": 1,
+      "base_character": false,
+      "name": "tairitsu_grievous_lady",
+      "is_available": false,
+      "is_previewable": false,
+      "base_frag": 57.5,
+      "base_prog": 70,
+      "base_over": 57.5,
+      "max_frag": 79,
+      "max_prog": 102,
+      "max_over": 79,
+      "char_type": 2,
+      "skill_unlock_level": 0,
+      "skill_id": "gauge_hard",
+      "uncap_cores": [],
+      "version_from": "0.0.0",
+      "search_strings": [
+        "対立",
+        "对立",
+        "對立",
+        "ぐりーゔぁすれでぃーたいりつ",
+        "ぐりーばすれでぃーたいりつ",
+        "그리버스 레이디 타이리츠",
+        "타이리츠 그리버스 레이디"
+      ],
+      "pack_id": "yugamu"
+    },
+    {
+      "character_id": 8,
+      "base_character": true,
+      "name": "stella",
+      "is_available": false,
+      "is_previewable": false,
+      "base_frag": 41,
+      "base_prog": 58,
+      "base_over": 41,
+      "max_frag": 65.5,
+      "max_prog": 84,
+      "max_over": 65.5,
+      "char_type": 0,
+      "skill_unlock_level": 0,
+      "skill_id": "frag_plus_10_pack_stellights",
+      "uncap_cores": [],
+      "version_from": "0.0.0",
+      "search_strings": [
+        "ステラ",
+        "星",
+        "스텔라"
+      ]
+    },
+    {
+      "character_id": 9,
+      "name": "hikari_fisica_quon",
+      "is_available": false,
+      "is_previewable": false,
+      "base_frag": 22.5,
+      "base_prog": 45,
+      "base_over": 7.5,
+      "max_frag": 40,
+      "max_prog": 78.5,
+      "max_over": 31.5,
+      "char_type": 1,
+      "skill_unlock_level": 0,
+      "skill_id": "gauge_easy|frag_plus_15_pst&prs",
+      "uncap_cores": [],
+      "version_from": "0.0.0",
+      "search_strings": [
+        "光＆フィシカ",
+        "光 & 菲希卡",
+        "ひかりふぃしか",
+        "히카리 피시카"
+      ],
+      "pack_id": "lanota"
+    },
+    {
+      "character_id": 10,
+      "base_character": true,
+      "name": "ilith",
+      "is_available": false,
+      "is_previewable": false,
+      "base_frag": 50,
+      "base_prog": 70,
+      "base_over": 10.5,
+      "max_frag": 50,
+      "max_prog": 105.5,
+      "max_over": 50,
+      "uncap_frag_growth": 0,
+      "uncap_prog_growth": 0.5,
+      "uncap_over_growth": 0,
+      "char_type": 2,
+      "skill_unlock_level": 8,
+      "skill_id": "gauge_hard|fail_frag_minus_100",
+      "skill_id_uncap": "ilith_awakened_skill",
+      "uncap_version_from": "4.3.0",
+      "uncap_cores": [
+        {
+          "core_type": "core_umbral",
+          "amount": 30
+        }
+      ],
+      "version_from": "0.0.0",
+      "search_strings": [
+        "イリス",
+        "이리스",
+        "依莉丝",
+        "依麗絲"
+      ]
+    },
+    {
+      "character_id": 11,
+      "base_character": true,
+      "name": "eto",
+      "is_available": false,
+      "is_previewable": false,
+      "base_frag": 54,
+      "base_prog": 45.5,
+      "base_over": 32,
+      "max_frag": 80,
+      "max_prog": 67,
+      "max_over": 59.5,
+      "char_type": 0,
+      "skill_unlock_level": 0,
+      "skill_id": "frag_plus_5_side_light",
+      "skill_id_uncap": "eto_uncap",
+      "uncap_cores": [
+        {
+          "core_type": "core_binary",
+          "amount": 25
+        },
+        {
+          "core_type": "core_hollow",
+          "amount": 5
+        }
+      ],
+      "uncap_version_from": "0.0.0",
+      "version_from": "0.0.0",
+      "search_strings": [
+        "エト",
+        "爱托",
+        "愛托",
+        "에토"
+      ],
+      "pack_id": "nijuusei"
+    },
+    {
+      "character_id": 12,
+      "base_character": true,
+      "name": "luna",
+      "is_available": false,
+      "is_previewable": false,
+      "base_frag": 60.5,
+      "base_prog": 42.5,
+      "base_over": 65.5,
+      "max_frag": 90,
+      "max_prog": 63.5,
+      "max_over": 90,
+      "char_type": 0,
+      "skill_unlock_level": 8,
+      "skill_id": "visual_hide_hp",
+      "skill_id_uncap": "luna_uncap",
+      "uncap_cores": [
+        {
+          "core_type": "core_binary",
+          "amount": 25
+        },
+        {
+          "core_type": "core_desolate",
+          "amount": 5
+        }
+      ],
+      "uncap_version_from": "0.0.0",
+      "version_from": "0.0.0",
+      "search_strings": [
+        "ルナ",
+        "露娜",
+        "露娜",
+        "루나"
+      ],
+      "pack_id": "nijuusei"
+    },
+    {
+      "character_id": 13,
+      "base_character": true,
+      "name": "shirabe",
+      "is_available": false,
+      "is_previewable": false,
+      "base_frag": 56.5,
+      "base_prog": 46.5,
+      "base_over": 31,
+      "max_frag": 82.5,
+      "max_prog": 68.5,
+      "max_over": 58,
+      "char_type": 0,
+      "skill_unlock_level": 8,
+      "skill_id": "frag_plus_5_side_conflict",
+      "skill_id_uncap": "shirabe_entry_fee",
+      "uncap_cores": [
+        {
+          "core_type": "core_scarlet",
+          "amount": 30
+        }
+      ],
+      "uncap_version_from": "0.0.0",
+      "version_from": "0.0.0",
+      "search_strings": [
+        "調",
+        "调",
+        "調",
+        "しらべ",
+        "시라베"
+      ]
+    },
+    {
+      "character_id": 14,
+      "base_character_id": 0,
+      "base_character": false,
+      "name": "hikari_zero",
+      "is_available": false,
+      "is_previewable": false,
+      "base_frag": 78,
+      "base_prog": 61,
+      "base_over": 61,
+      "max_frag": 0,
+      "max_prog": 0,
+      "max_over": 0,
+      "char_type": 2,
+      "skill_unlock_level": 8,
+      "skill_id": "challenge_fullcombo_0gauge",
+      "uncap_cores": [],
+      "version_from": "0.0.0",
+      "search_strings": [
+        "光",
+        "ひかりぜろ",
+        "ぜろひかり",
+        "제로 히카리"
+      ],
+      "pack_id": "rei"
+    },
+    {
+      "character_id": 15,
+      "base_character_id": 0,
+      "base_character": false,
+      "name": "hikari_fracture",
+      "is_available": false,
+      "is_previewable": false,
+      "base_frag": 42.5,
+      "base_prog": 67.5,
+      "base_over": 53.5,
+      "max_frag": 61,
+      "max_prog": 99,
+      "max_over": 78.5,
+      "char_type": 3,
+      "skill_unlock_level": 0,
+      "skill_id": "gauge_overflow",
+      "uncap_cores": [],
+      "version_from": "0.0.0",
+      "search_strings": [
+        "光",
+        "ひかりふらくちゃー",
+        "ふらくちゃーひかり",
+        "프랙쳐 히카리"
+      ],
+      "pack_id": "rei"
+    },
+    {
+      "character_id": 16,
+      "base_character_id": 0,
+      "base_character": false,
+      "name": "hikari_summer",
+      "is_available": false,
+      "is_previewable": false,
+      "base_frag": 41.5,
+      "base_prog": 49.5,
+      "base_over": 31,
+      "max_frag": 67,
+      "max_prog": 80,
+      "max_over": 50,
+      "char_type": 1,
+      "skill_unlock_level": 0,
+      "skill_id": "gauge_easy|note_mirror",
+      "uncap_cores": [],
+      "version_from": "0.0.0",
+      "search_strings": [
+        "光",
+        "ひかりさまー",
+        "さまーひかり",
+        "여름 히카리"
+      ]
+    },
+    {
+      "character_id": 17,
+      "base_character_id": 1,
+      "base_character": false,
+      "name": "tairitsu_summer",
+      "is_available": false,
+      "is_previewable": false,
+      "base_frag": 61.5,
+      "base_prog": 44.5,
+      "base_over": 47,
+      "max_frag": 92,
+      "max_prog": 66,
+      "max_over": 70,
+      "char_type": 0,
+      "skill_unlock_level": 8,
+      "skill_id": "note_mirror",
+      "uncap_cores": [],
+      "version_from": "0.0.0",
+      "search_strings": [
+        "対立",
+        "对立",
+        "對立",
+        "たいりつさまー",
+        "さまーたいりつ",
+        "여름 타이리츠"
+      ]
+    },
+    {
+      "character_id": 18,
+      "name": "tairitsu_trin",
+      "is_available": false,
+      "is_previewable": false,
+      "base_frag": 52,
+      "base_prog": 28,
+      "base_over": 38,
+      "max_frag": 85,
+      "max_prog": 46,
+      "max_over": 62,
+      "char_type": 0,
+      "skill_unlock_level": 8,
+      "skill_id": "visual_tomato_pack_tonesphere",
+      "uncap_cores": [],
+      "version_from": "0.0.0",
+      "search_strings": [
+        "対立＆トリン",
+        "对立 & 托凛",
+        "對立 & 托凜",
+        "たいりつとりん",
+        "타이리츠 트린"
+      ],
+      "pack_id": "tonesphere"
+    },
+    {
+      "character_id": 19,
+      "base_character": true,
+      "name": "ayu",
+      "is_available": false,
+      "is_previewable": false,
+      "base_frag": 50,
+      "base_prog": 45.5,
+      "base_over": 12,
+      "max_frag": 50,
+      "max_prog": 83,
+      "max_over": 49.5,
+      "uncap_frag_growth": 0,
+      "char_type": 0,
+      "skill_unlock_level": 0,
+      "skill_id": "frag_rng_ayu",
+      "skill_id_uncap": "ayu_uncap",
+      "uncap_cores": [
+        {
+          "core_type": "core_colorful",
+          "amount": 30
+        }
+      ],
+      "uncap_version_from": "0.0.0",
+      "version_from": "0.0.0",
+      "search_strings": [
+        "彩夢",
+        "彩梦",
+        "彩夢",
+        "あゆ",
+        "아유"
+      ]
+    },
+    {
+      "character_id": 20,
+      "name": "eto_luna_winter",
+      "is_available": false,
+      "is_previewable": false,
+      "base_frag": 52,
+      "base_prog": 24,
+      "base_over": 39,
+      "max_frag": 86,
+      "max_prog": 40,
+      "max_over": 64,
+      "char_type": 1,
+      "skill_unlock_level": 0,
+      "skill_id": "gaugestart_30|gaugegain_70",
+      "uncap_cores": [],
+      "version_from": "0.0.0",
+      "search_strings": [
+        "エト＆ルナ",
+        "爱托 & 露娜",
+        "愛托 & 露娜",
+        "うぃんたーえとるな",
+        "えとるなうぃんたー",
+        "겨울 에토 루나"
+      ]
+    },
+    {
+      "character_id": 21,
+      "base_character": true,
+      "name": "yume",
+      "is_available": false,
+      "is_previewable": false,
+      "base_frag": 32.5,
+      "base_prog": 46,
+      "base_over": 18.5,
+      "max_frag": 52.5,
+      "max_prog": 73.5,
+      "max_over": 46,
+      "char_type": 0,
+      "skill_unlock_level": 0,
+      "skill_id": "combo_100-frag_1",
+      "skill_id_uncap": "frags_yume",
+      "voice": [
+        0,
+        1,
+        2,
+        3,
+        100,
+        1000,
+        1001
+      ],
+      "uncap_cores": [
+        {
+          "core_type": "core_groove",
+          "amount": 15
+        }
+      ],
+      "uncap_version_from": "0.0.0",
+      "version_from": "0.0.0",
+      "search_strings": [
+        "ユメ",
+        "柚梅",
+        "夢",
+        "유메"
+      ],
+      "pack_id": "groovecoaster"
+    },
+    {
+      "character_id": 22,
+      "name": "hikari_seine",
+      "is_available": false,
+      "is_previewable": false,
+      "base_frag": 42.5,
+      "base_prog": 52.5,
+      "base_over": 48.5,
+      "max_frag": 65,
+      "max_prog": 80,
+      "max_over": 73.5,
+      "char_type": 0,
+      "skill_unlock_level": 8,
+      "skill_id": "audio_gcemptyhit_pack_groovecoaster",
+      "uncap_cores": [],
+      "version_from": "0.0.0",
+      "search_strings": [
+        "光＆セイネ",
+        "光 & 赛依娜",
+        "光 & 晴音",
+        "ひかりせいね",
+        "히카리 세이네"
+      ],
+      "pack_id": "groovecoaster"
+    },
+    {
+      "character_id": 23,
+      "base_character": true,
+      "name": "saya",
+      "is_available": false,
+      "is_previewable": false,
+      "base_frag": 55.5,
+      "base_prog": 59,
+      "base_over": 65.5,
+      "max_frag": 85,
+      "max_prog": 90,
+      "max_over": 95,
+      "char_type": 0,
+      "skill_unlock_level": 8,
+      "skill_id": "gauge_saya",
+      "skill_id_uncap": "skill_saya_uncap",
+      "uncap_cores": [
+        {
+          "core_type": "core_serene",
+          "amount": 25
+        },
+        {
+          "core_type": "core_desolate",
+          "amount": 5
+        }
+      ],
+      "uncap_version_from": "0.0.0",
+      "version_from": "0.0.0",
+      "search_strings": [
+        "サヤ",
+        "咲弥",
+        "咲彌",
+        "사야"
+      ],
+      "pack_id": "zettai"
+    },
+    {
+      "character_id": 24,
+      "name": "gl_penguin",
+      "is_available": false,
+      "is_previewable": false,
+      "base_frag": 45,
+      "base_prog": 62,
+      "base_over": 45,
+      "max_frag": 67,
+      "max_prog": 93,
+      "max_over": 67,
+      "char_type": 0,
+      "skill_unlock_level": 8,
+      "skill_id": "gauge_chuni",
+      "uncap_cores": [],
+      "version_from": "0.0.0",
+      "search_strings": [
+        "対立＆チュウニペンギン",
+        "对立 & 中二企鹅",
+        "對立 & 中二企鵝",
+        "ぐりーばすれでぃーたいりつちゅうにぺんぎん",
+        "ぐりーゔぁすれでぃーたいりつちゅうにぺんぎん",
+        "たいりつぐりーゔぁすれでぃーちゅうにぺんぎん",
+        "たいりつぐりーばすれでぃーちゅうにぺんぎん",
+        "그리버스 레이디 타이리츠 츄니펭귄",
+        "타이리츠 츄니펭귄 그리버스 레이디"
+      ],
+      "pack_id": "chunithm"
+    },
+    {
+      "character_id": 25,
+      "base_character": true,
+      "name": "chuni_penguin",
+      "is_available": false,
+      "is_previewable": false,
+      "base_frag": 58.5,
+      "base_prog": 33,
+      "base_over": 55.5,
+      "max_frag": 88,
+      "max_prog": 50,
+      "max_over": 84,
+      "char_type": 0,
+      "skill_unlock_level": 14,
+      "skill_id": "kantandeshou",
+      "uncap_cores": [],
+      "version_from": "0.0.0",
+      "search_strings": [
+        "チュウニペンギン",
+        "中二企鹅",
+        "中二企鵝",
+        "츄니펭귄"
+      ],
+      "pack_id": "chunithm"
+    },
+    {
+      "character_id": 26,
+      "base_character": true,
+      "name": "haruna",
+      "is_available": false,
+      "is_previewable": false,
+      "base_frag": 43,
+      "base_prog": 58,
+      "base_over": 44,
+      "max_frag": 64,
+      "max_prog": 86,
+      "max_over": 70,
+      "char_type": 0,
+      "skill_unlock_level": 0,
+      "skill_id": "gauge_haruna",
+      "uncap_cores": [
+        {
+          "core_type": "core_chunithm",
+          "amount": 15
+        }
+      ],
+      "uncap_version_from": "0.0.0",
+      "version_from": "0.0.0",
+      "search_strings": [
+        "はるな",
+        "榛名",
+        "榛名",
+        "하루나"
+      ],
+      "pack_id": "chunithm"
+    },
+    {
+      "character_id": 27,
+      "base_character": true,
+      "name": "nono",
+      "is_available": false,
+      "is_previewable": false,
+      "base_frag": 0.5,
+      "base_prog": 25,
+      "base_over": 25,
+      "max_frag": 0.5,
+      "max_prog": 78,
+      "max_over": 78,
+      "uncap_frag_growth": 0,
+      "char_type": 0,
+      "skill_unlock_level": 0,
+      "skill_id": "frags_nono",
+      "uncap_cores": [
+        {
+          "core_type": "core_chunithm",
+          "amount": 15
+        }
+      ],
+      "uncap_version_from": "0.0.0",
+      "version_from": "0.0.0",
+      "search_strings": [
+        "ノノ",
+        "诺诺",
+        "諾諾",
+        "노노"
+      ],
+      "pack_id": "chunithm"
+    },
+    {
+      "character_id": 28,
+      "base_character": true,
+      "name": "mtaxxx",
+      "is_available": false,
+      "is_previewable": false,
+      "base_frag": 68,
+      "base_prog": 63.5,
+      "base_over": 46.5,
+      "max_frag": 95,
+      "max_prog": 89,
+      "max_over": 69,
+      "char_type": 2,
+      "skill_unlock_level": 8,
+      "skill_id": "gauge_pandora",
+      "uncap_cores": [
+        {
+          "core_type": "core_chunithm",
+          "amount": 15
+        }
+      ],
+      "uncap_version_from": "0.0.0",
+      "version_from": "0.0.0",
+      "search_strings": [
+        "パンドラネメシス",
+        "潘多拉涅墨西斯",
+        "潘多拉涅墨西斯",
+        "판도라 네메시스"
+      ],
+      "pack_id": "chunithm"
+    },
+    {
+      "character_id": 29,
+      "base_character": true,
+      "name": "mda21",
+      "is_available": false,
+      "is_previewable": false,
+      "base_frag": 50,
+      "base_prog": 69.5,
+      "base_over": 44,
+      "max_frag": 70.5,
+      "max_prog": 98,
+      "max_over": 70,
+      "char_type": 2,
+      "skill_unlock_level": 8,
+      "skill_id": "gauge_regulus",
+      "uncap_cores": [
+        {
+          "core_type": "core_chunithm",
+          "amount": 15
+        }
+      ],
+      "uncap_version_from": "0.0.0",
+      "version_from": "0.0.0",
+      "search_strings": [
+        "レグルス",
+        "轩辕十四",
+        "軒轅十四",
+        "레굴루스"
+      ],
+      "pack_id": "chunithm"
+    },
+    {
+      "character_id": 30,
+      "base_character": true,
+      "name": "kanae",
+      "is_available": false,
+      "is_previewable": false,
+      "base_frag": 62.5,
+      "base_prog": 50,
+      "base_over": 33,
+      "max_frag": 95,
+      "max_prog": 75.5,
+      "max_over": 50,
+      "char_type": 0,
+      "skill_unlock_level": 8,
+      "skill_id": "omatsuri_daynight",
+      "skill_id_uncap": "skill_kanae_uncap",
+      "uncap_version_from": "5.2.6",
+      "uncap_cores": [
+        {
+          "core_type": "core_sunset",
+          "amount": 25
+        },
+        {
+          "core_type": "core_hollow",
+          "amount": 5
+        }
+      ],
+      "version_from": "0.0.0",
+      "search_strings": [
+        "叶永",
+        "群愿",
+        "群願",
+        "かなえ",
+        "카나에"
+      ],
+      "pack_id": "omatsuri"
+    },
+    {
+      "character_id": 31,
+      "base_character_id": 0,
+      "base_character": false,
+      "name": "hikari_ost",
+      "is_available": false,
+      "is_previewable": false,
+      "base_frag": 45,
+      "base_prog": 45,
+      "base_over": 45,
+      "max_frag": 50,
+      "max_prog": 80,
+      "max_over": 80,
+      "char_type": 0,
+      "skill_unlock_level": 0,
+      "skill_id": "",
+      "uncap_cores": [],
+      "version_from": "0.0.0",
+      "search_strings": [
+        "光",
+        "ひかりふぁんたじあ",
+        "ふぁんたじあひかり",
+        "판타지아 히카리",
+        "히카리 판타지아"
+      ]
+    },
+    {
+      "character_id": 32,
+      "base_character_id": 1,
+      "base_character": false,
+      "name": "tairitsu_ost",
+      "is_tairitsu": true,
+      "is_available": false,
+      "is_previewable": false,
+      "base_frag": 45,
+      "base_prog": 45,
+      "base_over": 45,
+      "max_frag": 80,
+      "max_prog": 50,
+      "max_over": 80,
+      "char_type": 0,
+      "skill_unlock_level": 0,
+      "skill_id": "",
+      "uncap_cores": [],
+      "version_from": "0.0.0",
+      "search_strings": [
+        "対立",
+        "对立",
+        "對立",
+        "たいりつそなた",
+        "そなたたいりつ",
+        "소나타 타이리츠",
+        "타이리츠 소나타"
+      ]
+    },
+    {
+      "character_id": 33,
+      "base_character": true,
+      "name": "sia",
+      "is_available": false,
+      "is_previewable": false,
+      "base_frag": 52,
+      "base_prog": 51.5,
+      "base_over": 37,
+      "max_frag": 87.5,
+      "max_prog": 64.5,
+      "max_over": 63.5,
+      "char_type": 0,
+      "skill_unlock_level": 0,
+      "skill_id": "sometimes(note_mirror|frag_plus_5)",
+      "uncap_cores": [],
+      "version_from": "0.0.0",
+      "search_strings": [
+        "シア",
+        "兮娅",
+        "兮婭",
+        "시아"
+      ]
+    },
+    {
+      "character_id": 34,
+      "base_character": true,
+      "name": "doroc",
+      "is_available": false,
+      "is_previewable": false,
+      "base_frag": 44.5,
+      "base_prog": 34.5,
+      "base_over": 25,
+      "max_frag": 71,
+      "max_prog": 55,
+      "max_over": 25,
+      "char_type": 0,
+      "skill_unlock_level": 0,
+      "skill_id": "scoreclear_aa|visual_scoregauge",
+      "skill_id_uncap": "skill_doroc_uncap",
+      "uncap_cores": [
+        {
+          "core_type": "core_tanoc",
+          "amount": 15
+        }
+      ],
+      "uncap_version_from": "0.0.0",
+      "version_from": "0.0.0",
+      "search_strings": [
+        "どろしー",
+        "도로시"
+      ]
+    },
+    {
+      "character_id": 35,
+      "base_character_id": 1,
+      "base_character": false,
+      "name": "tairitsu_tempest",
+      "is_available": false,
+      "is_previewable": false,
+      "base_frag": 27.5,
+      "base_prog": 70,
+      "base_over": 27.5,
+      "max_frag": 50,
+      "max_prog": 100,
+      "max_over": 50,
+      "char_type": 2,
+      "skill_unlock_level": 0,
+      "skill_id": "gauge_tempest",
+      "uncap_cores": [],
+      "version_from": "0.0.0",
+      "search_strings": [
+        "対立",
+        "对立",
+        "對立",
+        "てんぺすとたいりつ",
+        "たいりつてんぺすと",
+        "템페스트 타이리츠",
+        "타이리츠 템페스트"
+      ],
+      "pack_id": "vs"
+    },
+    {
+      "character_id": 36,
+      "base_character": true,
+      "name": "brilliante",
+      "is_available": false,
+      "is_previewable": false,
+      "base_frag": 59,
+      "base_prog": 62.5,
+      "base_over": 50.5,
+      "max_frag": 85,
+      "max_prog": 90,
+      "max_over": 72,
+      "char_type": 2,
+      "skill_unlock_level": 0,
+      "skill_id": "gauge_hard",
+      "uncap_cores": [
+        {
+          "core_type": "core_chunithm",
+          "amount": 15
+        }
+      ],
+      "uncap_version_from": "0.0.0",
+      "version_from": "0.0.0",
+      "search_strings": [
+        "ブリランテ",
+        "布丽兰特",
+        "布麗蘭特",
+        "브릴란테"
+      ]
+    },
+    {
+      "character_id": 37,
+      "base_character_id": 10,
+      "base_character": false,
+      "name": "ilith_summer",
+      "is_available": false,
+      "is_previewable": false,
+      "base_frag": 0,
+      "base_prog": 70,
+      "base_over": 20,
+      "max_frag": 0,
+      "max_prog": 110,
+      "max_over": 55,
+      "char_type": 2,
+      "skill_unlock_level": 0,
+      "skill_id": "gauge_ilith_summer",
+      "uncap_cores": [],
+      "version_from": "0.0.0",
+      "search_strings": [
+        "イリス",
+        "依莉丝",
+        "依麗絲",
+        "さまーいりす",
+        "いりすさまー",
+        "여름 이리스",
+        "이리스 여름"
+      ]
+    },
+    {
+      "character_id": 38,
+      "base_character_id": 23,
+      "base_character": false,
+      "name": "saya_ost",
+      "is_available": false,
+      "is_previewable": false,
+      "base_frag": 45,
+      "base_prog": 45,
+      "base_over": 45,
+      "max_frag": 80,
+      "max_prog": 80,
+      "max_over": 50,
+      "char_type": 0,
+      "skill_unlock_level": 0,
+      "skill_id": "",
+      "uncap_cores": [],
+      "version_from": "0.0.0",
+      "search_strings": [
+        "サヤ",
+        "咲弥",
+        "咲彌",
+        "えちゅーどさや",
+        "さやえちゅーど",
+        "에뛰드 사야",
+        "사야 에뛰드"
+      ]
+    },
+    {
+      "character_id": 39,
+      "base_character": true,
+      "name": "alice_tenniel",
+      "is_available": false,
+      "is_previewable": false,
+      "base_frag": 50,
+      "base_prog": 32.5,
+      "base_over": 63,
+      "max_frag": 75.5,
+      "max_prog": 50,
+      "max_over": 95,
+      "char_type": 0,
+      "skill_unlock_level": 0,
+      "skill_id": "note_mirror|visual_hide_far",
+      "uncap_cores": [],
+      "version_from": "0.0.0",
+      "search_strings": [
+        "アリス＆テニエル",
+        "爱丽丝 & 坦尼尔",
+        "愛麗絲 & 坦尼爾",
+        "앨리스 테니얼"
+      ],
+      "pack_id": "alice"
+    },
+    {
+      "character_id": 40,
+      "name": "luna_mia",
+      "is_available": false,
+      "is_previewable": false,
+      "base_frag": 50,
+      "base_prog": 32.5,
+      "base_over": 21.5,
+      "max_frag": 50,
+      "max_prog": 74,
+      "max_over": 55,
+      "char_type": 0,
+      "skill_unlock_level": 8,
+      "skill_id": "frags_ongeki",
+      "uncap_cores": [],
+      "version_from": "0.0.0",
+      "search_strings": [
+        "ルナ＆美亜",
+        "露娜 & 美亚",
+        "露娜 & 美亞",
+        "るなみあ",
+        "루나 미아"
+      ],
+      "pack_id": "ongeki"
+    },
+    {
+      "character_id": 41,
+      "name": "areus",
+      "base_character": true,
+      "is_available": false,
+      "is_previewable": false,
+      "base_frag": 47,
+      "base_prog": 61,
+      "base_over": 47,
+      "max_frag": 70,
+      "max_prog": 90,
+      "max_over": 70,
+      "char_type": 2,
+      "skill_unlock_level": 0,
+      "skill_id": "gauge_areus",
+      "uncap_cores": [],
+      "version_from": "0.0.0",
+      "search_strings": [
+        "アレウス",
+        "阿莱乌斯",
+        "阿萊烏斯",
+        "아레우스"
+      ],
+      "pack_id": "chunithm_append_1"
+    },
+    {
+      "character_id": 42,
+      "name": "seele",
+      "base_character": true,
+      "is_available": false,
+      "is_previewable": false,
+      "base_frag": 47,
+      "base_prog": 47,
+      "base_over": 61,
+      "max_frag": 70,
+      "max_prog": 70,
+      "max_over": 90,
+      "char_type": 2,
+      "skill_unlock_level": 0,
+      "skill_id": "gauge_seele",
+      "uncap_cores": [
+        {
+          "core_type": "core_chunithm",
+          "amount": 15
+        }
+      ],
+      "uncap_version_from": "0.0.0",
+      "version_from": "0.0.0",
+      "search_strings": [
+        "セーレ",
+        "希尔",
+        "希爾",
+        "제레"
+      ],
+      "pack_id": "chunithm_append_1"
+    },
+    {
+      "character_id": 43,
+      "name": "isabelle",
+      "base_character": true,
+      "is_available": false,
+      "is_previewable": false,
+      "base_frag": 61,
+      "base_prog": 47,
+      "base_over": 47,
+      "max_frag": 90,
+      "max_prog": 70,
+      "max_over": 70,
+      "char_type": 2,
+      "skill_unlock_level": 0,
+      "skill_id": "gauge_isabelle",
+      "uncap_cores": [
+        {
+          "core_type": "core_chunithm",
+          "amount": 15
+        }
+      ],
+      "uncap_version_from": "0.0.0",
+      "version_from": "0.0.0",
+      "search_strings": [
+        "イゼヴェル",
+        "伊莎贝尔",
+        "伊莎貝爾",
+        "이자벨"
+      ],
+      "pack_id": "chunithm_append_1"
+    },
+    {
+      "character_id": 44,
+      "name": "mir",
+      "base_character": true,
+      "is_available": false,
+      "is_previewable": false,
+      "base_frag": 43,
+      "base_prog": 37,
+      "base_over": 65.5,
+      "max_frag": 65.5,
+      "max_prog": 56,
+      "max_over": 99,
+      "char_type": 1,
+      "skill_unlock_level": 0,
+      "skill_id": "gauge_exhaustion",
+      "uncap_cores": [],
+      "version_from": "0.0.0",
+      "search_strings": [
+        "ミール",
+        "迷尔",
+        "迷爾",
+        "미르"
+      ]
+    },
+    {
+      "character_id": 45,
+      "name": "lagrange",
+      "base_character": true,
+      "is_available": false,
+      "is_previewable": false,
+      "base_frag": 42.5,
+      "base_prog": 42.5,
+      "base_over": 80,
+      "max_frag": 80,
+      "max_prog": 80,
+      "max_over": 80,
+      "char_type": 0,
+      "skill_unlock_level": 0,
+      "skill_id": "skill_lagrange",
+      "uncap_cores": [],
+      "version_from": "0.0.0",
+      "search_strings": [
+        "ラグランジュ",
+        "拉格兰",
+        "拉格蘭",
+        "라그랑주"
+      ],
+      "pack_id": "observer"
+    },
+    {
+      "character_id": 46,
+      "name": "linka",
+      "base_character": true,
+      "is_available": false,
+      "is_previewable": false,
+      "base_frag": 38,
+      "base_prog": 50,
+      "base_over": 38,
+      "max_frag": 61,
+      "max_prog": 79,
+      "max_over": 61,
+      "char_type": 1,
+      "skill_unlock_level": 0,
+      "skill_id": "gauge_safe_10",
+      "uncap_cores": [],
+      "voice": [
+        0,
+        1,
+        2,
+        3,
+        100,
+        1000,
+        1001
+      ],
+      "version_from": "0.0.0",
+      "search_strings": [
+        "リンカ",
+        "凛可",
+        "凜花",
+        "링카"
+      ]
+    },
+    {
+      "character_id": 47,
+      "name": "nami",
+      "base_character": true,
+      "is_available": false,
+      "is_previewable": false,
+      "base_frag": 25,
+      "base_prog": 50.5,
+      "base_over": 30,
+      "max_frag": 50,
+      "max_prog": 55.5,
+      "max_over": 40,
+      "char_type": 0,
+      "skill_unlock_level": 0,
+      "skill_id": "frags_nami",
+      "uncap_cores": [],
+      "version_from": "0.0.0",
+      "search_strings": [
+        "奈実",
+        "奈美",
+        "奈美",
+        "なみ",
+        "나미"
+      ]
+    },
+    {
+      "character_id": 48,
+      "name": "saya_elizabeth",
+      "is_available": false,
+      "is_previewable": false,
+      "base_frag": 58,
+      "base_prog": 45,
+      "base_over": 49.5,
+      "max_frag": 68,
+      "max_prog": 65,
+      "max_over": 69.5,
+      "char_type": 0,
+      "skill_unlock_level": 0,
+      "skill_id": "skill_elizabeth",
+      "uncap_cores": [],
+      "version_from": "0.0.0",
+      "search_strings": [
+        "サヤ＆エリザベス",
+        "咲弥 & 伊莉莎白",
+        "咲彌 & 伊莉莎白",
+        "さやえりざべす",
+        "사야 엘리자베스"
+      ],
+      "pack_id": "wacca"
+    },
+    {
+      "character_id": 49,
+      "name": "lily",
+      "base_character": true,
+      "is_available": false,
+      "is_previewable": false,
+      "base_frag": 50,
+      "base_prog": 41,
+      "base_over": 15,
+      "max_frag": 60,
+      "max_prog": 59,
+      "max_over": 62,
+      "char_type": 0,
+      "skill_unlock_level": 0,
+      "skill_id": "skill_lily",
+      "uncap_cores": [],
+      "version_from": "0.0.0",
+      "search_strings": [
+        "リリィ",
+        "莉莉",
+        "릴리"
+      ],
+      "pack_id": "wacca"
+    },
+    {
+      "character_id": 50,
+      "base_character_id": 30,
+      "base_character": false,
+      "name": "kanae_midsummer",
+      "is_available": false,
+      "is_previewable": false,
+      "base_frag": 61,
+      "base_prog": 61,
+      "base_over": 34.5,
+      "max_frag": 90,
+      "max_prog": 90,
+      "max_over": 51.5,
+      "char_type": 0,
+      "skill_unlock_level": 0,
+      "skill_id": "skill_kanae_midsummer",
+      "uncap_cores": [],
+      "version_from": "0.0.0",
+      "search_strings": [
+        "叶永",
+        "群愿",
+        "群願",
+        "せいかかなえ",
+        "かなえせいか",
+        "한여름 카나에"
+      ]
+    },
+    {
+      "character_id": 51,
+      "base_character_id": 39,
+      "base_character": false,
+      "name": "alice_tenniel_ost",
+      "is_available": false,
+      "is_previewable": false,
+      "base_frag": 45,
+      "base_prog": 45,
+      "base_over": 45,
+      "max_frag": 67.5,
+      "max_prog": 50,
+      "max_over": 90,
+      "char_type": 0,
+      "skill_unlock_level": 0,
+      "skill_id": "",
+      "uncap_cores": [],
+      "version_from": "0.0.0",
+      "search_strings": [
+        "アリス＆テニエル",
+        "爱丽丝 & 坦尼尔",
+        "愛麗絲 & 坦尼爾",
+        "めぬえっとありすてにえる",
+        "ありすてにえるめぬえっと",
+        "앨리스 테니얼 미뉴엣",
+        "미뉴엣 앨리스 테니얼"
+      ]
+    },
+    {
+      "character_id": 52,
+      "base_character_id": 1,
+      "base_character": false,
+      "name": "tairitsu_ost_elegy",
+      "is_available": false,
+      "is_previewable": false,
+      "base_frag": 45,
+      "base_prog": 45,
+      "base_over": 45,
+      "max_frag": 50,
+      "max_prog": 90,
+      "max_over": 67.5,
+      "char_type": 0,
+      "skill_unlock_level": 0,
+      "skill_id": "",
+      "uncap_cores": [],
+      "version_from": "0.0.0",
+      "search_strings": [
+        "対立",
+        "对立",
+        "對立",
+        "えれじーたいりつ",
+        "たいりつえれじー",
+        "엘레지 타이리츠",
+        "타이리츠 엘레지"
+      ]
+    },
+    {
+      "character_id": 53,
+      "base_character": true,
+      "name": "marija",
+      "is_available": false,
+      "is_previewable": false,
+      "base_frag": 38.5,
+      "base_prog": 58,
+      "base_over": 38.5,
+      "max_frag": 60,
+      "max_prog": 90,
+      "max_over": 60,
+      "char_type": 0,
+      "skill_unlock_level": 8,
+      "skill_id": "visual_ghost_skynotes",
+      "uncap_cores": [],
+      "version_from": "0.0.0",
+      "search_strings": [
+        "マリヤ",
+        "玛莉嘉",
+        "瑪莉嘉",
+        "마이쟈"
+      ],
+      "pack_id": "musedash"
+    },
+    {
+      "character_id": 54,
+      "base_character": true,
+      "name": "vita",
+      "is_available": false,
+      "is_previewable": false,
+      "base_frag": 34,
+      "base_prog": 50.5,
+      "base_over": 67,
+      "max_frag": 51,
+      "max_prog": 75.5,
+      "max_over": 100,
+      "char_type": 2,
+      "skill_unlock_level": 0,
+      "skill_id": "skill_vita",
+      "uncap_cores": [],
+      "version_from": "3.12.0",
+      "search_strings": [
+        "维塔",
+        "維塔",
+        "りこーるゔぃーた",
+        "ゔぃーたりこーる",
+        "리콜 비타",
+        "비타 리콜"
+      ]
+    },
+    {
+      "character_id": 55,
+      "base_character_id": 0,
+      "base_character": false,
+      "name": "hikari_fatalis",
+      "is_available": false,
+      "is_previewable": false,
+      "base_frag": 27.5,
+      "base_prog": 130,
+      "base_over": 120,
+      "max_frag": 50,
+      "max_prog": 210,
+      "max_over": 200,
+      "char_type": 3,
+      "skill_unlock_level": 0,
+      "skill_id": "skill_fatalis",
+      "uncap_cores": [],
+      "version_from": "4.0.0",
+      "search_strings": [
+        "光",
+        "ふぇいたりすひかり",
+        "ひかりふぇいたりす",
+        "파탈리스 히카리",
+        "히카리 파탈리스"
+      ],
+      "pack_id": "finale"
+    },
+    {
+      "character_id": 56,
+      "base_character": true,
+      "name": "saki",
+      "is_available": false,
+      "is_previewable": false,
+      "base_frag": 18,
+      "base_prog": 18,
+      "base_over": 44,
+      "max_frag": 35,
+      "max_prog": 35,
+      "max_over": 85,
+      "char_type": 0,
+      "skill_unlock_level": 8,
+      "skill_id": "frags_ongeki_slash",
+      "uncap_cores": [],
+      "version_from": "0.0.0",
+      "search_strings": [
+        "咲姫",
+        "咲姬",
+        "さき",
+        "사키"
+      ],
+      "pack_id": "ongeki_append_1"
+    },
+    {
+      "character_id": 57,
+      "base_character": true,
+      "name": "setsuna",
+      "is_available": false,
+      "is_previewable": false,
+      "base_frag": 56,
+      "base_prog": 57,
+      "base_over": 33,
+      "max_frag": 85,
+      "max_prog": 86,
+      "max_over": 50,
+      "char_type": 2,
+      "skill_unlock_level": 1,
+      "skill_id": "frags_ongeki_hard",
+      "uncap_cores": [],
+      "version_from": "0.0.0",
+      "search_strings": [
+        "セツナ",
+        "刹那",
+        "剎那",
+        "세츠나"
+      ],
+      "pack_id": "ongeki_append_1"
+    },
+    {
+      "character_id": 58,
+      "base_character": true,
+      "name": "amane",
+      "is_available": false,
+      "is_previewable": false,
+      "base_frag": 47.5,
+      "base_prog": 55,
+      "base_over": 55,
+      "max_frag": 47.5,
+      "max_prog": 92.5,
+      "max_over": 92.5,
+      "char_type": 2,
+      "skill_unlock_level": 1,
+      "skill_id": "skill_amane",
+      "uncap_cores": [],
+      "version_from": "0.0.0",
+      "search_strings": [
+        "天々音",
+        "天音",
+        "あまね",
+        "아마네"
+      ]
+    },
+    {
+      "character_id": 59,
+      "base_character_id": 2,
+      "base_character": false,
+      "name": "kou_winter",
+      "is_available": false,
+      "is_previewable": false,
+      "base_frag": 30,
+      "base_prog": 50,
+      "base_over": 50,
+      "max_frag": 50,
+      "max_prog": 80,
+      "max_over": 50,
+      "char_type": 0,
+      "skill_unlock_level": 0,
+      "skill_id": "skill_kou_winter",
+      "uncap_cores": [],
+      "version_from": "0.0.0",
+      "search_strings": [
+        "紅",
+        "红",
+        "こううぃんたー",
+        "うぃんたーこう",
+        "겨울 코우"
+      ]
+    },
+    {
+      "character_id": 60,
+      "base_character_id": 45,
+      "base_character": false,
+      "name": "lagrange_aria_ost",
+      "is_available": false,
+      "is_previewable": false,
+      "base_frag": 45,
+      "base_prog": 45,
+      "base_over": 45,
+      "max_frag": 75,
+      "max_prog": 75,
+      "max_over": 75,
+      "char_type": 0,
+      "skill_unlock_level": 0,
+      "skill_id": "",
+      "uncap_cores": [],
+      "version_from": "0.0.0",
+      "search_strings": [
+        "ラグランジュ",
+        "拉格兰",
+        "拉格蘭",
+        "らぐらんじゅありあ",
+        "ありあらぐらんじゅ",
+        "아리아 라그랑주"
+      ]
+    },
+    {
+      "character_id": 61,
+      "base_character_id": 4,
+      "base_character": false,
+      "name": "lethe_apophenia",
+      "is_available": false,
+      "is_previewable": false,
+      "base_frag": 57.5,
+      "base_prog": 70,
+      "base_over": 57.5,
+      "max_frag": 80,
+      "max_prog": 100,
+      "max_over": 80,
+      "char_type": 2,
+      "skill_unlock_level": 0,
+      "skill_id": "gauge_hard|note_mirror",
+      "uncap_cores": [],
+      "version_from": "0.0.0",
+      "search_strings": [
+        "レーテー",
+        "忘却",
+        "忘卻",
+        "れーてーあぽふぇにあ",
+        "あぽふぇにあれーてー",
+        "아포페니아 레테"
+      ]
+    },
+    {
+      "character_id": 62,
+      "base_character": true,
+      "name": "shama",
+      "is_available": false,
+      "is_previewable": false,
+      "base_frag": 56,
+      "base_prog": 38,
+      "base_over": 31.5,
+      "max_frag": 90,
+      "max_prog": 60.5,
+      "max_over": 50,
+      "char_type": 1,
+      "skill_unlock_level": 0,
+      "skill_id": "skill_shama",
+      "uncap_cores": [],
+      "version_from": "0.0.0",
+      "search_strings": [
+        "夏玛",
+        "夏瑪",
+        "ゆにばーすしゃま",
+        "しゃまゆにばーす",
+        "유니버스 샤마"
+      ],
+      "pack_id": "maimai_append_1"
+    },
+    {
+      "character_id": 63,
+      "base_character": true,
+      "name": "milk",
+      "is_available": false,
+      "is_previewable": false,
+      "base_frag": 47.5,
+      "base_prog": 29,
+      "base_over": 29,
+      "max_frag": 80.5,
+      "max_prog": 50,
+      "max_over": 50,
+      "char_type": 0,
+      "skill_unlock_level": 0,
+      "skill_id": "skill_milk",
+      "uncap_cores": [],
+      "version_from": "0.0.0",
+      "search_strings": [
+        "咪璐库",
+        "咪璐庫",
+        "ゆにばーすみるく",
+        "みるくゆにばーす",
+        "유니버스 밀크"
+      ],
+      "pack_id": "maimai_append_1"
+    },
+    {
+      "character_id": 64,
+      "base_character": true,
+      "name": "shikoku",
+      "is_available": false,
+      "is_previewable": false,
+      "base_frag": 33,
+      "base_prog": 44.5,
+      "base_over": 65.5,
+      "max_frag": 50,
+      "max_prog": 68,
+      "max_over": 100,
+      "char_type": 2,
+      "skill_unlock_level": 0,
+      "skill_id": "skill_shikoku",
+      "uncap_cores": [],
+      "version_from": "0.0.0",
+      "search_strings": [
+        "紫黒",
+        "紫黑",
+        "しこく",
+        "시코쿠"
+      ],
+      "pack_id": "maimai_append_1"
+    },
+    {
+      "character_id": 65,
+      "base_character": true,
+      "name": "mika",
+      "is_available": false,
+      "is_previewable": false,
+      "base_frag": 26.5,
+      "base_prog": 26.5,
+      "base_over": 26.5,
+      "max_frag": 51.5,
+      "max_prog": 51.5,
+      "max_over": 51.5,
+      "char_type": 0,
+      "skill_unlock_level": 0,
+      "skill_id": "skill_mika",
+      "uncap_cores": [],
+      "version_from": "0.0.0",
+      "search_strings": [
+        "百合咲ミカ",
+        "百合咲美香",
+        "ゆりさきみか",
+        "유리사키 미카"
+      ],
+      "pack_id": "maimai_append_1"
+    },
+    {
+      "character_id": 66,
+      "base_character": true,
+      "name": "mithra",
+      "is_available": false,
+      "is_previewable": false,
+      "base_frag": 29,
+      "base_prog": 26,
+      "base_over": 29,
+      "max_frag": 54.5,
+      "max_prog": 50,
+      "max_over": 54.5,
+      "char_type": 2,
+      "skill_unlock_level": 0,
+      "skill_id": "skill_mithra",
+      "uncap_cores": [
+        {
+          "core_type": "core_chunithm",
+          "amount": 15
+        }
+      ],
+      "uncap_version_from": "0.0.0",
+      "version_from": "0.0.0",
+      "search_strings": [
+        "密特拉·泰尔塞拉",
+        "密特拉·泰爾賽拉",
+        "ぴーすめーかーみすらてるせーら",
+        "みすらてるせーらぴーすめーかー",
+        "피스메이커 미트라 테르세라",
+        "미트라 테르세라 피스메이커"
+      ],
+      "pack_id": "chunithm_append_2"
+    },
+    {
+      "character_id": 67,
+      "base_character": true,
+      "name": "toa",
+      "is_available": false,
+      "is_previewable": false,
+      "base_frag": 66,
+      "base_prog": 35,
+      "base_over": 42.5,
+      "max_frag": 100.5,
+      "max_prog": 53,
+      "max_over": 65,
+      "char_type": 2,
+      "skill_unlock_level": 0,
+      "skill_id": "skill_toa",
+      "uncap_cores": [],
+      "version_from": "0.0.0",
+      "search_strings": [
+        "不来方 とあ",
+        "不来方永爱",
+        "不來方永愛",
+        "こずかたとあ",
+        "코즈카타 토아"
+      ],
+      "pack_id": "chunithm_append_2"
+    },
+    {
+      "character_id": 68,
+      "base_character_id": 47,
+      "base_character": false,
+      "name": "nami_twilight",
+      "is_available": false,
+      "is_previewable": false,
+      "base_frag": 40,
+      "base_prog": 40,
+      "base_over": 40,
+      "max_frag": 50,
+      "max_prog": 85,
+      "max_over": 59.5,
+      "char_type": 1,
+      "skill_unlock_level": 0,
+      "skill_id": "skill_nami_twilight",
+      "uncap_cores": [],
+      "version_from": "0.0.0",
+      "search_strings": [
+        "奈実",
+        "奈美",
+        "奈美",
+        "なみよいやみ",
+        "よいやみなみ",
+        "황혼 나미"
+      ]
+    },
+    {
+      "character_id": 69,
+      "name": "ilith_ivy",
+      "is_available": false,
+      "is_previewable": false,
+      "base_frag": 33.5,
+      "base_prog": 33.5,
+      "base_over": 33.5,
+      "max_frag": 58.5,
+      "max_prog": 58.5,
+      "max_over": 58.5,
+      "char_type": 0,
+      "skill_unlock_level": 0,
+      "skill_id": "skill_ilith_ivy",
+      "uncap_cores": [],
+      "version_from": "0.0.0",
+      "search_strings": [
+        "Ilith & Ivy",
+        "いりすあいゔぃー",
+        "いりすあいびー",
+        "리리스 아이비"
+      ],
+      "pack_id": "cytusii"
+    },
+    {
+      "character_id": 70,
+      "name": "hikari_vanessa",
+      "is_available": false,
+      "is_previewable": false,
+      "base_frag": 51,
+      "base_prog": 58,
+      "base_over": 58,
+      "max_frag": 51,
+      "max_prog": 96,
+      "max_over": 96,
+      "char_type": 2,
+      "skill_unlock_level": 0,
+      "skill_id": "skill_hikari_vanessa",
+      "uncap_cores": [],
+      "version_from": "0.0.0",
+      "search_strings": [
+        "Hikari & Vanessa",
+        "ひかりゔぁねっさ",
+        "ひかりばねっさ"
+      ],
+      "pack_id": "cytusii_append_1"
+    },
+    {
+      "character_id": 71,
+      "base_character": true,
+      "name": "maya",
+      "is_available": false,
+      "is_previewable": false,
+      "base_frag": 27,
+      "base_prog": 31.5,
+      "base_over": 31.5,
+      "max_frag": 40,
+      "max_prog": 47,
+      "max_over": 47,
+      "char_type": 0,
+      "skill_unlock_level": 0,
+      "skill_id": "skill_maya",
+      "skill_id_uncap": "skill_maya_uncap",
+      "uncap_cores": [
+        {
+          "core_type": "core_maya_invisible",
+          "amount": 1
+        }
+      ],
+      "uncap_visible_req": "client_toggle",
+      "uncap_version_from": "6.9.0",
+      "version_from": "0.0.0",
+      "search_strings": [
+        "摩耶",
+        "まやえくりぷす",
+        "えくりぷすまや",
+        "이클립스 마야"
+      ],
+      "pack_id": "eden"
+    },
+    {
+      "character_id": 72,
+      "base_character": true,
+      "name": "intruder",
+      "is_available": false,
+      "is_previewable": false,
+      "base_frag": 50,
+      "base_prog": 40,
+      "base_over": 35,
+      "max_frag": 115,
+      "max_prog": 80,
+      "max_over": 75,
+      "char_type": 4,
+      "skill_unlock_level": 0,
+      "skill_id": "skill_intruder",
+      "uncap_cores": [],
+      "version_from": "0.0.0",
+      "search_strings": [
+        "Lacrymira",
+        "Insight",
+        "識眼",
+        "洞烛",
+        "洞燭",
+        "ラクリミラ",
+        "拉可弥拉",
+        "拉可彌拉",
+        "天賦第八究明者",
+        "至高：第八探索者",
+        "てんぶだいはちきゅうめいしゃしきがん",
+        "てんぶだいはちきゅうめいしゃらくりみら",
+        "초월자 여덟 번째 추적자 라크리미라",
+        "초월자 여덟 번째 추적자 혜안"
+      ],
+      "pack_id": "eden_append_1"
+    },
+    {
+      "character_id": 73,
+      "base_character": true,
+      "name": "luin",
+      "is_available": false,
+      "is_previewable": false,
+      "base_frag": 60,
+      "base_prog": 50.5,
+      "base_over": 34,
+      "max_frag": 70,
+      "max_prog": 80,
+      "max_over": 54,
+      "char_type": 2,
+      "skill_unlock_level": 0,
+      "skill_id": "skill_luin",
+      "skill_id_uncap": "skill_luin_uncap",
+      "uncap_cores": [
+        {
+          "core_type": "core_wacca",
+          "amount": 15
+        }
+      ],
+      "uncap_version_from": "0.0.0",
+      "version_from": "0.0.0",
+      "search_strings": [
+        "ルーン",
+        "露恩",
+        "룬"
+      ],
+      "pack_id": "wacca_append_1"
+    },
+    {
+      "character_id": 74,
+      "base_character_id": 54,
+      "base_character": false,
+      "name": "vita_cadenza_ost",
+      "is_available": false,
+      "is_previewable": false,
+      "base_frag": 45,
+      "base_prog": 45,
+      "base_over": 45,
+      "max_frag": 50,
+      "max_prog": 67.5,
+      "max_over": 90,
+      "char_type": 0,
+      "skill_unlock_level": 0,
+      "skill_id": "",
+      "uncap_cores": [],
+      "version_from": "0.0.0",
+      "search_strings": [
+        "维塔",
+        "維塔",
+        "ゔぃーたかでんつぁ",
+        "かでんつぁゔぃーた"
+      ]
+    },
+    {
+      "character_id": 75,
+      "base_character": true,
+      "name": "aichan",
+      "is_available": false,
+      "is_previewable": false,
+      "base_frag": 50,
+      "base_prog": 41,
+      "base_over": 41,
+      "max_frag": 61.6,
+      "max_prog": 41,
+      "max_over": 41,
+      "char_type": 0,
+      "skill_unlock_level": 0,
+      "skill_id": "skill_aichan",
+      "uncap_cores": [],
+      "version_from": "0.0.0",
+      "search_strings": [
+        "Ai酱",
+        "Ai醬",
+        "えーあいちゃん",
+        "아이쨩",
+        "아이짱"
+      ]
+    },
+    {
+      "character_id": 76,
+      "name": "luna_ilot",
+      "is_available": false,
+      "is_previewable": false,
+      "base_frag": 38,
+      "base_prog": 12,
+      "base_over": 12,
+      "max_frag": 48,
+      "max_prog": 55,
+      "max_over": 34,
+      "char_type": 0,
+      "skill_unlock_level": 0,
+      "skill_id": "skill_luna_ilot",
+      "uncap_cores": [],
+      "version_from": "0.0.0",
+      "search_strings": [
+        "ルナ＆イロ",
+        "露娜 & 伊洛",
+        "露娜 & 伊洛",
+        "るないろ",
+        "루나 이로"
+      ],
+      "pack_id": "rotaeno"
+    },
+    {
+      "character_id": 77,
+      "name": "eto_hoppe",
+      "is_available": false,
+      "is_previewable": false,
+      "base_frag": 22.5,
+      "base_prog": 31,
+      "base_over": 19,
+      "max_frag": 37.5,
+      "max_prog": 50,
+      "max_over": 30,
+      "char_type": 0,
+      "skill_unlock_level": 0,
+      "skill_id": "skill_eto_hoppe",
+      "uncap_cores": [],
+      "version_from": "0.0.0",
+      "search_strings": [
+        "エト＆ホッパ",
+        "爱托 & 荷珀",
+        "愛托 & 荷珀",
+        "えとほっぱ",
+        "에토 호페"
+      ],
+      "pack_id": "rotaeno"
+    },
+    {
+      "character_id": 78,
+      "base_character": true,
+      "name": "nell",
+      "is_available": false,
+      "is_previewable": false,
+      "base_frag": 63,
+      "base_prog": 72,
+      "base_over": 38.5,
+      "max_frag": 90,
+      "max_prog": 103,
+      "max_over": 55.5,
+      "char_type": 2,
+      "skill_unlock_level": 0,
+      "skill_id": "skill_nell",
+      "uncap_cores": [],
+      "version_from": "0.0.0",
+      "search_strings": [
+        "Forlorn",
+        "Nell",
+        "佗棄",
+        "哀寂",
+        "哀寂",
+        "天賦第六究明者",
+        "至高：第六探索者",
+        "尼尔",
+        "尼爾",
+        "てんぶだいろくきゅうめいしゃねーる",
+        "てんぶだいろくきゅうめいしゃだき",
+        "초월자 여섯번째 추적자 고독",
+        "초월자 여섯번째 추적자 넬"
+      ],
+      "pack_id": "lephon"
+    },
+    {
+      "character_id": 79,
+      "base_character": true,
+      "name": "chinatsu",
+      "is_available": false,
+      "is_previewable": false,
+      "base_frag": 37,
+      "base_prog": 40,
+      "base_over": 40,
+      "max_frag": 60,
+      "max_prog": 66,
+      "max_over": 66,
+      "char_type": 0,
+      "skill_unlock_level": 0,
+      "skill_id": "skill_chinatsu",
+      "uncap_cores": [],
+      "version_from": "0.0.0",
+      "search_strings": [
+        "千夏",
+        "ちなつ",
+        "치나츠"
+      ],
+      "pack_id": "ongeki_append_2"
+    },
+    {
+      "character_id": 80,
+      "base_character": true,
+      "name": "tsumugi",
+      "is_available": false,
+      "is_previewable": false,
+      "base_frag": 23.5,
+      "base_prog": 16.5,
+      "base_over": 26,
+      "max_frag": 50.5,
+      "max_prog": 35.5,
+      "max_over": 55,
+      "char_type": 0,
+      "skill_unlock_level": 0,
+      "skill_id": "skill_tsumugi",
+      "uncap_cores": [],
+      "version_from": "0.0.0",
+      "search_strings": [
+        "つむぎ",
+        "纺",
+        "紡",
+        "츠무기"
+      ],
+      "pack_id": "ongeki_append_2"
+    },
+    {
+      "character_id": 81,
+      "base_character": true,
+      "name": "nai",
+      "is_available": false,
+      "is_previewable": false,
+      "base_frag": 59,
+      "base_prog": 33,
+      "base_over": 39.5,
+      "max_frag": 92.5,
+      "max_prog": 52,
+      "max_over": 62,
+      "char_type": 0,
+      "skill_unlock_level": 0,
+      "skill_id": "skill_nai",
+      "uncap_cores": [
+        {
+          "core_type": "core_chunithm",
+          "amount": 15
+        }
+      ],
+      "uncap_version_from": "0.0.0",
+      "version_from": "0.0.0",
+      "search_strings": [
+        "ナイ",
+        "奈伊",
+        "나이"
+      ],
+      "pack_id": "chunithm_append_3"
+    },
+    {
+      "character_id": 82,
+      "base_character": true,
+      "name": "selene",
+      "is_available": false,
+      "is_previewable": false,
+      "base_frag": 45.5,
+      "base_prog": 35.5,
+      "base_over": 56.5,
+      "max_frag": 66,
+      "max_prog": 65,
+      "max_over": 81.5,
+      "char_type": 2,
+      "skill_unlock_level": 0,
+      "skill_id": "skill_selene",
+      "uncap_cores": [
+        {
+          "core_type": "core_chunithm",
+          "amount": 15
+        }
+      ],
+      "uncap_version_from": "0.0.0",
+      "version_from": "0.0.0",
+      "search_strings": [
+        "赛润妮·雪儿",
+        "賽潤妮·雪兒",
+        "せれねしぇりる",
+        "셀레네 셰릴"
+      ],
+      "pack_id": "chunithm_append_3"
+    },
+    {
+      "character_id": 83,
+      "base_character": true,
+      "name": "salt",
+      "is_available": false,
+      "is_previewable": false,
+      "base_frag": 20.5,
+      "base_prog": 23,
+      "base_over": 20.5,
+      "max_frag": 44.5,
+      "max_prog": 50,
+      "max_over": 44.5,
+      "char_type": 0,
+      "skill_unlock_level": 0,
+      "skill_id": "skill_salt",
+      "uncap_cores": [],
+      "version_from": "0.0.0",
+      "search_strings": [
+        "ソルト",
+        "莎露朵",
+        "솔트"
+      ],
+      "pack_id": "maimai_append_2"
+    },
+    {
+      "character_id": 84,
+      "base_character": true,
+      "name": "acid",
+      "is_available": false,
+      "is_previewable": false,
+      "base_frag": 43.5,
+      "base_prog": 24,
+      "base_over": 25.5,
+      "max_frag": 79,
+      "max_prog": 43,
+      "max_over": 46,
+      "char_type": 2,
+      "skill_unlock_level": 0,
+      "skill_id": "skill_acid",
+      "uncap_cores": [
+        {
+          "core_type": "core_maimai",
+          "amount": 15
+        }
+      ],
+      "uncap_version_from": "0.0.0",
+      "version_from": "0.0.0",
+      "search_strings": [
+        "アシッド",
+        "埃希德",
+        "애시드"
+      ],
+      "pack_id": "maimai_append_2"
+    },
+    {
+      "character_id": 85,
+      "name": "hikari_selene",
+      "is_available": false,
+      "is_previewable": false,
+      "base_frag": 50,
+      "base_prog": 46.5,
+      "base_over": 46.5,
+      "max_frag": 50,
+      "max_prog": 84,
+      "max_over": 84,
+      "char_type": 2,
+      "skill_unlock_level": 0,
+      "skill_id": "skill_hikari_selene",
+      "uncap_cores": [],
+      "version_from": "0.0.0",
+      "search_strings": [
+        "光＆セレネ・シェリル",
+        "光 & 赛润妮·雪儿",
+        "光 & 賽潤妮·雪兒",
+        "ひかりふらくちゃーせれねしぇりる",
+        "ひかりせれねしぇりるふらくちゃー",
+        "ふらくちゃーひかりせれねしぇりる",
+        "프랙쳐 히카리 셀레네 셰릴",
+        "셀레네 셰릴 프랙쳐"
+      ],
+      "pack_id": "chunithm_append_3"
+    },
+    {
+      "character_id": 86,
+      "name": "hikari_clear",
+      "is_available": false,
+      "is_previewable": false,
+      "base_frag": 22,
+      "base_prog": 26,
+      "base_over": 18.5,
+      "max_frag": 47,
+      "max_prog": 55,
+      "max_over": 39.5,
+      "char_type": 0,
+      "skill_unlock_level": 0,
+      "skill_id": "skill_hikari_clear",
+      "uncap_cores": [],
+      "version_from": "0.0.0",
+      "search_strings": [
+        "光＆エル・クリア",
+        "光 & 克莱尔",
+        "光 & 克萊爾",
+        "ひかりえるくりあ",
+        "히카리 엘 클리어"
+      ],
+      "pack_id": "djmax"
+    },
+    {
+      "character_id": 87,
+      "name": "tairitsu_fail",
+      "is_available": false,
+      "is_previewable": false,
+      "base_frag": 37.5,
+      "base_prog": 49.5,
+      "base_over": 71,
+      "max_frag": 55,
+      "max_prog": 73,
+      "max_over": 105,
+      "char_type": 2,
+      "skill_unlock_level": 0,
+      "skill_id": "skill_tairitsu_fail",
+      "uncap_cores": [],
+      "version_from": "0.0.0",
+      "search_strings": [
+        "対立＆エル・フェイル",
+        "对立 & 菲尔",
+        "對立 & 菲爾",
+        "たいりつえるふぇいる",
+        "타이리츠 엘 페일"
+      ],
+      "pack_id": "djmax"
+    },
+    {
+      "character_id": 88,
+      "name": "nami_sui",
+      "is_available": false,
+      "is_previewable": false,
+      "base_frag": 26.5,
+      "base_prog": 32,
+      "base_over": 29.5,
+      "max_frag": 49,
+      "max_prog": 59,
+      "max_over": 55,
+      "char_type": 0,
+      "skill_unlock_level": 0,
+      "skill_id": "skill_nami_sui",
+      "uncap_cores": [],
+      "version_from": "0.0.0",
+      "search_strings": [
+        "奈実＆スイ",
+        "奈美 & 希依",
+        "なみよいやみすい",
+        "よいやみなみすい",
+        "나미 스이 황혼",
+        "황혼 나미 스이"
+      ],
+      "pack_id": "djmax_append_1"
+    },
+    {
+      "character_id": 89,
+      "base_character": true,
+      "name": "nonoka",
+      "is_available": false,
+      "is_previewable": false,
+      "base_frag": 47,
+      "base_prog": 35.5,
+      "base_over": 25.5,
+      "max_frag": 79.5,
+      "max_prog": 60,
+      "max_over": 43.5,
+      "char_type": 0,
+      "skill_unlock_level": 0,
+      "skill_id": "skill_nonoka",
+      "skill_id_uncap": "skill_nonoka_uncap",
+      "uncap_cores": [
+        {
+          "core_type": "core_alluring",
+          "amount": 25
+        },
+        {
+          "core_type": "core_hollow",
+          "amount": 5
+        }
+      ],
+      "uncap_version_from": "0.0.0",
+      "version_from": "0.0.0",
+      "search_strings": [
+        "野乃香",
+        "ののかあずーる",
+        "あずーるののか",
+        "아쥬르 노노카",
+        "노노카 아쥬르",
+        "아주르 노노카",
+        "노노카 아주르"
+      ],
+      "pack_id": "anima"
+    },
+    {
+      "character_id": 90,
+      "base_character_id": 54,
+      "base_character": false,
+      "name": "vita_arc",
+      "is_available": false,
+      "is_previewable": false,
+      "base_frag": 34.5,
+      "base_prog": 43,
+      "base_over": 73.5,
+      "max_frag": 52,
+      "max_prog": 64,
+      "max_over": 110,
+      "char_type": 0,
+      "skill_unlock_level": 0,
+      "skill_id": "skill_vita_arc",
+      "uncap_cores": [],
+      "version_from": "0.0.0",
+      "search_strings": [
+        "维塔",
+        "維塔",
+        "ゔぃーたわんだらー",
+        "わんだらーゔぃーた",
+        "원더러 비타",
+        "비타 원더러"
+      ]
+    },
+    {
+      "character_id": 91,
+      "base_character_id": 1,
+      "base_character": false,
+      "name": "hikari_tairitsu_ans_ost",
+      "is_available": false,
+      "is_previewable": false,
+      "base_frag": 45,
+      "base_prog": 45,
+      "base_over": 45,
+      "max_frag": 90,
+      "max_prog": 67.5,
+      "max_over": 50,
+      "char_type": 0,
+      "skill_unlock_level": 0,
+      "skill_id": "",
+      "uncap_cores": [],
+      "version_from": "6.9.7",
+      "search_strings": [
+        "光と対立",
+        "光 & 对立",
+        "光 & 對立",
+        "ひかりたいりつぶれいくするー",
+        "ひかりたいりつぶれーくするー",
+        "ぶれーくするーひかりたいりつ",
+        "ぶれいくするーひかりたいりつ",
+        "브레이크스루 히카리 타이리츠",
+        "히카리 타이리츠 브레이크스루"
+      ]
+    },
+    {
+      "character_id": 92,
+      "base_character_id": 1,
+      "base_character": false,
+      "name": "hikari_tairitsu_debut",
+      "is_available": false,
+      "is_previewable": false,
+      "base_frag": 23,
+      "base_prog": 62.5,
+      "base_over": 62.5,
+      "max_frag": 35,
+      "max_prog": 94,
+      "max_over": 94,
+      "char_type": 0,
+      "skill_unlock_level": 0,
+      "skill_id": "skill_hikari_tairitsu_debut",
+      "uncap_cores": [],
+      "version_from": "6.10.8",
+      "search_strings": [
+        "光と対立",
+        "光 & 对立",
+        "光 & 對立",
+        "ひかりたいりつでびゅー",
+        "でびゅーひかりたいりつ",
+        "데뷔 히카리 타이리츠",
+        "데뷰 히카리 타이리츠",
+        "히카리 타이리츠 데뷔",
+        "히카리 타이리츠 데뷰"
+      ],
+      "pack_id": "nextstage"
+    },
+    {
+      "character_id": 93,
+      "base_character": true,
+      "name": "viim",
+      "is_available": false,
+      "is_previewable": false,
+      "base_frag": 47,
+      "base_prog": 77,
+      "base_over": 47,
+      "max_frag": 68,
+      "max_prog": 110,
+      "max_over": 68,
+      "char_type": 2,
+      "skill_unlock_level": 0,
+      "skill_id": "skill_hp_slow_drain",
+      "uncap_cores": [],
+      "version_from": "6.11.2",
+      "search_strings": [
+        "ゔぃーむ",
+        "びーむ",
+        "ぶいつーえむ",
+        "ぶいとぅーえむ",
+        "ぶいあいあいえむ",
+        "ゔいつーえむ",
+        "ゔいとぅーえむ",
+        "ゔぃーつーえむ",
+        "ゔぃーとぅーえむ",
+        "ゔぃーあいあいえむ",
+        "브이 투 엠",
+        "빔",
+        "비 아이 아이 엠"
+      ]
+    },
+    {
+      "character_id": 94,
+      "base_character": true,
+      "name": "helena",
+      "is_available": false,
+      "is_previewable": false,
+      "base_frag": 42.5,
+      "base_prog": 42.5,
+      "base_over": 71,
+      "max_frag": 63,
+      "max_prog": 63,
+      "max_over": 105,
+      "char_type": 0,
+      "skill_unlock_level": 0,
+      "skill_id": "skill_hprate_based_on_hp",
+      "uncap_cores": [],
+      "version_from": "6.11.8",
+      "search_strings": [
+        "ヘレナ",
+        "海琳娜",
+        "헬레나"
+      ]
+    },
+    {
+      "character_id": 95,
+      "base_character": true,
+      "name": "yuno",
+      "is_available": false,
+      "is_previewable": false,
+      "base_frag": 70.5,
+      "base_prog": 44,
+      "base_over": 44,
+      "max_frag": 103.5,
+      "max_prog": 65,
+      "max_over": 65,
+      "char_type": 0,
+      "skill_unlock_level": 0,
+      "skill_id": "skill_lost_to_85",
+      "uncap_cores": [],
+      "version_from": "6.11.6",
+      "search_strings": [
+        "夢乃",
+        "梦乃",
+        "ゆの",
+        "유노"
+      ]
+    },
+    {
+      "character_id": 96,
+      "base_character_id": 99,
+      "base_character": false,
+      "name": "shirahime_flow",
+      "is_available": false,
+      "is_previewable": false,
+      "base_frag": 41,
+      "base_prog": 33,
+      "base_over": 11.5,
+      "max_frag": 65,
+      "max_prog": 58,
+      "max_over": 13.5,
+      "char_type": 0,
+      "skill_unlock_level": 0,
+      "skill_id": "skill_frag_doubled_after_earning_X",
+      "uncap_cores": [],
+      "version_from": "6.12.0",
+      "search_strings": [
+        "白姫",
+        "しらひめふろー",
+        "しらひめふろう",
+        "ふろーしらひめ",
+        "ふろうしらひめ",
+        "플로우 시라히메",
+        "시라히메 플로우"
+      ],
+      "pack_id": "megarex"
+    },
+    {
+      "character_id": 99,
+      "base_character": true,
+      "name": "shirahime",
+      "is_available": false,
+      "is_previewable": false,
+      "base_frag": 38,
+      "base_prog": 33,
+      "base_over": 28.5,
+      "max_frag": 66.5,
+      "max_prog": 58,
+      "max_over": 50,
+      "char_type": 0,
+      "skill_unlock_level": 8,
+      "skill_id": "frags_preferred_song",
+      "uncap_cores": [],
+      "version_from": "0.0.0",
+      "search_strings": [
+        "白姫",
+        "しらひめ",
+        "시라히메"
+      ],
+      "pack_id": "dividedheart"
     }
   ],
   "storyNodes": [

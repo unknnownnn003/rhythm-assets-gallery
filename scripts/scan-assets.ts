@@ -477,6 +477,7 @@ async function buildAsset(
       jacketDesigner: arcaeaEnrichment.jacketDesigner,
       characterId: arcaeaEnrichment.characterId,
       characterName: arcaeaEnrichment.characterName,
+      characterEnglishName: arcaeaEnrichment.characterEnglishName,
       characterVariant: arcaeaEnrichment.characterVariant,
       relatedCharacterIds: arcaeaEnrichment.relatedCharacterIds,
       relatedCharacterNames: arcaeaEnrichment.relatedCharacterNames,

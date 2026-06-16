@@ -37,6 +37,30 @@ npm run arcaea:metadata
 npm run scan + npm run thumbs + npm run sitemap
 ```
 
+## Arcaea APK Runtime Download
+
+Arcaea 瀹㈡埛绔笅杞戒笉鍐嶄緷璧?`public/downloads` 鎴?`dist/downloads`銆傛帹鑽愭ā寮忔槸锛?
+
+- 鏈嶅姟鍣ㄥ畾鏃惰繍琛?`npm run arcaea:check-apk`
+- 鑴氭湰鐩存帴鍦ㄦ湇鍔″櫒鏈湴緙撳瓨 APK锛屽啓鍏ョ鏈夊厓鏁版嵁 JSON
+- 棣栭〉杩愯鏃堕€氳繃 `/api/apk/arcaea/latest` 璇诲彇鏈€鏂扮増鏈俊鎭紝涓嶉渶閲嶆柊鏋勫缓绔欑偣
+- 鐢ㄦ埛閫氳繃 `/api/download/arcaea/latest` 涓嬭浇锛岀敱鏈嶅姟鍣ㄦ湰鍦版枃浠舵彁渚涙祦寮忎笅鍙?
+
+榛樿寤鸿鐨勭幆澧冨彉閲忥細
+
+```text
+STATS_DATA_DIR=/www/wwwroot/stats-data
+ARCAEA_APK_RUNTIME_DIR=/www/wwwroot/stats-data/arcaea-apk
+ARCAEA_APK_META_FILE=/www/wwwroot/stats-data/arcaea-apk/arcaea-apk.json
+ARCAEA_APK_DOWNLOAD_DIR=/www/wwwroot/stats-data/arcaea-apk/files
+```
+
+鐗规€ц鏄庯細
+
+- APK 鍏冩暟鎹帴鍙ｅ彧鍏紑 `version`銆?`filename`銆?`sizeBytes`銆?`scrapedAt`锛屼笉鍐嶆毚闇茬湡瀹炰笂娓?URL 鎴栨湰鍦版枃浠惰矾寰?
+- 涓嬭浇鎺ュ彛鏀寔 `HEAD` 鍜?HTTP `Range`锛屽彲鐢ㄤ簬鏂偣缁紶鍜屽绾跨▼鍒嗘涓嬭浇
+- 鏈嶅姟鍣ㄧ紦瀛樺拰绔欑偣鏋勫缓浜х墿瑙ｈ€︼紝杩滅▼鏋勫缓鏃朵笉浼氭妸 APK 鎵撹繘 `dist`
+
 ## Arcaea APK 更新提取流程
 
 ### 只提取新版 APK 的新增资源
@@ -380,6 +404,25 @@ dist
 
 `.deploy.env` 已加入 `.gitignore`，不要提交这个文件。仓库里只保留 `.deploy.env.example` 作为模板。
 
+运行过一次 `npm install` 后，仓库会自动把 `core.hooksPath` 指向 `.githooks`，启用本地 `pre-commit` 检查。也可以手动运行：
+
+```powershell
+npm run hooks:install
+```
+
+提交前检查会拦截：
+
+- `.deploy.env`
+- SSH 私钥文件、`.pem` / `.p12` / `.pfx`
+- 私钥内容块
+- `.deploy.env.example` 和 `README.md` 里的真实部署值
+
+需要手动检查时可以运行：
+
+```powershell
+npm run guard:secrets
+```
+
 当前站点按宝塔 Linux 面板常见目录配置：
 
 ```env
@@ -645,3 +688,5 @@ automation/logs
 ```
 
 `scripts/import-incoming-assets.ts` 当前只扫描 `automation/incoming`、检查扩展名和可读性、写入 dry-run 报告。它不会移动、删除、重命名、覆盖、下载或抓取文件。
+
+Arcaea APK 客户端是明确的例外：它使用 `scripts/check-arcaea-apk.ts` 在服务器本地嗅探和缓存，再由 `scripts/stats-server.mjs` 在运行时提供元数据和下载接口，不参与站点构建产物同步。

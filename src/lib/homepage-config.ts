@@ -1,15 +1,15 @@
 export const homepageConfig = {
   siteTitle: "音游曲绘下载站",
-  metaDescription: "Arcaea 与 Phigros 曲绘、角色立绘、剧情图与封面资源静态图库。",
+  metaDescription: "高清 Arcaea 与 Phigros 曲绘、角色立绘、剧情 CG 和封面图库，支持一键搜索与批量下载。",
 
   hero: {
     eyebrow: "Rhythm Assets",
-    title: "更快、更清晰的音游曲绘下载体验",
+    title: "Arcaea & Phigros\n曲绘资源库",
     description:
-      "保留现有静态资源结构与目录兼容性，只优化前端检索、浏览与下载交互，让大图查找和批量收集都更顺手。",
+      "收录曲绘、立绘、剧情 CG、游玩背景等高清素材，支持多条件筛选与批量下载。",
     searchLabel: "搜索资源",
-    searchPlaceholder: "输入曲名、画师、曲包、角色、版本号或背景名",
-    searchButton: "立即搜索",
+    searchPlaceholder: "搜曲名、画师、曲包，多个关键词用空格分开",
+    searchButton: "搜索",
     chips: [
       { label: "Arcaea 曲绘", href: "/arcaea?category=%E6%9B%B2%E7%BB%98" },
       { label: "Phigros 曲绘", href: "/phigros?category=%E6%9B%B2%E7%BB%98" },
@@ -24,25 +24,24 @@ export const homepageConfig = {
     avatar: "/site-icon.png",
     badge: "Bilibili",
     name: "unknnownnn_003",
-    description: "站点维护、资源补档与问题反馈入口集中在这里。",
+    description: "资源补档、问题反馈、更新预告都在这里，欢迎来玩。",
     button: "前往 B 站主页",
   },
 
   clientDownload: {
     title: "Arcaea 客户端",
-    status: "前端位已预留",
+    status: "暂无新版",
     version: "待接入",
-    updatedAt: "等待本地缓存源接入",
-    downloadCount: "累计下载 — 次",
+    updatedAt: "暂无",
+    downloadCount: "暂无",
     href: "",
-    button: "等待下载源接入",
-    note: "当前分支只做首页前端位，不新增下载后端与服务器任务。",
+    button: "暂无可用版本",
+    note: "",
   },
 
   announcements: [
-    "图库页保留现有静态索引与目录结构。",
-    "批量下载将直接读取现有原图链接并前端打包。",
-    "本轮优化仅做本地预览，不同步远程服务器。",
+    "曲绘图片版权归原游戏与画师所有，本站仅提供索引整理。",
+    "批量下载功能已上线：选中图片后，点击底部按钮即可打包为 ZIP。",
   ],
 
   footer: {

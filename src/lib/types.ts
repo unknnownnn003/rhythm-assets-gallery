@@ -90,3 +90,18 @@ export type TagSummary = {
   name: string;
   count: number;
 };
+
+export type ArcaeaApkVersion = {
+  version: string;
+  filename: string;
+  sizeBytes: number;
+  scrapedAt: string;
+};
+
+export type ArcaeaApkPublicMeta = {
+  latest: ArcaeaApkVersion | null;
+  history: ArcaeaApkVersion[];
+  lastChecked: string;
+  downloadCount: number;
+  downloadHref: string;
+};

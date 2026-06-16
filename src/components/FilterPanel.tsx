@@ -34,9 +34,9 @@ export function FilterPanel({
   return (
     <div className="filter-panel">
       <div className="filter-panel-head">
-        <strong>筛选条件</strong>
+        <strong>筛选</strong>
         <button type="button" onClick={onClear}>
-          清空
+          重置
         </button>
       </div>
 

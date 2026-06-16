@@ -15,6 +15,9 @@ dev-server.log
 dev-server.err.log
 preview-server.log
 preview-server.err.log
+preview-*.log
+preview-*.err.log
+debug.log
 codex.ps1
 
 
@@ -23,6 +26,7 @@ codex.ps1
 .env.production
 .deploy.env
 .deploy-work/
+.runtime/
 .phigros-apk-work/
 
 # macOS-specific files

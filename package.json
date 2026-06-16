@@ -9,6 +9,8 @@
     "dev": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
+    "guard:secrets": "node scripts/check-sensitive-staged.mjs",
+    "hooks:install": "node scripts/install-git-hooks.mjs",
     "scan": "tsx scripts/scan-assets.ts",
     "thumbs": "tsx scripts/generate-thumbnails.ts",
     "sitemap": "tsx scripts/generate-sitemap.ts",
@@ -21,7 +23,9 @@
     "arcaea:publish": "powershell -ExecutionPolicy Bypass -File scripts/publish-arcaea-update.ps1",
     "phigros:extract": "python scripts/extract-phigros-update.py",
     "phigros:publish": "powershell -ExecutionPolicy Bypass -File scripts/publish-phigros-update.ps1",
-    "update": "npm run scan && npm run thumbs && npm run sitemap",
+    "suggestions": "tsx scripts/generate-search-suggestions.ts",
+    "update": "npm run scan && npm run thumbs && npm run sitemap && npm run suggestions",
+    "prepare": "node scripts/install-git-hooks.mjs",
     "astro": "astro"
   },
   "dependencies": {

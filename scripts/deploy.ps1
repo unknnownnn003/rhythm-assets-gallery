@@ -341,6 +341,7 @@ function New-RemoteSourceArchive {
     "--exclude=node_modules",
     "--exclude=public/assets",
     "--exclude=public/data",
+    "--exclude=public/downloads",
     "--exclude=public/thumbs",
     "--exclude=preview-server.log",
     "--exclude=preview-server.err.log",

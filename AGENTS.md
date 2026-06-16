@@ -22,7 +22,7 @@ Production server context:
 
 Do not add a backend, database, login system, comments, admin panel, or upload UI unless the user explicitly asks.
 
-The only server-side exception is a tiny Node.js HTTP API server at `scripts/stats-server.mjs` (deployed to `/www/wwwroot/stats-server.mjs`, managed by PM2 as `rhythm-stats-api`) for visitor counting. It stores data outside the web root at `/www/wwwroot/stats-data/stats.json` to survive atomic deploy switches. Nginx proxies `/api/` requests to this server on `127.0.0.1:3001`. This was explicitly requested.
+The only server-side exception is a tiny Node.js HTTP API server at `scripts/stats-server.mjs` (deployed to `/www/wwwroot/stats-server.mjs`, managed by PM2 as `rhythm-stats-api`) for visitor counting and Arcaea APK runtime download metadata. It stores its runtime data outside the web root under `/www/wwwroot/stats-data/` so it survives atomic deploy switches. Nginx proxies `/api/` requests to this server on `localhost:3001`. This was explicitly requested.
 
 ---
 
@@ -393,6 +393,8 @@ The deploy script reads local deployment configuration from:
 
 `.deploy.env` is intentionally ignored and must not be committed. Keep `.deploy.env.example` safe to commit.
 
+After `npm install`, the repo installs a local `pre-commit` hook via `core.hooksPath=.githooks`. Keep that guard active. It blocks committed `.deploy.env`, private key material, and real deployment values accidentally pasted into `.deploy.env.example` or `README.md`.
+
 Remote build mode:
 
 1. Creates a local source archive excluding large/generated directories.
@@ -413,7 +415,7 @@ DEPLOY_REMOTE_SHARP_CACHE_MEMORY_MB=64
 
 The script reuses existing deployed thumbnails. On normal metadata or page changes, it should skip existing thumbnails rather than regenerate thousands of files.
 
-The visitor stats API server (`scripts/stats-server.mjs`) runs as a separate PM2 process and is not managed by the deploy script. It stores data at `/www/wwwroot/stats-data/` (outside the web root) and listens on `127.0.0.1:3001`. Nginx proxies `/api/` to it via a location block in `/www/server/panel/vhost/nginx/www.unknnownnn.homes.conf`. This nginx config is managed by Baota — if Baota regenerates the site config, the `/api/` proxy block may need to be re-added.
+The visitor stats API server (`scripts/stats-server.mjs`) runs as a separate PM2 process and is not managed by the deploy script. It stores runtime data at `/www/wwwroot/stats-data/` (outside the web root), listens on `localhost:3001`, and now also serves Arcaea APK metadata plus streamed downloads from server-local cached files. Nginx proxies `/api/` to it via a location block in `/www/server/panel/vhost/nginx/www.unknnownnn.homes.conf`. This nginx config is managed by Baota — if Baota regenerates the site config, the `/api/` proxy block may need to be re-added.
 
 If the user explicitly asks to update/publish/sync the website, the normal flow is:
 

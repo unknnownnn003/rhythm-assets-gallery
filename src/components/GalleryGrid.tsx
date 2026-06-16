@@ -28,6 +28,9 @@ const META_FILTER_KEYS = [
 
 const GAME_SPECIFIC_META_KEYS = new Set<string>(["side", "version", "pack"]);
 const SELECTED_STORAGE_KEY = "gallery-selected-ids";
+const SELECTED_CACHE_KEY = "gallery-selected-cache";
+
+type SelectedAssetCache = Record<string, { filename: string; thumbnailSmall?: string }>;
 
 function loadSelectedIds() {
   if (typeof window === "undefined") {
@@ -44,6 +47,16 @@ function loadSelectedIds() {
   return new Set<string>();
 }
 
+function loadSelectedCache() {
+  if (typeof window === "undefined") return {};
+  try {
+    const raw = sessionStorage.getItem(SELECTED_CACHE_KEY);
+    return raw ? (JSON.parse(raw) as SelectedAssetCache) : {};
+  } catch {
+    return {};
+  }
+}
+
 function saveSelectedIds(ids: Set<string>) {
   if (typeof window === "undefined") {
     return;
@@ -55,14 +68,45 @@ function saveSelectedIds(ids: Set<string>) {
   }
 }
 
+function readUrlFilterState() {
+  if (typeof window === "undefined") {
+    return {
+      query: "",
+      category: "",
+      sort: "recent",
+      meta: {} as Record<string, string>,
+    };
+  }
+
+  const params = new URLSearchParams(window.location.search);
+  const meta: Record<string, string> = {};
+
+  for (const key of META_FILTER_KEYS) {
+    const value = params.get(key)?.trim();
+    if (value) {
+      meta[key] = value;
+    }
+  }
+
+  const sort = params.get("sort")?.trim();
+
+  return {
+    query: params.get("q")?.trim() ?? "",
+    category: params.get("category")?.trim() ?? "",
+    sort: sort && ["recent", "name", "category"].includes(sort) ? sort : "recent",
+    meta,
+  };
+}
+
 export default function GalleryGrid({ assets, game }: GalleryGridProps) {
-  const [query, setQuery] = useState("");
-  const [debouncedQuery, setDebouncedQuery] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("");
-  const [selectedMeta, setSelectedMeta] = useState<Record<string, string>>({});
-  const [sort, setSort] = useState("recent");
+  const initialUrlState = readUrlFilterState();
+  const [query, setQuery] = useState(initialUrlState.query);
+  const [debouncedQuery, setDebouncedQuery] = useState(initialUrlState.query);
+  const [selectedCategory, setSelectedCategory] = useState(initialUrlState.category);
+  const [selectedMeta, setSelectedMeta] = useState<Record<string, string>>(initialUrlState.meta);
+  const [sort, setSort] = useState(initialUrlState.sort);
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
-  const [hasLoadedUrlParams, setHasLoadedUrlParams] = useState(false);
+  const [hasLoadedUrlParams, setHasLoadedUrlParams] = useState(typeof window !== "undefined");
   const [selectedIds, setSelectedIds] = useState<Set<string>>(() => new Set());
   const [isDownloading, setIsDownloading] = useState(false);
   const [didRestoreSelection, setDidRestoreSelection] = useState(false);
@@ -84,32 +128,22 @@ export default function GalleryGrid({ assets, game }: GalleryGridProps) {
   }, []);
 
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const urlQuery = params.get("q")?.trim() ?? "";
-    const urlCategory = params.get("category")?.trim() ?? "";
-    const urlSort = params.get("sort")?.trim() ?? "";
-    const nextMeta: Record<string, string> = {};
-
-    for (const key of META_FILTER_KEYS) {
-      const value = params.get(key)?.trim();
-      if (value) {
-        nextMeta[key] = value;
-      }
+    if (typeof window === "undefined") {
+      return;
     }
 
-    if (urlQuery) {
-      setQuery(urlQuery);
-      setDebouncedQuery(urlQuery);
-    }
-    if (urlCategory) {
-      setSelectedCategory(urlCategory);
-    }
-    if (urlSort && ["recent", "name", "category"].includes(urlSort)) {
-      setSort(urlSort);
-    }
+    const syncFromUrl = () => {
+      const nextState = readUrlFilterState();
+      setQuery(nextState.query);
+      setDebouncedQuery(nextState.query);
+      setSelectedCategory(nextState.category);
+      setSelectedMeta(nextState.meta);
+      setSort(nextState.sort);
+      setHasLoadedUrlParams(true);
+    };
 
-    setSelectedMeta(nextMeta);
-    setHasLoadedUrlParams(true);
+    window.addEventListener("popstate", syncFromUrl);
+    return () => window.removeEventListener("popstate", syncFromUrl);
   }, []);
 
   useEffect(() => {
@@ -177,8 +211,11 @@ export default function GalleryGrid({ assets, game }: GalleryGridProps) {
     () =>
       new Fuse(assets, {
         keys: [
-          "title",
-          "artist",
+          { name: "characterName", weight: 4 },
+          { name: "characterEnglishName", weight: 3 },
+          { name: "relatedCharacterNames", weight: 3 },
+          { name: "title", weight: 2 },
+          { name: "artist", weight: 1.5 },
           "filename",
           "category",
           "tags",
@@ -197,10 +234,7 @@ export default function GalleryGrid({ assets, game }: GalleryGridProps) {
           "difficultyRatings",
           "chartDesigner",
           "jacketDesigner",
-          "characterName",
-          "characterEnglishName",
           "characterVariant",
-          "relatedCharacterNames",
           "storyNode",
           "storyPathTitle",
           "relatedSongId",
@@ -241,10 +275,49 @@ export default function GalleryGrid({ assets, game }: GalleryGridProps) {
   const selectedAssets = useMemo(
     () =>
       [...selectedIds]
-        .map((id) => assetMap.get(id))
+        .map((id) => {
+          const fromPage = assetMap.get(id);
+          if (fromPage) return fromPage;
+          const cache = loadSelectedCache();
+          const cached = cache[id];
+          if (cached) {
+            return {
+              id,
+              filename: cached.filename,
+              thumbnailSmall: cached.thumbnailSmall,
+              url: "",
+            } as AssetItem;
+          }
+          return null;
+        })
         .filter((asset): asset is AssetItem => Boolean(asset)),
     [assetMap, selectedIds],
   );
+
+  useEffect(() => {
+    if (!didRestoreSelection) return;
+    const cache: Record<string, { filename: string; thumbnailSmall?: string }> = {};
+    for (const id of selectedIds) {
+      const asset = assetMap.get(id);
+      if (asset) {
+        cache[id] = {
+          filename: asset.filename,
+          thumbnailSmall: asset.thumbnailSmall ?? asset.thumbnailMedium,
+        };
+      }
+    }
+    const existing = loadSelectedCache();
+    const merged = { ...existing, ...cache };
+    for (const key of Object.keys(merged)) {
+      if (!selectedIds.has(key)) delete merged[key];
+    }
+    try {
+      sessionStorage.setItem(SELECTED_CACHE_KEY, JSON.stringify(merged));
+    } catch {
+      // ignore quota errors
+    }
+  }, [selectedIds, assetMap, didRestoreSelection]);
+
   const visibleAssets = filteredAssets.slice(0, visibleCount);
   const hasMore = visibleCount < filteredAssets.length;
   const allVisibleSelected =
@@ -318,8 +391,9 @@ export default function GalleryGrid({ assets, game }: GalleryGridProps) {
       current: "",
     });
 
+    const downloadable = selectedAssets.filter((asset) => asset.url);
     try {
-      await downloadAssetsAsZip(selectedAssets, {
+      await downloadAssetsAsZip(downloadable, {
         archiveName: buildArchiveName(game),
         onProgress: (completed, total, filename) => {
           setDownloadProgress({
@@ -330,7 +404,7 @@ export default function GalleryGrid({ assets, game }: GalleryGridProps) {
         },
       });
 
-      setDownloadNotice(`已开始打包下载 ${selectedAssets.length} 个资源。`);
+      setDownloadNotice(`${downloadable.length} 张图片已打包完成，浏览器将自动下载。`);
     } catch (error) {
       setDownloadError(error instanceof Error ? error.message : "打包失败，请稍后重试。");
     } finally {
@@ -345,15 +419,15 @@ export default function GalleryGrid({ assets, game }: GalleryGridProps) {
 
         <div className="gallery-actions">
           <button type="button" className="toolbar-button" onClick={toggleVisibleSelection} disabled={!visibleAssets.length}>
-            {allVisibleSelected ? "取消已加载项" : `勾选已加载项 (${visibleAssets.length})`}
+            {allVisibleSelected ? "取消当前页" : `全选当前页 (${visibleAssets.length})`}
           </button>
           <button type="button" className="toolbar-button" onClick={clearSelection} disabled={!selectedAssets.length}>
             清空选择
           </button>
           <span>
             {selectedAssets.length > 0
-              ? `当前已选 ${selectedAssets.length} 项，可在底部一键打包。`
-              : "勾选卡片右上角“选择”即可进行前端批量打包。"}
+              ? `已选 ${selectedAssets.length} 张，滑到页面底部即可打包下载。`
+              : "点击卡片右上角「选择」，多选图片后批量打包。"}
           </span>
         </div>
 
@@ -424,8 +498,8 @@ export default function GalleryGrid({ assets, game }: GalleryGridProps) {
             </div>
           ) : (
             <div className="empty-state">
-              <strong>没有匹配的资源</strong>
-              <span>换一个关键词，或者清空分类、标签和元数据筛选后再试。</span>
+              <strong>没有找到匹配的资源</strong>
+              <span>试试换个关键词，或者调整左侧的筛选条件。</span>
             </div>
           )}
 
@@ -435,7 +509,7 @@ export default function GalleryGrid({ assets, game }: GalleryGridProps) {
               type="button"
               onClick={() => setVisibleCount((current) => current + PAGE_SIZE)}
             >
-              加载更多
+              查看更多
               <span>
                 已显示 {visibleAssets.length.toLocaleString("zh-CN")} /{" "}
                 {filteredAssets.length.toLocaleString("zh-CN")}
@@ -447,11 +521,11 @@ export default function GalleryGrid({ assets, game }: GalleryGridProps) {
 
       <div className={`batch-download-bar${selectedAssets.length > 0 ? " is-visible" : ""}`} aria-live="polite">
         <div className="batch-download-copy">
-          <strong>已选择 {selectedAssets.length} 项</strong>
+          <strong>已选 {selectedAssets.length} 张</strong>
           <span>
             {isDownloading
-              ? `正在收集 ${downloadProgress.completed}/${downloadProgress.total}：${downloadProgress.current}`
-              : downloadError || downloadNotice || "打包时直接平铺图片文件，同名文件自动添加序号。"}
+              ? `正在获取 ${downloadProgress.completed}/${downloadProgress.total}：${downloadProgress.current}`
+              : downloadError || downloadNotice || "打包为 ZIP 文件，同名图片会自动重命名避免覆盖。"}
           </span>
         </div>
 
@@ -475,7 +549,7 @@ export default function GalleryGrid({ assets, game }: GalleryGridProps) {
           >
             {isDownloading
               ? `打包中 ${downloadProgress.completed}/${downloadProgress.total}`
-              : "一键打包下载 .zip"}
+              : "打包下载 ZIP"}
           </button>
         </div>
       </div>

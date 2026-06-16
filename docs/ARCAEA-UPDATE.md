@@ -16,6 +16,30 @@
 
 ---
 
+## Arcaea 客户端下载缓存
+
+首页展示的 Arcaea APK 下载卡片不再依赖把 APK 放进 `public/downloads` 或 `dist`。推荐流程是：
+
+1. 服务器定时运行 `npm run arcaea:check-apk`
+2. 脚本直接把最新 APK 缓存在服务器本地目录
+3. 运行中的 `scripts/stats-server.mjs` 通过 `/api/apk/arcaea/latest` 提供最新版本元数据
+4. 用户通过 `/api/download/arcaea/latest` 下载服务器本地缓存的 APK
+
+推荐环境变量：
+
+```text
+STATS_DATA_DIR=/www/wwwroot/stats-data
+ARCAEA_APK_RUNTIME_DIR=/www/wwwroot/stats-data/arcaea-apk
+ARCAEA_APK_META_FILE=/www/wwwroot/stats-data/arcaea-apk/arcaea-apk.json
+ARCAEA_APK_DOWNLOAD_DIR=/www/wwwroot/stats-data/arcaea-apk/files
+```
+
+说明：
+
+- 这套客户端下载链路和站点构建解耦，服务器缓存刷新后不需要重新构建首页。
+- 下载接口支持 `HEAD` 和 `Range`，可用于断点续传和分段下载。
+- 对外公开的元数据不会暴露上游直链或服务器本地文件路径。
+
 ## 第一步：提取新增/变更的图片资源
 
 ### 命令

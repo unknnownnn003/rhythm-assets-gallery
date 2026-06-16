@@ -10,7 +10,7 @@ import type { AssetItem } from "../lib/types";
 
 const assets = [...readAssets("arcaea-index.json"), ...readAssets("phigros-index.json")];
 const pageTitle = "音游曲绘资源搜索 - Unknnownnn";
-const pageDescription = "跨 Arcaea 和 Phigros 搜索曲绘、曲包封面、角色立绘、头像、背景图等音游图片资源。";
+const pageDescription = "同时搜索 Arcaea 与 Phigros 的曲绘、立绘、封面、头像与背景图，输入关键词即可跨游戏查找。";
 const pageUrl = absoluteUrl("/search/");
 const pageImage = assets[0] ? assetOgImage(assets[0]) : absoluteUrl("/site-icon.png");
 const navLinks = [
@@ -53,17 +53,18 @@ function readAssets(filename: string): AssetItem[] {
 
     <main class="gallery-page-shell">
       <header class="gallery-page-hero glass-panel" data-reveal>
-        <p class="eyebrow">Global Search</p>
-        <h1>全站资源搜索</h1>
+        <p class="eyebrow">Search</p>
+        <h1>全站搜索</h1>
         <div class="gallery-hero-badges">
-          <span>跨游戏联合索引</span>
-          <span>支持标签与元数据筛选</span>
-          <span>支持前端批量打包</span>
+          <span>Arcaea + Phigros 联合搜索</span>
+          <span>多关键词智能匹配</span>
+          <span>支持批量打包下载</span>
         </div>
       </header>
 
       <GalleryGrid assets={assets} game="All" client:load />
     </main>
+    <script is:inline src="/search-autocomplete.js"></script>
     <script type="module" src="/site-effects.js"></script>
   </body>
 </html>

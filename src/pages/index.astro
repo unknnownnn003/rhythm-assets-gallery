@@ -2,6 +2,7 @@
 import fs from "node:fs";
 import path from "node:path";
 
+import ArcaeaApkDownloadCard from "../components/ArcaeaApkDownloadCard";
 import SiteNav from "../components/SiteNav.astro";
 import VisitorStats from "../components/VisitorStats";
 import "../styles/global.css";
@@ -42,29 +43,21 @@ const navLinks = [
   { href: "/phigros", label: "Phigros" },
   { href: "/search", label: "搜索" },
 ];
-const apkMeta = readJson<{ latest?: { version: string; filename: string; sizeBytes: number } | null; history: Array<{ version: string; scrapedAt: string; sizeBytes: number }> }>("arcaea-apk.json", { history: [] });
-const hasApk = apkMeta.latest && apkMeta.history.length > 0;
-const apkDownload = hasApk
-  ? {
-      title: "Arcaea 客户端",
-      status: "可用",
-      version: apkMeta.latest!.version,
-      updatedAt: new Intl.DateTimeFormat("zh-CN", {
-        year: "numeric",
-        month: "2-digit",
-        day: "2-digit",
-      }).format(new Date(apkMeta.history[0].scrapedAt)),
-      downloadCount: apkMeta.history.length > 1 ? `累计 ${apkMeta.history.length} 个版本` : "最新版本",
-      href: `/downloads/arcaea/${apkMeta.latest!.filename}`,
-      button: `下载 ${apkMeta.latest!.version}`,
-      note: `文件大小 ${(apkMeta.latest!.sizeBytes / 1024 / 1024).toFixed(1)} MB，服务器保留最近 ${Math.min(apkMeta.history.length, 3)} 个版本。`,
-    }
-  : null;
-
 const announcementItems = [
   `最近数据更新时间：${generatedAt}`,
   ...homepageConfig.announcements,
 ];
+
+const apkDownloadFallback = {
+  title: homepageConfig.clientDownload.title,
+  status: homepageConfig.clientDownload.status,
+  version: homepageConfig.clientDownload.version,
+  updatedAt: homepageConfig.clientDownload.updatedAt,
+  cacheCount: homepageConfig.clientDownload.downloadCount,
+  href: homepageConfig.clientDownload.href,
+  button: homepageConfig.clientDownload.button,
+  note: homepageConfig.clientDownload.note,
+};
 
 function readJson<T>(filename: string, fallback: T): T {
   const filePath = path.join(dataDir, filename);
@@ -172,9 +165,10 @@ function formatBytes(bytes?: number) {
 
     <main class="home-shell">
       <section class="home-hero" data-reveal>
-        <div class="home-hero-copy">
+        <div class="home-hero-body">
+          <div class="home-hero-copy">
           <p class="eyebrow">{homepageConfig.hero.eyebrow}</p>
-          <h1>{homepageConfig.hero.title}</h1>
+          <h1>{homepageConfig.hero.title.split("\n")[0]}<br/>{homepageConfig.hero.title.split("\n")[1]}</h1>
           <p class="hero-description">{homepageConfig.hero.description}</p>
 
           <form class="hero-search" action="/search" method="get">
@@ -189,50 +183,11 @@ function formatBytes(bytes?: number) {
             <button type="submit">{homepageConfig.hero.searchButton}</button>
           </form>
 
-          <div class="hero-chip-row" aria-label="快捷入口">
-            {
-              homepageConfig.hero.chips.map((chip) => (
-                <a class="hero-chip" href={chip.href}>
-                  {chip.label}
-                </a>
-              ))
-            }
-          </div>
-
-          <div class="hero-download-card">
-            <div class="hero-download-head">
-              <span class={`hero-download-badge${hasApk ? " is-ready" : ""}`}>
-                {apkDownload?.status ?? homepageConfig.clientDownload.status}
-              </span>
-              <strong>{apkDownload?.title ?? homepageConfig.clientDownload.title}</strong>
-            </div>
-            <div class="hero-download-stats">
-              <div>
-                <small>版本</small>
-                <span>{apkDownload?.version ?? homepageConfig.clientDownload.version}</span>
-              </div>
-              <div>
-                <small>更新日期</small>
-                <span>{apkDownload?.updatedAt ?? homepageConfig.clientDownload.updatedAt}</span>
-              </div>
-              <div>
-                <small>下载次数</small>
-                <span>{apkDownload?.downloadCount ?? homepageConfig.clientDownload.downloadCount}</span>
-              </div>
-            </div>
-            {
-              (apkDownload?.href ?? homepageConfig.clientDownload.href) ? (
-                <a class="hero-download-btn" href={apkDownload?.href ?? homepageConfig.clientDownload.href}>
-                  {apkDownload?.button ?? homepageConfig.clientDownload.button}
-                </a>
-              ) : (
-                <span class="hero-download-btn is-pending">
-                  {homepageConfig.clientDownload.button}
-                </span>
-              )
-            }
-          </div>
+          <ArcaeaApkDownloadCard client:load fallback={apkDownloadFallback} />
         </div>
+        </div>
+
+        <div class="scroll-hint" aria-hidden="true">下滑查看更多 ↓</div>
       </section>
 
       <div class="home-content">
@@ -354,14 +309,17 @@ function formatBytes(bytes?: number) {
 
           <section class="home-section home-seo-note" data-reveal>
             <p>
-              本站继续使用现有的静态 JSON 索引与图片目录结构，面向 Arcaea 与 Phigros
-              的曲绘、角色立绘、曲包封面、剧情 CG、启动页面和游玩背景等资源提供更高效的浏览、筛选与下载入口。
+              本站收录 Arcaea 与 Phigros 的曲绘、角色立绘、曲包封面、剧情 CG、启动页面和游玩背景等数千张高清资源，
+              支持按游戏、曲包、版本和侧别快速筛选，选中图片即可一键打包下载。
             </p>
           </section>
+
         </section>
 
         <aside class="home-sidebar">
+          <div data-reveal>
           <VisitorStats client:load />
+          </div>
 
           {
             homepageConfig.bilibili.enabled ? (
@@ -412,6 +370,7 @@ function formatBytes(bytes?: number) {
     <script is:inline>
       fetch("/api/stats?track", { keepalive: true });
     </script>
+    <script is:inline src="/search-autocomplete.js"></script>
     <script type="module" src="/site-effects.js"></script>
   </body>
 </html>

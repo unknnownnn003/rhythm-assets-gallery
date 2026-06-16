@@ -14,6 +14,8 @@ interface StatsResponse {
   days: DayStats[];
 }
 
+const PRODUCTION_HOST = "www.unknnownnn.homes";
+const LOCAL_API_ORIGIN = "http://localhost:3001";
 const DAY_LABELS = ["周日", "周一", "周二", "周三", "周四", "周五", "周六"];
 
 function buildEmptyDays() {
@@ -51,9 +53,10 @@ async function fetchStats(): Promise<StatsResponse | null> {
   const candidates = ["/api/stats"];
   if (
     typeof window !== "undefined" &&
-    (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1")
+    window.location.hostname &&
+    window.location.hostname !== PRODUCTION_HOST
   ) {
-    candidates.push("http://127.0.0.1:3001/api/stats");
+    candidates.push(`${LOCAL_API_ORIGIN}/api/stats`);
   }
 
   for (const url of candidates) {
@@ -125,7 +128,7 @@ export default function VisitorStats() {
       </div>
 
       <div className="chart-wrap">
-        <div className="chart-strip" aria-label="近 7 日访问量">
+        <div className="chart-strip" aria-label="最近 7 日访问量">
           {data.days.map((day, index) => {
             const isToday = day.date === today;
             return (
@@ -148,8 +151,8 @@ export default function VisitorStats() {
         </div>
       </div>
 
-      {error ? <p className="chart-note">统计服务暂不可用，当前展示的是占位图表。</p> : null}
-      <p className="visitor-note">主数字为浏览量，副标题展示独立访客数。</p>
+      {error ? <p className="chart-note">统计服务暂不可用，当前显示的是占位图表。</p> : null}
+      <p className="visitor-note">主数字为浏览量，副标题显示独立访客数。</p>
     </section>
   );
 }

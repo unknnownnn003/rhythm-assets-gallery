@@ -268,6 +268,7 @@
 
   function initNavSearch() {
     const navSearch = document.querySelector("[data-nav-search]");
+    const navShell = document.querySelector(".site-nav-shell");
     const hero = document.querySelector(".home-hero");
     if (!navSearch || !hero) {
       return;
@@ -276,7 +277,11 @@
     const observer = new IntersectionObserver(
       (entries) => {
         for (const entry of entries) {
-          navSearch.classList.toggle("is-visible", !entry.isIntersecting);
+          const docked = !entry.isIntersecting;
+          navSearch.classList.toggle("is-visible", docked);
+          if (navShell) {
+            navShell.classList.toggle("is-docked", docked);
+          }
         }
       },
       { rootMargin: "-88px 0px 0px 0px" },
@@ -285,9 +290,48 @@
     observer.observe(hero);
   }
 
+  function initHeroSnap() {
+    const hero = document.querySelector(".home-hero");
+    const content = document.querySelector(".home-content");
+    if (!hero || !content) {
+      return;
+    }
+
+    let isScrolling = false;
+
+    window.addEventListener(
+      "wheel",
+      (event) => {
+        if (isScrolling) {
+          event.preventDefault();
+          return;
+        }
+
+        const atTop = window.scrollY < 10;
+        const atContentTop =
+          window.scrollY >= content.offsetTop - 10 &&
+          window.scrollY <= content.offsetTop + 10;
+
+        if (event.deltaY > 0 && atTop) {
+          event.preventDefault();
+          isScrolling = true;
+          content.scrollIntoView({ behavior: "smooth" });
+          setTimeout(() => { isScrolling = false; }, 600);
+        } else if (event.deltaY < 0 && atContentTop) {
+          event.preventDefault();
+          isScrolling = true;
+          hero.scrollIntoView({ behavior: "smooth" });
+          setTimeout(() => { isScrolling = false; }, 600);
+        }
+      },
+      { passive: false },
+    );
+  }
+
   addAmbientLayer();
   initReveal();
   initRipple();
   initTilt();
   initNavSearch();
+  initHeroSnap();
 })();
