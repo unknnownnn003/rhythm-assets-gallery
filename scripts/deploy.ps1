@@ -364,7 +364,8 @@ function Get-RemoteSwitchScript {
     [string]$DeployPath,
     [string]$TempPath,
     [string]$OldPath,
-    [string]$CleanupPath = ""
+    [string]$CleanupPath = "",
+    [string]$PostSwitchScript = ""
   )
 
   $quotedDeployPath = Quote-RemotePath $DeployPath
@@ -374,6 +375,11 @@ function Get-RemoteSwitchScript {
   if (-not [string]::IsNullOrWhiteSpace($CleanupPath)) {
     $quotedCleanupPath = Quote-RemotePath $CleanupPath
     $cleanupCommand = "rm -rf -- $quotedCleanupPath"
+  }
+
+  $postSwitchBlock = ""
+  if (-not [string]::IsNullOrWhiteSpace($PostSwitchScript)) {
+    $postSwitchBlock = Normalize-RemoteScript $PostSwitchScript
   }
 
   return @"
@@ -397,6 +403,7 @@ if ! mv -- $quotedTempPath $quotedDeployPath; then
   fi
   exit 1
 fi
+$postSwitchBlock
 $cleanupCommand
 "@
 }
@@ -472,6 +479,8 @@ $tempPath = "${deployPath}.release-${timestamp}"
 $oldPath = "${deployPath}.old"
 $deployParentPath = Get-RemoteParentPath $deployPath
 $remoteSourcePath = "${remoteWorkPath}/source-${timestamp}"
+$remoteStableSourcePath = "${remoteWorkPath}/source"
+$remoteStableSourceOldPath = "${remoteWorkPath}/source.old"
 $remoteArchivePath = "${remoteWorkPath}/source-${timestamp}.tar.gz"
 
 $sshBaseArgs = @()
@@ -627,7 +636,27 @@ rm -f -- $quotedRemoteArchivePath
   }
 
   Invoke-Step "Switch remote release atomically" {
-    $remoteScript = Get-RemoteSwitchScript -DeployPath $deployPath -TempPath $tempPath -OldPath $oldPath -CleanupPath $remoteSourcePath
+    $quotedRemoteSourcePath = Quote-RemotePath $remoteSourcePath
+    $quotedRemoteStableSourcePath = Quote-RemotePath $remoteStableSourcePath
+    $quotedRemoteStableSourceOldPath = Quote-RemotePath $remoteStableSourceOldPath
+    $postSwitchScript = @"
+if [ -e $quotedRemoteStableSourceOldPath ]; then
+  rm -rf -- $quotedRemoteStableSourceOldPath
+fi
+if [ -e $quotedRemoteStableSourcePath ]; then
+  mv -- $quotedRemoteStableSourcePath $quotedRemoteStableSourceOldPath
+fi
+if ! mv -- $quotedRemoteSourcePath $quotedRemoteStableSourcePath; then
+  if [ -e $quotedRemoteStableSourceOldPath ] && [ ! -e $quotedRemoteStableSourcePath ]; then
+    mv -- $quotedRemoteStableSourceOldPath $quotedRemoteStableSourcePath
+  fi
+  exit 1
+fi
+if [ -e $quotedRemoteStableSourceOldPath ]; then
+  rm -rf -- $quotedRemoteStableSourceOldPath
+fi
+"@
+    $remoteScript = Get-RemoteSwitchScript -DeployPath $deployPath -TempPath $tempPath -OldPath $oldPath -PostSwitchScript $postSwitchScript
     & ssh @sshBaseArgs $remote (Normalize-RemoteScript $remoteScript)
   }
 
