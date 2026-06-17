@@ -197,7 +197,7 @@ export default function ArcaeaApkDownloadCard({ fallback }: Props) {
           <span>{card.version}</span>
         </div>
         <div>
-          <small>{"\u66f4\u65b0\u65e5\u671f"}</small>
+          <small>{"APK \u66f4\u65b0"}</small>
           <span>{card.updatedAt}</span>
         </div>
         <div>

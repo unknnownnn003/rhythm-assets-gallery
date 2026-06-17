@@ -33,6 +33,7 @@ type ApkMeta = {
   latest: ApkVersion | null;
   history: ApkVersion[];
   lastChecked: string;
+  downloadCount: number;
 };
 
 type Config = {
@@ -159,7 +160,7 @@ function normalizeEntry(raw: unknown): ApkVersion | null {
 
 function readMeta(metaFile: string): ApkMeta {
   if (!existsSync(metaFile)) {
-    return { latest: null, history: [], lastChecked: "" };
+    return { latest: null, history: [], lastChecked: "", downloadCount: 0 };
   }
 
   try {
@@ -167,10 +168,21 @@ function readMeta(metaFile: string): ApkMeta {
     const history = Array.isArray(raw.history) ? raw.history.map(normalizeEntry).filter(Boolean) as ApkVersion[] : [];
     const latest = normalizeEntry(raw.latest) ?? history[0] ?? null;
     const lastChecked = typeof raw.lastChecked === "string" ? raw.lastChecked : "";
+    const downloadCount =
+      typeof raw.downloadCount === "number"
+        ? raw.downloadCount
+        : typeof raw.downloadCount === "string"
+          ? Number(raw.downloadCount)
+          : 0;
 
-    return { latest, history, lastChecked };
+    return {
+      latest,
+      history,
+      lastChecked,
+      downloadCount: Number.isFinite(downloadCount) && downloadCount >= 0 ? downloadCount : 0,
+    };
   } catch {
-    return { latest: null, history: [], lastChecked: "" };
+    return { latest: null, history: [], lastChecked: "", downloadCount: 0 };
   }
 }
 
