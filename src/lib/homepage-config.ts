@@ -1,5 +1,5 @@
 export const homepageConfig = {
-  siteTitle: "音游曲绘下载站",
+  siteTitle: "Arcaea | Phigros 音游曲绘下载站",
   metaDescription: "高清 Arcaea 与 Phigros 曲绘、角色立绘、剧情 CG 和封面图库，支持一键搜索与批量下载。",
 
   hero: {
