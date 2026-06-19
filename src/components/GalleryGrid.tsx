@@ -322,6 +322,9 @@ export default function GalleryGrid({ assets, game }: GalleryGridProps) {
   const hasMore = visibleCount < filteredAssets.length;
   const allVisibleSelected =
     visibleAssets.length > 0 && visibleAssets.every((asset) => selectedIds.has(asset.id));
+  const batchStatusText = isDownloading
+    ? `正在获取 ${downloadProgress.completed}/${downloadProgress.total}：${downloadProgress.current}`
+    : downloadError || downloadNotice;
 
   const clearFilters = () => {
     setSelectedCategory("");
@@ -424,11 +427,6 @@ export default function GalleryGrid({ assets, game }: GalleryGridProps) {
           <button type="button" className="toolbar-button" onClick={clearSelection} disabled={!selectedAssets.length}>
             清空选择
           </button>
-          <span>
-            {selectedAssets.length > 0
-              ? `已选 ${selectedAssets.length} 张，滑到页面底部即可打包下载。`
-              : "点击卡片右上角「选择」，多选图片后批量打包。"}
-          </span>
         </div>
 
         <details className="mobile-filter">
@@ -522,11 +520,7 @@ export default function GalleryGrid({ assets, game }: GalleryGridProps) {
       <div className={`batch-download-bar${selectedAssets.length > 0 ? " is-visible" : ""}`} aria-live="polite">
         <div className="batch-download-copy">
           <strong>已选 {selectedAssets.length} 张</strong>
-          <span>
-            {isDownloading
-              ? `正在获取 ${downloadProgress.completed}/${downloadProgress.total}：${downloadProgress.current}`
-              : downloadError || downloadNotice || "打包为 ZIP 文件，同名图片会自动重命名避免覆盖。"}
-          </span>
+          {batchStatusText ? <span>{batchStatusText}</span> : null}
         </div>
 
         <div className="batch-download-actions">

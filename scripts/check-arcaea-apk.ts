@@ -310,8 +310,7 @@ async function main() {
 
   const existing = meta.history.find((entry) => entry.version === version);
   if (existing) {
-    console.log(`[arcaea-apk] Version ${version} already cached. Updating timestamp.`);
-    existing.scrapedAt = new Date().toISOString();
+    console.log(`[arcaea-apk] Version ${version} already cached. Keeping original update timestamp.`);
     meta.latest = existing;
     meta.lastChecked = new Date().toISOString();
     meta.history = keepLatestHistory(meta.history, config.keepVersions);

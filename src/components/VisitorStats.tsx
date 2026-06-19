@@ -169,7 +169,6 @@ export default function VisitorStats() {
       </div>
 
       {error ? <p className="chart-note">{"\u7edf\u8ba1\u670d\u52a1\u6682\u4e0d\u53ef\u7528\uff0c\u5f53\u524d\u663e\u793a\u7684\u662f\u5360\u4f4d\u56fe\u8868\u3002"}</p> : null}
-      <p className="visitor-note">{"\u4e3b\u6570\u5b57\u4e3a\u6d4f\u89c8\u91cf\uff0c\u526f\u6807\u9898\u663e\u793a\u72ec\u7acb\u8bbf\u5ba2\u6570\u3002"}</p>
     </section>
   );
 }

@@ -1,12 +1,12 @@
 export const homepageConfig = {
   siteTitle: "Arcaea | Phigros 音游曲绘下载站",
-  metaDescription: "高清 Arcaea 与 Phigros 曲绘、角色立绘、剧情 CG 和封面图库，支持一键搜索与批量下载。",
+  metaDescription: "高清 Arcaea 与 Phigros 曲绘、角色立绘、剧情 CG 和封面图库，支持一键搜索与多条件筛选。",
 
   hero: {
     eyebrow: "Rhythm Assets",
     title: "Arcaea & Phigros\n曲绘资源库",
     description:
-      "收录曲绘、立绘、剧情 CG、游玩背景等高清素材，支持多条件筛选与批量下载。",
+      "收录曲绘、立绘、剧情 CG、游玩背景等高清素材，支持多条件筛选与关键词搜索。",
     searchLabel: "搜索资源",
     searchPlaceholder: "搜曲名、画师、曲包，多个关键词用空格分开",
     searchButton: "搜索",
@@ -41,7 +41,7 @@ export const homepageConfig = {
 
   announcements: [
     "曲绘图片版权归原游戏与画师所有，本站仅提供索引整理。",
-    "批量下载功能已上线：选中图片后，点击底部按钮即可打包为 ZIP。",
+    "资源索引持续维护中，如发现缺失或信息错误，欢迎通过 B 站主页反馈。",
   ],
 
   footer: {

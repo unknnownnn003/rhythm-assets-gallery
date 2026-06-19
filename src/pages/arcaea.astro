@@ -11,7 +11,7 @@ import type { AssetItem } from "../lib/types";
 
 const assets = readAssets("arcaea-index.json");
 const pageTitle = "Arcaea 曲绘资源下载 - Unknnownnn";
-const pageDescription = "高清 Arcaea 曲绘、角色立绘、剧情 CG、曲包封面与游玩背景资源，支持分类筛选与批量下载。";
+const pageDescription = "高清 Arcaea 曲绘、角色立绘、剧情 CG、曲包封面与游玩背景资源，支持分类筛选与关键词搜索。";
 const pageUrl = absoluteUrl("/arcaea/");
 const pageImage = assets[0] ? assetOgImage(assets[0]) : absoluteUrl("/site-icon.png");
 const navLinks = [
@@ -60,7 +60,6 @@ function readAssets(filename: string): AssetItem[] {
         <div class="gallery-hero-badges">
           <span>曲绘 · 立绘 · 游玩背景 · 剧情 CG</span>
           <span>按曲包 / 侧别 / 版本筛选</span>
-          <span>支持批量打包下载</span>
         </div>
       </header>
 

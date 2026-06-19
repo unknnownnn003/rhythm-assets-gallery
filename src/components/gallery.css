@@ -771,8 +771,8 @@
   }
 
   .selected-panel {
-    bottom: 124px;
-    max-height: 260px;
+    bottom: 196px;
+    max-height: min(320px, calc(100dvh - 220px));
   }
 
   .selected-panel-list {
