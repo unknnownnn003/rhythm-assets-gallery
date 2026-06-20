@@ -22,6 +22,7 @@ const ALLOWED_ORIGINS = new Set(
     .filter(Boolean),
 );
 const recentTrackByVisitor = new Map();
+const RECENT_TRACK_MAX_SIZE = 10_000;
 
 if (!SALT) {
   throw new Error("STATS_SALT is required");
@@ -48,17 +49,27 @@ function loadData() {
     const raw = fs.readFileSync(DATA_FILE, "utf8");
     const parsed = JSON.parse(raw);
     if (parsed && typeof parsed === "object" && parsed.days) return parsed;
-  } catch {
-    // corrupt file, reset
+    console.warn("[stats] data file missing .days, treating as empty:", DATA_FILE);
+  } catch (err) {
+    const backupPath = `${DATA_FILE}.corrupt-${Date.now()}`;
+    try {
+      fs.copyFileSync(DATA_FILE, backupPath);
+      console.warn("[stats] corrupt data file backed up to:", backupPath);
+    } catch (backupErr) {
+      console.warn("[stats] failed to back up corrupt data file:", backupErr.message);
+    }
   }
   return { days: {} };
 }
 
 function saveData(data) {
+  const tmpPath = `${DATA_FILE}.tmp-${process.pid}`;
   try {
-    fs.writeFileSync(DATA_FILE, JSON.stringify(data) + "\n", { flag: "w" });
-  } catch {
-    // fail silently
+    fs.writeFileSync(tmpPath, JSON.stringify(data) + "\n", { flag: "w" });
+    fs.renameSync(tmpPath, DATA_FILE);
+  } catch (err) {
+    console.warn("[stats] failed to save data:", err.message);
+    try { fs.unlinkSync(tmpPath); } catch { /* ignore */ }
   }
 }
 
@@ -150,6 +161,14 @@ function shouldCountTrack(ipHash) {
   for (const [key, timestamp] of recentTrackByVisitor) {
     if (timestamp < cutoff) {
       recentTrackByVisitor.delete(key);
+    }
+  }
+
+  if (recentTrackByVisitor.size > RECENT_TRACK_MAX_SIZE) {
+    const entries = [...recentTrackByVisitor.entries()].sort((a, b) => a[1] - b[1]);
+    const evictCount = entries.length - RECENT_TRACK_MAX_SIZE;
+    for (let i = 0; i < evictCount; i++) {
+      recentTrackByVisitor.delete(entries[i][0]);
     }
   }
 
@@ -291,9 +310,11 @@ function incrementApkDownloadCount() {
     if (!fs.existsSync(APK_META_FILE)) return;
     const raw = JSON.parse(fs.readFileSync(APK_META_FILE, "utf8"));
     raw.downloadCount = (typeof raw.downloadCount === "number" ? raw.downloadCount : 0) + 1;
-    fs.writeFileSync(APK_META_FILE, JSON.stringify(raw, null, 2) + "\n");
-  } catch {
-    // fail silently
+    const tmpPath = `${APK_META_FILE}.tmp-${process.pid}`;
+    fs.writeFileSync(tmpPath, JSON.stringify(raw, null, 2) + "\n");
+    fs.renameSync(tmpPath, APK_META_FILE);
+  } catch (err) {
+    console.warn("[stats] failed to increment APK download count:", err.message);
   }
 }
 
@@ -541,3 +562,12 @@ const server = http.createServer((req, res) => {
 server.listen(PORT, LISTEN_HOST, () => {
   console.log(`stats-api listening on http://${LISTEN_HOST}:${PORT}`);
 });
+
+setInterval(() => {
+  const cutoff = Date.now() - TRACK_COOLDOWN_MS;
+  for (const [key, timestamp] of recentTrackByVisitor) {
+    if (timestamp < cutoff) {
+      recentTrackByVisitor.delete(key);
+    }
+  }
+}, TRACK_COOLDOWN_MS * 2);

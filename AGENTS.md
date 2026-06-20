@@ -120,7 +120,7 @@ If regenerating icons, use Sharp or another image tool to make square PNGs witho
 
 `AssetItem` is defined in `src/lib/types.ts`. Keep scanner output compatible with it.
 
-Important fields include:
+Important fields include (see `src/lib/types.ts` for the full type):
 
 ```ts
 type AssetItem = {
@@ -134,15 +134,26 @@ type AssetItem = {
   etrVersion?: string;
   pack?: string;
   packDisplayName?: string;
-  packDescription?: string;
-  packSection?: string;
   idx?: number;
+  songId?: string;
   bpm?: string;
   side?: string;
   sideLabel?: string;
   bg?: string;
+  bgInverse?: string;
   difficulty?: "PST" | "PRS" | "FTR" | "BYD" | "ETR";
   difficultyLabel?: string;
+  difficultyRating?: string;
+  chartDesigner?: string;
+  jacketDesigner?: string;
+  characterId?: number;
+  characterName?: string;
+  characterEnglishName?: string;
+  storyNode?: string;
+  storyPathTitle?: string;
+  storyType?: string;
+  relatedSongId?: string;
+  relatedSongTitle?: string;
   filename: string;
   extension: string;
   relativePath: string;
@@ -233,7 +244,9 @@ Detect categories from path segments. Known categories include:
 - 角色
 - 立绘
 - LinkPlay预览
+- LinkPlay贴纸
 - 剧情
+- 剧情贴图
 - 启动页面
 - 游玩背景
 - April Fools
@@ -351,7 +364,7 @@ npm run import:incoming
 `npm run update` means:
 
 ```text
-npm run scan && npm run thumbs && npm run sitemap
+npm run scan && npm run thumbs && npm run sitemap && npm run suggestions
 ```
 
 Before finishing a coding task, run at least:

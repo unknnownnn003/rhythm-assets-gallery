@@ -1,10 +1,11 @@
-﻿---
+---
 import fs from "node:fs";
 import path from "node:path";
 
 import "../../styles/global.css";
 import { SITE_NAME, absoluteUrl, assetAlt, assetMetaDescription, assetMetaTitle, assetOgImage } from "../../lib/seo";
 import { SITE_CSP } from "../../lib/security";
+import { formatBytes } from "../../lib/read-index";
 import type { AssetItem } from "../../lib/types";
 
 export function getStaticPaths() {
@@ -55,46 +56,81 @@ export function getStaticPaths() {
     }
     return [...groups.values()];
   };
+
+  const byPack = new Map<string, AssetItem[]>();
+  const byCharacterId = new Map<number, AssetItem[]>();
+  const byStoryPath = new Map<string, AssetItem[]>();
+  const bySongId = new Map<string, AssetItem[]>();
+  const backgroundByKey = new Map<string, AssetItem>();
+  const songsByBg = new Map<string, AssetItem[]>();
+  const songArtByKey = new Map<string, { original?: AssetItem; aiUpscaled?: AssetItem }>();
+
+  for (const asset of assets) {
+    if (asset.pack) {
+      const list = byPack.get(asset.pack);
+      if (list) list.push(asset); else byPack.set(asset.pack, [asset]);
+    }
+    if (asset.characterId !== undefined) {
+      const list = byCharacterId.get(asset.characterId);
+      if (list) list.push(asset); else byCharacterId.set(asset.characterId, [asset]);
+    }
+    if (asset.storyPathTitle) {
+      const list = byStoryPath.get(asset.storyPathTitle);
+      if (list) list.push(asset); else byStoryPath.set(asset.storyPathTitle, [asset]);
+    }
+    if (asset.songId) {
+      const list = bySongId.get(asset.songId);
+      if (list) list.push(asset); else bySongId.set(asset.songId, [asset]);
+    }
+    if (asset.game === "Arcaea" && asset.category === "游玩背景") {
+      backgroundByKey.set(normalizeAssetKey(asset.filename), asset);
+    }
+    if (asset.bg) {
+      const key = normalizeAssetKey(asset.bg);
+      const list = songsByBg.get(key);
+      if (list) list.push(asset); else songsByBg.set(key, [asset]);
+    }
+    if (isArcaeaSongArt(asset)) {
+      const key = normalizeAssetKey(asset.filename);
+      const entry = songArtByKey.get(key) ?? {};
+      if (asset.category === "曲绘") entry.original = asset;
+      else entry.aiUpscaled = asset;
+      songArtByKey.set(key, entry);
+    }
+  }
+
   const getRelated = (current: AssetItem) => {
     if (current.game === "Arcaea" && current.characterId !== undefined) {
-      return seededShuffle(
-        assets.filter((asset) => asset.id !== current.id && asset.game === current.game && asset.characterId === current.characterId),
-        current.id,
-      ).slice(0, 8);
+      const candidates = (byCharacterId.get(current.characterId) ?? []).filter((a) => a.id !== current.id);
+      return seededShuffle(candidates, current.id).slice(0, 8);
     }
 
     if (current.game === "Arcaea" && current.storyPathTitle) {
-      return seededShuffle(
-        assets.filter(
-          (asset) =>
-            asset.id !== current.id &&
-            asset.game === current.game &&
-            (
-              asset.storyPathTitle === current.storyPathTitle ||
-              Boolean(current.relatedSongId && asset.songId === current.relatedSongId) ||
-              Boolean(current.relatedCharacterIds?.some((id) => asset.characterId === id))
-            ),
-        ),
-        current.id,
-      ).slice(0, 8);
+      const candidates = assets.filter(
+        (asset) =>
+          asset.id !== current.id &&
+          asset.game === current.game &&
+          (
+            asset.storyPathTitle === current.storyPathTitle ||
+            Boolean(current.relatedSongId && asset.songId === current.relatedSongId) ||
+            Boolean(current.relatedCharacterIds?.some((id) => asset.characterId === id))
+          ),
+      );
+      return seededShuffle(candidates, current.id).slice(0, 8);
     }
 
     if (current.game === "Arcaea" && current.category === "游玩背景") {
       const backgroundKey = normalizeAssetKey(current.filename);
-      const songsUsingBackground = assets.filter(
+      const songsUsingBackground = (songsByBg.get(backgroundKey) ?? []).filter(
         (asset) =>
           asset.id !== current.id &&
-          asset.game === current.game &&
-          (asset.category === "曲绘" || asset.category === "曲绘（AI超分后）") &&
-          asset.bg &&
-          normalizeAssetKey(asset.bg) === backgroundKey,
+          (asset.category === "曲绘" || asset.category === "曲绘（AI超分后）"),
       );
-
       return seededShuffle(preferOriginalSongArt(songsUsingBackground), current.id).slice(0, 8);
     }
 
     const samePack = current.pack
-      ? assets.filter((asset) => asset.id !== current.id && asset.game === current.game && asset.pack === current.pack)
+      ? (byPack.get(current.pack) ?? []).filter((asset) => asset.id !== current.id)
       : [];
 
     if (current.pack) {
@@ -119,29 +155,16 @@ export function getStaticPaths() {
       return undefined;
     }
 
-    const expected = normalizeAssetKey(current.bg);
-    return assets.find(
-      (asset) =>
-        asset.id !== current.id &&
-        asset.game === current.game &&
-        asset.category === "游玩背景" &&
-        normalizeAssetKey(asset.filename) === expected,
-    );
+    return backgroundByKey.get(normalizeAssetKey(current.bg));
   };
   const getAlternateSongArt = (current: AssetItem) => {
     if (!isArcaeaSongArt(current)) {
       return undefined;
     }
 
-    const expected = normalizeAssetKey(current.filename);
-    const expectedCategory = current.category === "曲绘" ? "曲绘（AI超分后）" : "曲绘";
-    return assets.find(
-      (asset) =>
-        asset.id !== current.id &&
-        asset.game === current.game &&
-        asset.category === expectedCategory &&
-        normalizeAssetKey(asset.filename) === expected,
-    );
+    const entry = songArtByKey.get(normalizeAssetKey(current.filename));
+    if (!entry) return undefined;
+    return current.category === "曲绘" ? entry.aiUpscaled : entry.original;
   };
 
   return assets.map((asset) => ({
@@ -216,16 +239,6 @@ const metadataRows = [
   { label: "图片尺寸", value: dimensions },
   { label: wikiLabel, value: asset.wikiUrl ? "打开对应页面" : undefined, href: asset.wikiUrl },
 ].filter((row) => row.value !== undefined && row.value !== "");
-
-function formatBytes(bytes?: number) {
-  if (!bytes) {
-    return "未知大小";
-  }
-  if (bytes < 1024 * 1024) {
-    return `${Math.round(bytes / 1024)} KB`;
-  }
-  return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
-}
 
 ---
 

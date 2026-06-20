@@ -1,7 +1,4 @@
 ---
-import fs from "node:fs";
-import path from "node:path";
-
 import ArcaeaApkDownloadCard from "../components/ArcaeaApkDownloadCard";
 import SiteNav from "../components/SiteNav.astro";
 import VisitorStats from "../components/VisitorStats";
@@ -9,9 +6,8 @@ import "../styles/global.css";
 import { homepageConfig } from "../lib/homepage-config";
 import { SITE_NAME, SITE_URL, absoluteUrl, assetAlt, assetOgImage } from "../lib/seo";
 import { SITE_CSP } from "../lib/security";
+import { readJson, formatBytes } from "../lib/read-index";
 import type { AssetItem, SiteSummary } from "../lib/types";
-
-const dataDir = path.join(process.cwd(), "public", "data");
 
 const summary = readJson<SiteSummary>("summary.json", {
   totalAssets: 0,
@@ -60,13 +56,6 @@ const apkDownloadFallback = {
   note: homepageConfig.clientDownload.note,
 };
 
-function readJson<T>(filename: string, fallback: T): T {
-  const filePath = path.join(dataDir, filename);
-  if (!fs.existsSync(filePath)) {
-    return fallback;
-  }
-  return JSON.parse(fs.readFileSync(filePath, "utf8")) as T;
-}
 
 function getGameCategoryShortcuts(siteSummary: SiteSummary, gameName: "Arcaea" | "Phigros") {
   const game = siteSummary.games.find((item) => item.game === gameName);
@@ -129,16 +118,6 @@ function buildFeaturedCategoryCards(siteSummary: SiteSummary) {
   }
 
   return cards.slice(0, 6);
-}
-
-function formatBytes(bytes?: number) {
-  if (!bytes) {
-    return "未知大小";
-  }
-  if (bytes < 1024 * 1024) {
-    return `${Math.round(bytes / 1024)} KB`;
-  }
-  return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
 }
 ---
 

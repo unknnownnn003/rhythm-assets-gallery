@@ -1,13 +1,10 @@
 ---
-import fs from "node:fs";
-import path from "node:path";
-
 import GalleryGrid from "../components/GalleryGrid";
 import SiteNav from "../components/SiteNav.astro";
 import "../styles/global.css";
 import { SITE_NAME, absoluteUrl, assetOgImage } from "../lib/seo";
 import { SITE_CSP } from "../lib/security";
-import type { AssetItem } from "../lib/types";
+import { readAssets } from "../lib/read-index";
 
 const assets = [...readAssets("arcaea-index.json"), ...readAssets("phigros-index.json")];
 const pageTitle = "音游曲绘资源搜索 - Unknnownnn";
@@ -20,14 +17,6 @@ const navLinks = [
   { href: "/phigros", label: "Phigros" },
   { href: "/search", label: "搜索" },
 ];
-
-function readAssets(filename: string): AssetItem[] {
-  const filePath = path.join(process.cwd(), "public", "data", filename);
-  if (!fs.existsSync(filePath)) {
-    return [];
-  }
-  return JSON.parse(fs.readFileSync(filePath, "utf8")) as AssetItem[];
-}
 ---
 
 <!doctype html>
