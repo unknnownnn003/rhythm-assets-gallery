@@ -39,14 +39,14 @@ npm run scan + npm run thumbs + npm run sitemap
 
 ## Arcaea APK Runtime Download
 
-Arcaea 瀹㈡埛绔笅杞戒笉鍐嶄緷璧?`public/downloads` 鎴?`dist/downloads`銆傛帹鑽愭ā寮忔槸锛?
+Arcaea 客户端下载不再依赖 `public/downloads` 或 `dist/downloads`。推荐模式是：
 
-- 鏈嶅姟鍣ㄥ畾鏃惰繍琛?`npm run arcaea:check-apk`
-- 鑴氭湰鐩存帴鍦ㄦ湇鍔″櫒鏈湴緙撳瓨 APK锛屽啓鍏ョ鏈夊厓鏁版嵁 JSON
-- 棣栭〉杩愯鏃堕€氳繃 `/api/apk/arcaea/latest` 璇诲彇鏈€鏂扮増鏈俊鎭紝涓嶉渶閲嶆柊鏋勫缓绔欑偣
-- 鐢ㄦ埛閫氳繃 `/api/download/arcaea/latest` 涓嬭浇锛岀敱鏈嶅姟鍣ㄦ湰鍦版枃浠舵彁渚涙祦寮忎笅鍙?
+- 服务器定时运行 `npm run arcaea:check-apk`
+- 脚本直接在服务器本地缓存 APK，写入私有元数据 JSON
+- 首页运行时通过 `/api/apk/arcaea/latest` 读取最新版本信息，不需要重新构建站点
+- 用户通过 `/api/download/arcaea/latest` 下载，由服务器本地文件提供流式响应
 
-榛樿寤鸿鐨勭幆澧冨彉閲忥細
+默认建议的环境变量：
 
 ```text
 STATS_DATA_DIR=/www/wwwroot/stats-data
@@ -58,11 +58,11 @@ STATS_SALT=<long-random-secret>
 
 Security and Nginx hardening notes: `docs/SECURITY-HARDENING.md`
 
-鐗规€ц鏄庯細
+特性说明：
 
-- APK 鍏冩暟鎹帴鍙ｅ彧鍏紑 `version`銆?`filename`銆?`sizeBytes`銆?`scrapedAt`锛屼笉鍐嶆毚闇茬湡瀹炰笂娓?URL 鎴栨湰鍦版枃浠惰矾寰?
-- 涓嬭浇鎺ュ彛鏀寔 `HEAD` 鍜?HTTP `Range`锛屽彲鐢ㄤ簬鏂偣缁紶鍜屽绾跨▼鍒嗘涓嬭浇
-- 鏈嶅姟鍣ㄧ紦瀛樺拰绔欑偣鏋勫缓浜х墿瑙ｈ€︼紝杩滅▼鏋勫缓鏃朵笉浼氭妸 APK 鎵撹繘 `dist`
+- APK 元数据接口只公开 `version`、`filename`、`sizeBytes`、`scrapedAt`，不再暴露真实上游 URL 或本地文件路径
+- 下载接口支持 `HEAD` 和 HTTP `Range`，可用于断点续传和多线程分段下载
+- 服务器缓存和站点构建产物解耦，远程构建时不会把 APK 打进 `dist`
 
 ## Arcaea APK 更新提取流程
 
