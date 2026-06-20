@@ -44,3 +44,4 @@ public/sitemap.xml
 
 # tool configs
 .claude/
+.mimocode/
